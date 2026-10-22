@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ClockInterpolator } from '../src/engine/clock';
+import { ClockInterpolator, PageClock } from '../src/engine/clock';
 import { computePeaks, PEAK_PAIRS_PER_SECOND } from '../src/media/peaks';
 import { videoCorrection } from '../src/engine/videoSync';
 
@@ -59,5 +59,41 @@ describe('videoCorrection', () => {
   it('snaps exactly to the master time when stopped', () => {
     expect(videoCorrection(10.05, 10, false)).toEqual({ seekTo: 10, rate: 1 });
     expect(videoCorrection(10.001, 10, false)).toEqual({ seekTo: null, rate: 1 });
+  });
+});
+
+describe('PageClock', () => {
+  it('holds its time while stopped', () => {
+    const clock = new PageClock();
+    clock.set(12, 0);
+    expect(clock.now(5000, null)).toBe(12);
+  });
+
+  it('runs on real time when no audio is locked', () => {
+    const clock = new PageClock();
+    clock.start(2, 1000);
+    expect(clock.now(1500, null)).toBeCloseTo(2.5);
+  });
+
+  it('follows the audio while it is locked, then continues from there', () => {
+    const clock = new PageClock();
+    clock.start(0, 0);
+    expect(clock.now(1000, 0.98)).toBeCloseTo(0.98);
+    expect(clock.now(1500, null)).toBeCloseTo(1.48);
+  });
+
+  it('does not step backwards when the audio starts slightly late', () => {
+    const clock = new PageClock();
+    clock.start(5, 0);
+    expect(clock.now(100, null)).toBeCloseTo(5.1);
+    expect(clock.now(116, 5.08)).toBeCloseTo(5.1);
+    expect(clock.now(132, 5.13)).toBeCloseTo(5.13);
+  });
+
+  it('jumps on seek', () => {
+    const clock = new PageClock();
+    clock.start(5, 0);
+    clock.set(30, 100);
+    expect(clock.now(100, null)).toBe(30);
   });
 });

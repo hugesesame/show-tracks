@@ -3,6 +3,7 @@ import { MtcOutput } from '../engine/mtc';
 import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
 import { importMediaFile } from '../media/importMedia';
+import { moveClip } from '../model/clips';
 import { addMarker, removeMarker, renameMarker, setMarkerTime } from '../model/markers';
 import {
   addPage,
@@ -141,6 +142,7 @@ export class App {
 
   private applyPageSettings(): void {
     const page = this.page;
+    if (this.loadedPageId === page.id) this.transport.setOffsets(page.audioOffset, page.videoOffset);
     this.transport.setVideoAudio(page.videoAudioEnabled, page.videoAudioVolume);
     this.mtc.configure(this._project.settings.mtcFps, page.mtcOffset);
   }
@@ -150,7 +152,7 @@ export class App {
       const page = this.page;
       const [audio, video] = await Promise.all([this.fetchMedia(page.audioMediaId), this.fetchMedia(page.videoMediaId)]);
       try {
-        await this.transport.load(audio?.blob ?? null, video?.blob ?? null);
+        await this.transport.load(audio?.blob ?? null, video?.blob ?? null, page.audioOffset, page.videoOffset);
       } catch {
         this.error('Could not load the media.');
       }
@@ -265,6 +267,13 @@ export class App {
 
   removeMarker(markerId: string): void {
     this.updateCurrentPage((page) => removeMarker(page, markerId));
+  }
+
+  /** Places a clip on the timeline; markers move with the audio clip. */
+  moveClip(kind: MediaRecord['kind'], offset: number): void {
+    const durations = { audio: this.transport.audioDuration, video: this.transport.videoDuration };
+    const page = this.page;
+    this.commit(replacePage(this._project, moveClip(page, kind, offset, durations)), page.markers);
   }
 
   // ---- pages ----

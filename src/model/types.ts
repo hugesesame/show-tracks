@@ -17,6 +17,9 @@ export type Page = {
   /** At least one of audio and video is required for playback. */
   audioMediaId: string | null;
   videoMediaId: string | null;
+  /** Where each clip starts on the page timeline, in seconds (0 or later). */
+  audioOffset: number;
+  videoOffset: number;
   videoAudioEnabled: boolean;
   videoAudioVolume: number;
   /** Seconds added to the page time when sending MTC. */

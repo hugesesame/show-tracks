@@ -33,12 +33,18 @@ export class VideoSync {
     this.followers.delete(video);
   }
 
-  tick(masterTime: number, playing: boolean): void {
+  /**
+   * `clipTime` is the position inside the video file, which is negative
+   * before the clip starts. Outside the clip the videos are hidden (black).
+   */
+  tick(clipTime: number, playing: boolean): void {
     for (const video of this.followers) {
       if (!video.src || video.readyState === HTMLMediaElement.HAVE_NOTHING) continue;
       const duration = Number.isFinite(video.duration) ? video.duration : Infinity;
-      const target = Math.min(masterTime, duration);
-      const shouldPlay = playing && masterTime < duration;
+      const inClip = clipTime >= 0 && clipTime < duration;
+      video.style.visibility = inClip ? '' : 'hidden';
+      const target = Math.min(Math.max(clipTime, 0), duration);
+      const shouldPlay = playing && inClip;
 
       if (shouldPlay && video.paused) void video.play().catch(() => {});
       if (!shouldPlay && !video.paused) video.pause();

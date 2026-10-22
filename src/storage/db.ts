@@ -1,3 +1,4 @@
+import { normalizeProject } from '../model/project';
 import type { MediaRecord, Project } from '../model/types';
 
 const PROJECT_STORE = 'project';
@@ -28,7 +29,8 @@ function run<T>(db: IDBDatabase, store: string, mode: IDBTransactionMode, op: (s
 }
 
 export async function loadProject(db: IDBDatabase): Promise<Project | null> {
-  return (await run<Project | undefined>(db, PROJECT_STORE, 'readonly', (s) => s.get(PROJECT_KEY))) ?? null;
+  const project = await run<Project | undefined>(db, PROJECT_STORE, 'readonly', (s) => s.get(PROJECT_KEY));
+  return project ? normalizeProject(project) : null;
 }
 
 export async function saveProject(db: IDBDatabase, project: Project): Promise<void> {
@@ -106,7 +108,7 @@ export function importProjectJson(text: string): { project: Project; media: Expo
   if (!Array.isArray(project?.pages) || project.pages.length === 0 || typeof project.currentPageId !== 'string') {
     throw new Error('Invalid project format');
   }
-  return { project: project as Project, media: (data.media ?? {}) as ExportedMedia };
+  return { project: normalizeProject(project as Project), media: (data.media ?? {}) as ExportedMedia };
 }
 
 /** Ids of pages that reference media not present in the store. */

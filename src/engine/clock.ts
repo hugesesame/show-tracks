@@ -39,17 +39,43 @@ export class ClockInterpolator {
   }
 }
 
-/** The current time of the page, driven by its master media element. */
-export class MediaClock {
-  private source: HTMLMediaElement | null = null;
-  private readonly interpolator = new ClockInterpolator();
+/** Small backward steps from the audio (e.g. its start latency) are held instead of followed. */
+const HOLD_THRESHOLD = 0.1;
 
-  setSource(element: HTMLMediaElement | null): void {
-    this.source = element;
+/**
+ * The page timeline clock. While the audio clip is playing it follows the
+ * audio, so the music is never corrected; elsewhere it runs on real time.
+ */
+export class PageClock {
+  private playing = false;
+  private anchorTime = 0;
+  private anchorMs = 0;
+  private last = 0;
+
+  start(time: number, nowMs: number): void {
+    this.playing = true;
+    this.set(time, nowMs);
   }
 
-  now(): number {
-    if (!this.source) return 0;
-    return this.interpolator.update(this.source.currentTime, !this.source.paused, performance.now());
+  stop(time: number): void {
+    this.playing = false;
+    this.anchorTime = this.last = time;
+  }
+
+  set(time: number, nowMs: number): void {
+    this.anchorTime = this.last = time;
+    this.anchorMs = nowMs;
+  }
+
+  /** `audioPageTime` is the page time read from the playing audio, or null when it is not playing. */
+  now(nowMs: number, audioPageTime: number | null): number {
+    if (!this.playing) return this.anchorTime;
+    let time = this.anchorTime + (nowMs - this.anchorMs) / 1000;
+    if (audioPageTime !== null) {
+      const behind = this.last - audioPageTime;
+      time = behind > 0 && behind < HOLD_THRESHOLD ? this.last : audioPageTime;
+    }
+    this.set(time, nowMs);
+    return time;
   }
 }

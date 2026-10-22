@@ -19,8 +19,10 @@ function probeDuration(blob: Blob, kind: MediaRecord['kind']): Promise<number> {
     const element = document.createElement(kind);
     const url = URL.createObjectURL(blob);
     const done = () => {
-      URL.revokeObjectURL(url);
+      // Detach before revoking, or the element keeps fetching a dead URL.
       element.removeAttribute('src');
+      element.load();
+      URL.revokeObjectURL(url);
     };
     element.preload = 'metadata';
     element.onloadedmetadata = () => {

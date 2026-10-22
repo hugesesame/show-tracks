@@ -6,11 +6,21 @@ export function createPage(name: string, id: string = randomId()): Page {
     name,
     audioMediaId: null,
     videoMediaId: null,
+    audioOffset: 0,
+    videoOffset: 0,
     videoAudioEnabled: false,
     videoAudioVolume: 1,
     mtcOffset: 0,
     markers: [],
     nextCueNumber: 1,
+  };
+}
+
+/** Fills in fields added after a project was saved, so older saves keep loading. */
+export function normalizeProject(project: Project): Project {
+  return {
+    ...project,
+    pages: project.pages.map((p) => ({ ...p, audioOffset: p.audioOffset ?? 0, videoOffset: p.videoOffset ?? 0 })),
   };
 }
 

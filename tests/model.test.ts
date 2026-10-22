@@ -105,6 +105,8 @@ describe('project', () => {
       name: 'A',
       audioMediaId: null,
       videoMediaId: null,
+      audioOffset: 0,
+      videoOffset: 0,
       videoAudioEnabled: false,
       videoAudioVolume: 1,
       mtcOffset: 0,

@@ -10,7 +10,11 @@
   --playhead: #ff4d4d;
   --marker: #f5b942;
   --danger: #ff5c5c;
-  --wave: #4e5d6c;
+  --wave: #7fa3c4;
+  --clip-audio: #20364a;
+  --clip-audio-edge: #3d6a91;
+  --clip-video: #36294a;
+  --clip-video-edge: #6a5291;
   --font: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Segoe UI', sans-serif;
   --mono: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
   color-scheme: dark;

@@ -1,4 +1,5 @@
-import { MediaClock } from './clock';
+import { pageDuration } from '../model/clips';
+import { ClockInterpolator, PageClock } from './clock';
 import { VideoSync } from './videoSync';
 
 export type TransportEvent = 'load' | 'playstate' | 'locate';
@@ -11,35 +12,45 @@ function waitForMetadata(element: HTMLMediaElement): Promise<void> {
   });
 }
 
+const finiteDuration = (element: HTMLMediaElement) => (Number.isFinite(element.duration) ? element.duration : 0);
+
 /**
- * Plays one page. The audio element is the master clock when the page has
- * audio; otherwise the monitor video is. Videos that are not the master follow it.
+ * Plays one page. The page has its own timeline clock; the audio and video
+ * clips sit on it at their offsets. While the audio clip plays it drives the
+ * clock, so the music itself is never corrected.
  */
 export class Transport {
   readonly audio = new Audio();
   readonly videoSync = new VideoSync();
-  private readonly clock = new MediaClock();
+  private readonly clock = new PageClock();
+  private readonly audioClock = new ClockInterpolator();
   private readonly events = new EventTarget();
-  private master: HTMLMediaElement | null = null;
+  private hasAudio = false;
+  private hasVideo = false;
+  private audioOffset = 0;
+  private videoOffset = 0;
   private audioUrl: string | null = null;
   private _videoUrl: string | null = null;
   private _duration = 0;
+  private _playing = false;
 
   constructor(readonly monitor: HTMLVideoElement) {
     this.audio.preload = 'auto';
     monitor.preload = 'auto';
     monitor.playsInline = true;
-    for (const element of [this.audio, monitor]) {
-      element.addEventListener('play', () => this.emit('playstate'));
-      element.addEventListener('pause', () => this.emit('playstate'));
-      element.addEventListener('seeking', () => {
-        if (element === this.master) this.emit('locate');
-      });
-    }
+    this.videoSync.add(monitor);
   }
 
   get duration(): number {
     return this._duration;
+  }
+
+  get audioDuration(): number | null {
+    return this.hasAudio ? finiteDuration(this.audio) : null;
+  }
+
+  get videoDuration(): number | null {
+    return this.hasVideo ? finiteDuration(this.monitor) : null;
   }
 
   get videoUrl(): string | null {
@@ -47,11 +58,11 @@ export class Transport {
   }
 
   get hasMedia(): boolean {
-    return this.master !== null;
+    return this.hasAudio || this.hasVideo;
   }
 
   get playing(): boolean {
-    return this.master !== null && !this.master.paused;
+    return this._playing;
   }
 
   on(event: TransportEvent, listener: () => void): void {
@@ -62,7 +73,7 @@ export class Transport {
     this.events.dispatchEvent(new Event(event));
   }
 
-  async load(audio: Blob | null, video: Blob | null): Promise<void> {
+  async load(audio: Blob | null, video: Blob | null, audioOffset: number, videoOffset: number): Promise<void> {
     this.pause();
     this.unload();
     if (audio) {
@@ -73,19 +84,18 @@ export class Transport {
       this._videoUrl = URL.createObjectURL(video);
       this.monitor.src = this._videoUrl;
     }
-    this.master = audio ? this.audio : video ? this.monitor : null;
-    if (this.master === this.audio && video) this.videoSync.add(this.monitor);
-    this.clock.setSource(this.master);
+    this.hasAudio = audio !== null;
+    this.hasVideo = video !== null;
     try {
       await Promise.all([audio && waitForMetadata(this.audio), video && waitForMetadata(this.monitor)]);
-      this._duration = this.master?.duration ?? 0;
     } finally {
+      this.setOffsets(audioOffset, videoOffset);
+      this.clock.stop(0);
       this.emit('load');
     }
   }
 
   private unload(): void {
-    this.videoSync.remove(this.monitor);
     for (const element of [this.audio, this.monitor]) {
       element.removeAttribute('src');
       element.load();
@@ -93,9 +103,19 @@ export class Transport {
     if (this.audioUrl) URL.revokeObjectURL(this.audioUrl);
     if (this._videoUrl) URL.revokeObjectURL(this._videoUrl);
     this.audioUrl = this._videoUrl = null;
-    this.master = null;
-    this.clock.setSource(null);
+    this.hasAudio = this.hasVideo = false;
     this._duration = 0;
+  }
+
+  /** Moves the clips on the timeline. */
+  setOffsets(audioOffset: number, videoOffset: number): void {
+    this.audioOffset = audioOffset;
+    this.videoOffset = videoOffset;
+    this._duration = pageDuration(
+      { audioMediaId: this.hasAudio ? 'a' : null, videoMediaId: this.hasVideo ? 'v' : null, audioOffset, videoOffset },
+      { audio: this.audioDuration, video: this.videoDuration },
+    );
+    this.syncAudio(this.now(), true);
   }
 
   /** Whether the monitor video's own sound is heard, and how loud. */
@@ -104,38 +124,87 @@ export class Transport {
     this.monitor.volume = Math.min(1, Math.max(0, volume));
   }
 
+  /** The page time read from the audio while it is actually playing, else null. */
+  private audioPageTime(nowMs: number): number | null {
+    const audio = this.audio;
+    const locked =
+      this._playing &&
+      this.hasAudio &&
+      !audio.paused &&
+      !audio.seeking &&
+      audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA;
+    const time = this.audioClock.update(audio.currentTime, locked, nowMs);
+    return locked ? this.audioOffset + time : null;
+  }
+
   now(): number {
-    return Math.min(this.clock.now(), this._duration);
+    const time = this.clock.now(performance.now(), this.audioPageTime(performance.now()));
+    return Math.min(Math.max(time, 0), this._duration);
   }
 
   play(): void {
-    if (!this.master) return;
-    if (this.master.currentTime >= this._duration) this.master.currentTime = 0;
-    void this.master.play().catch(() => {});
+    if (!this.hasMedia) return;
+    const from = this.now() >= this._duration ? 0 : this.now();
+    this._playing = true;
+    this.clock.start(from, performance.now());
+    this.syncAudio(from, true);
+    this.emit('playstate');
   }
 
   pause(): void {
-    this.master?.pause();
+    if (!this._playing) return;
+    const time = this.now();
+    this._playing = false;
+    this.clock.stop(time);
+    this.audio.pause();
+    this.emit('playstate');
   }
 
   toggle(): void {
-    if (this.playing) this.pause();
+    if (this._playing) this.pause();
     else this.play();
   }
 
   seek(time: number): void {
-    if (!this.master) return;
-    this.master.currentTime = Math.min(Math.max(time, 0), this._duration);
+    if (!this.hasMedia) return;
+    const target = Math.min(Math.max(time, 0), this._duration);
+    if (this._playing) this.clock.start(target, performance.now());
+    else this.clock.stop(target);
+    this.syncAudio(target, true);
+    this.emit('locate');
   }
 
   skip(delta: number): void {
     this.seek(this.now() + delta);
   }
 
-  /** Call every animation frame: syncs follower videos and returns the current time. */
+  /** Starts, stops or relocates the audio so it matches the page time. */
+  private syncAudio(time: number, force: boolean): void {
+    if (!this.hasAudio) return;
+    const audio = this.audio;
+    const clipTime = time - this.audioOffset;
+    const inClip = clipTime >= 0 && clipTime < finiteDuration(audio);
+    if (!this._playing || !inClip) {
+      if (!audio.paused) audio.pause();
+      if (force) audio.currentTime = Math.min(Math.max(clipTime, 0), finiteDuration(audio));
+      return;
+    }
+    if (force) audio.currentTime = clipTime;
+    if (audio.paused) {
+      if (!force) audio.currentTime = clipTime;
+      void audio.play().catch(() => {});
+    }
+  }
+
+  /** Call every animation frame: follows the clips and returns the current time. */
   tick(): number {
     const time = this.now();
-    this.videoSync.tick(time, this.playing);
+    if (this._playing && time >= this._duration) {
+      this.pause();
+      return this.now();
+    }
+    this.syncAudio(time, false);
+    this.videoSync.tick(time - this.videoOffset, this._playing);
     return time;
   }
 }
