@@ -20,6 +20,9 @@ const FOLLOW_EDGE = 0.95;
 type Kind = MediaRecord['kind'];
 type Rect = { x: number; y: number; w: number; h: number };
 
+/** How fast the meters fall back, in meter widths per second. */
+const METER_FALL_PER_SECOND = 1.5;
+
 function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
@@ -30,6 +33,13 @@ export function createTrack(app: App) {
   const empty = h('div', { class: 'track-empty' });
   const element = h('div', { class: 'track' }, canvas, empty);
   const ctx = canvas.getContext('2d')!;
+  const headers = { audio: laneHeader(app, 'audio'), video: laneHeader(app, 'video') };
+  const wrap = h(
+    'div',
+    { class: 'track-wrap' },
+    h('div', { class: 'track-headers' }, headers.audio.element, headers.video.element),
+    element,
+  );
 
   let width = 0;
   let height = 0;
@@ -100,6 +110,11 @@ export function createTrack(app: App) {
     height = element.clientHeight;
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
+    for (const kind of ['audio', 'video'] as const) {
+      const { y, h: laneHeight } = lane(kind);
+      headers[kind].element.style.top = `${y}px`;
+      headers[kind].element.style.height = `${laneHeight}px`;
+    }
     colors = Object.fromEntries(
       ['--panel', '--panel-2', '--wave', '--line', '--marker', '--selected', '--playhead', '--text', '--muted',
         '--clip-audio', '--clip-audio-edge', '--clip-video', '--clip-video-edge'].map((n) => [n, cssVar(n)]),
@@ -174,6 +189,8 @@ export function createTrack(app: App) {
   function draw(time: number): void {
     if (element.clientWidth !== width || element.clientHeight !== height) resize();
     clampView();
+    headers.audio.tick();
+    headers.video.tick();
     // Keep a moving playhead in view (playback, marker jumps), but leave the
     // view alone when only the user scrolled.
     if (zoom > 1 && frozenView === null && time !== lastTime) {
@@ -335,6 +352,8 @@ export function createTrack(app: App) {
   );
 
   function update(): void {
+    headers.audio.update();
+    headers.video.update();
     const page = app.page;
     const missing = app.missingMediaPageIds().includes(page.id);
     empty.textContent = missing
@@ -345,11 +364,68 @@ export function createTrack(app: App) {
   }
 
   return {
-    element,
+    element: wrap,
     draw,
     update,
     zoomIn: () => zoomBy(ZOOM_STEP),
     zoomOut: () => zoomBy(1 / ZOOM_STEP),
     zoomFit,
   };
+}
+
+/** Name, mute, volume and a stereo meter at the left of a lane. */
+function laneHeader(app: App, kind: Kind) {
+  const level = () => {
+    const page = app.page;
+    return kind === 'audio'
+      ? { volume: page.audioVolume, muted: page.audioMuted }
+      : { volume: page.videoAudioVolume, muted: !page.videoAudioEnabled };
+  };
+  const mute = h('button', {
+    class: 'mute',
+    title: 'Mute',
+    onclick: () => app.setTrackLevel(kind, level().volume, !level().muted),
+  }, 'M');
+  const volume = h('input', {
+    class: 'volume',
+    type: 'range',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    oninput: () => app.setTrackLevel(kind, Number(volume.value), level().muted),
+  });
+  const masks = [h('div', { class: 'meter-mask' }), h('div', { class: 'meter-mask' })];
+  const element = h(
+    'div',
+    { class: 'lane-header' },
+    h('div', { class: 'lane-top' }, h('span', { class: 'lane-name' }, kind === 'audio' ? 'Audio' : 'Video'), mute),
+    volume,
+    h('div', { class: 'meter' }, ...masks.map((mask) => h('div', { class: 'meter-bar' }, mask))),
+  );
+
+  const shown = [0, 0];
+  let lastTick = performance.now();
+
+  function update(): void {
+    const { volume: v, muted } = level();
+    const hasMedia = (kind === 'audio' ? app.page.audioMediaId : app.page.videoMediaId) !== null;
+    volume.value = String(v);
+    volume.title = `Volume ${Math.round(v * 100)}%`;
+    volume.disabled = mute.disabled = !hasMedia;
+    mute.classList.toggle('on', muted);
+    mute.title = muted ? 'Unmute' : 'Mute';
+  }
+
+  /** Peaks jump up at once and fall back smoothly. */
+  function tick(): void {
+    const now = performance.now();
+    const fall = ((now - lastTick) / 1000) * METER_FALL_PER_SECOND;
+    lastTick = now;
+    app.transport.mixer.levels(kind).forEach((peak, i) => {
+      shown[i] = Math.max(peak, shown[i] - fall);
+      masks[i].style.width = `${(1 - shown[i]) * 100}%`;
+    });
+  }
+
+  return { element, update, tick };
 }

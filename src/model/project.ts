@@ -8,6 +8,8 @@ export function createPage(name: string, id: string = randomId()): Page {
     videoMediaId: null,
     audioOffset: 0,
     videoOffset: 0,
+    audioVolume: 1,
+    audioMuted: false,
     videoAudioEnabled: false,
     videoAudioVolume: 1,
     mtcOffset: 0,
@@ -20,7 +22,13 @@ export function createPage(name: string, id: string = randomId()): Page {
 export function normalizeProject(project: Project): Project {
   return {
     ...project,
-    pages: project.pages.map((p) => ({ ...p, audioOffset: p.audioOffset ?? 0, videoOffset: p.videoOffset ?? 0 })),
+    pages: project.pages.map((p) => ({
+      ...p,
+      audioOffset: p.audioOffset ?? 0,
+      videoOffset: p.videoOffset ?? 0,
+      audioVolume: p.audioVolume ?? 1,
+      audioMuted: p.audioMuted ?? false,
+    })),
   };
 }
 

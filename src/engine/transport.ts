@@ -1,5 +1,6 @@
 import { pageDuration } from '../model/clips';
 import { ClockInterpolator, PageClock } from './clock';
+import { Mixer } from './mixer';
 import { VideoSync } from './videoSync';
 
 export type TransportEvent = 'load' | 'playstate' | 'locate';
@@ -22,6 +23,7 @@ const finiteDuration = (element: HTMLMediaElement) => (Number.isFinite(element.d
 export class Transport {
   readonly audio = new Audio();
   readonly videoSync = new VideoSync();
+  readonly mixer: Mixer;
   private readonly clock = new PageClock();
   private readonly audioClock = new ClockInterpolator();
   private readonly events = new EventTarget();
@@ -38,6 +40,7 @@ export class Transport {
     this.audio.preload = 'auto';
     monitor.preload = 'auto';
     monitor.playsInline = true;
+    this.mixer = new Mixer({ audio: this.audio, video: monitor });
     this.videoSync.add(monitor);
   }
 
@@ -118,12 +121,6 @@ export class Transport {
     this.syncAudio(this.now(), true);
   }
 
-  /** Whether the monitor video's own sound is heard, and how loud. */
-  setVideoAudio(enabled: boolean, volume: number): void {
-    this.monitor.muted = !enabled;
-    this.monitor.volume = Math.min(1, Math.max(0, volume));
-  }
-
   /** The page time read from the audio while it is actually playing, else null. */
   private audioPageTime(nowMs: number): number | null {
     const audio = this.audio;
@@ -144,6 +141,7 @@ export class Transport {
 
   play(): void {
     if (!this.hasMedia) return;
+    void this.mixer.resume();
     const from = this.now() >= this._duration ? 0 : this.now();
     this._playing = true;
     this.clock.start(from, performance.now());

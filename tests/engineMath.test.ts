@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ClockInterpolator, PageClock } from '../src/engine/clock';
 import { computePeaks, PEAK_PAIRS_PER_SECOND } from '../src/media/peaks';
 import { videoCorrection } from '../src/engine/videoSync';
+import { meterLevel } from '../src/engine/mixer';
 
 describe('computePeaks', () => {
   it('stores min/max pairs per bucket across all channels', () => {
@@ -95,5 +96,15 @@ describe('PageClock', () => {
     clock.start(5, 0);
     clock.set(30, 100);
     expect(clock.now(100, null)).toBe(30);
+  });
+});
+
+describe('meterLevel', () => {
+  it('maps peak amplitude onto a -60..0 dBFS scale', () => {
+    expect(meterLevel(1)).toBe(1);
+    expect(meterLevel(0)).toBe(0);
+    expect(meterLevel(0.001)).toBe(0); // -60 dB
+    expect(meterLevel(Math.pow(10, -30 / 20))).toBeCloseTo(0.5); // -30 dB
+    expect(meterLevel(2)).toBe(1);
   });
 });

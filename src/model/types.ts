@@ -20,6 +20,9 @@ export type Page = {
   /** Where each clip starts on the page timeline, in seconds (0 or later). */
   audioOffset: number;
   videoOffset: number;
+  audioVolume: number;
+  audioMuted: boolean;
+  /** The video's own sound; disabled means the Video track is muted. */
   videoAudioEnabled: boolean;
   videoAudioVolume: number;
   /** Seconds added to the page time when sending MTC. */

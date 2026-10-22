@@ -62,20 +62,6 @@ export function createSettings(app: App) {
       },
     });
 
-    const videoAudio = h('input', {
-      type: 'checkbox',
-      checked: page.videoAudioEnabled,
-      onchange: () => app.setVideoAudio(videoAudio.checked, Number(volume.value)),
-    });
-    const volume = h('input', {
-      type: 'range',
-      min: 0,
-      max: 1,
-      step: 0.01,
-      value: String(page.videoAudioVolume),
-      oninput: () => app.setVideoAudio(videoAudio.checked, Number(volume.value)),
-    });
-
     const importInput = h('input', {
       type: 'file',
       accept: 'application/json,.json',
@@ -105,7 +91,6 @@ export function createSettings(app: App) {
         h('h3', {}, `This page (${page.name})`),
         row('Page name', pageName),
         row('MTC offset', offset),
-        row('Video sound', videoAudio, ' ', volume),
         h('h3', {}, 'Project'),
         row(
           'File',

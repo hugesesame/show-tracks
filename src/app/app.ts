@@ -143,7 +143,8 @@ export class App {
   private applyPageSettings(): void {
     const page = this.page;
     if (this.loadedPageId === page.id) this.transport.setOffsets(page.audioOffset, page.videoOffset);
-    this.transport.setVideoAudio(page.videoAudioEnabled, page.videoAudioVolume);
+    this.transport.mixer.setLevel('audio', page.audioVolume, page.audioMuted);
+    this.transport.mixer.setLevel('video', page.videoAudioVolume, !page.videoAudioEnabled);
     this.mtc.configure(this._project.settings.mtcFps, page.mtcOffset);
   }
 
@@ -365,8 +366,12 @@ export class App {
     this.commit(updatePage(this._project, this.page.id, { mtcOffset: seconds }));
   }
 
-  setVideoAudio(enabled: boolean, volume: number): void {
-    this.commit(updatePage(this._project, this.page.id, { videoAudioEnabled: enabled, videoAudioVolume: volume }));
+  setTrackLevel(kind: MediaRecord['kind'], volume: number, muted: boolean): void {
+    const patch =
+      kind === 'audio'
+        ? { audioVolume: volume, audioMuted: muted }
+        : { videoAudioVolume: volume, videoAudioEnabled: !muted };
+    this.commit(updatePage(this._project, this.page.id, patch));
   }
 
   // ---- import / export ----
