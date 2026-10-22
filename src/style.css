@@ -365,11 +365,11 @@ button.active {
   height: 14px;
 }
 
-/* Ticks sit where the thumb centre lands for that value. */
+/* Ticks sit where the thumb centre lands for that value, and reach past the thumb so they stay visible under it. */
 .volume-wrap .tick {
   position: absolute;
-  top: 1px;
-  bottom: 1px;
+  top: -3px;
+  bottom: -3px;
   width: 1px;
   left: calc(6px + (100% - 12px) * var(--at));
   background: var(--muted);
