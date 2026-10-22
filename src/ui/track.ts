@@ -66,7 +66,7 @@ export function createTrack(app: App) {
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
     colors = Object.fromEntries(
-      ['--panel', '--panel-2', '--wave', '--line', '--marker', '--accent', '--playhead', '--text', '--muted',
+      ['--panel', '--panel-2', '--wave', '--line', '--marker', '--selected', '--playhead', '--text', '--muted',
         '--clip-audio', '--clip-audio-edge', '--clip-video', '--clip-video-edge'].map((n) => [n, cssVar(n)]),
     );
   }
@@ -158,7 +158,7 @@ export function createTrack(app: App) {
     for (const marker of app.page.markers) {
       const x = Math.round(timeToX(marker.time)) + 0.5;
       const isStandby = standby.kind === 'cue' && standby.markerId === marker.id;
-      const color = isStandby ? colors['--accent'] : colors['--marker'];
+      const color = isStandby ? colors['--selected'] : colors['--marker'];
       ctx.strokeStyle = color;
       ctx.lineWidth = isStandby ? 2 : 1;
       ctx.beginPath();
@@ -168,7 +168,8 @@ export function createTrack(app: App) {
       const labelWidth = ctx.measureText(marker.name).width + 8;
       ctx.fillStyle = color;
       ctx.fillRect(x, 2, labelWidth, LABEL_HEIGHT - 4);
-      ctx.fillStyle = '#111';
+      // Dark text on the yellow selection, light text on the blue markers.
+      ctx.fillStyle = isStandby ? '#111' : '#fff';
       ctx.fillText(marker.name, x + 4, LABEL_HEIGHT / 2);
     }
     ctx.lineWidth = 1;

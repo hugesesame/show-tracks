@@ -8,7 +8,8 @@
   --accent: #3fa7ff;
   --go: #2ecc71;
   --playhead: #ff4d4d;
-  --marker: #f5b942;
+  --marker: #0061b7;
+  --selected: #ecb819;
   --danger: #ff5c5c;
   --wave: #7fa3c4;
   --clip-audio: #20364a;
@@ -317,12 +318,12 @@ button.active {
 }
 
 .cue-row.standby {
-  background: rgba(63, 167, 255, 0.15);
-  box-shadow: inset 3px 0 0 var(--accent);
+  background: rgba(236, 184, 25, 0.15);
+  box-shadow: inset 3px 0 0 var(--selected);
 }
 
 .cue-row .arrow {
-  color: var(--accent);
+  color: var(--selected);
   font-weight: 700;
 }
 
