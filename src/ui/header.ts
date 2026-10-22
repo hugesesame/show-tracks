@@ -9,19 +9,19 @@ export function createHeader(app: App) {
   const go = h('button', { class: 'go', title: 'GO (G)', onclick: () => app.go() }, 'GO');
   const standbyName = h('div', { class: 'standby-name' });
   const pageSelect = h('select', {
-    title: 'ページ',
+    title: 'Page',
     onchange: () => {
       app.selectPage(pageSelect.value);
       // Hand the keyboard back to the shortcuts.
       pageSelect.blur();
     },
   });
-  const moveLeft = h('button', { title: 'ページを前へ', onclick: () => app.movePage(-1) }, '◀');
-  const moveRight = h('button', { title: 'ページを後ろへ', onclick: () => app.movePage(1) }, '▶');
+  const moveLeft = h('button', { title: 'Move page left', onclick: () => app.movePage(-1) }, '◀');
+  const moveRight = h('button', { title: 'Move page right', onclick: () => app.movePage(1) }, '▶');
 
   // Two-step delete instead of a blocking confirm() dialog.
   let deleteArmed: ReturnType<typeof setTimeout> | undefined;
-  const removeButton = h('button', { title: 'ページを削除' }, '🗑');
+  const removeButton = h('button', { title: 'Delete page' }, '🗑');
   const disarm = () => {
     clearTimeout(deleteArmed);
     deleteArmed = undefined;
@@ -34,7 +34,7 @@ export function createHeader(app: App) {
       app.removeCurrentPage();
       return;
     }
-    removeButton.textContent = '削除する？';
+    removeButton.textContent = 'Delete?';
     removeButton.classList.add('active');
     deleteArmed = setTimeout(disarm, DELETE_CONFIRM_MS);
   });
@@ -56,7 +56,7 @@ export function createHeader(app: App) {
       'div',
       { class: 'pages' },
       pageSelect,
-      h('button', { title: 'ページを追加', onclick: () => app.addPage() }, '＋'),
+      h('button', { title: 'Add page', onclick: () => app.addPage() }, '＋'),
       moveLeft,
       moveRight,
       removeButton,
@@ -71,10 +71,10 @@ export function createHeader(app: App) {
       case 'cue':
         return app.page.markers.find((m) => m.id === standby.markerId)?.name ?? '—';
       case 'pageStart':
-        return 'ページの頭から';
+        return 'Page start';
       case 'nextPage': {
         const index = pages.findIndex((p) => p.id === app.cue.pageId);
-        return `次のページ ▶ ${pages[index + 1]?.name ?? ''}`;
+        return `Next page ▶ ${pages[index + 1]?.name ?? ''}`;
       }
       case 'none':
         return '—';
@@ -99,14 +99,14 @@ export function createHeader(app: App) {
     mtcIndicator.textContent = {
       on: 'MTC ON',
       off: 'MTC OFF',
-      denied: 'MTC 拒否',
-      unsupported: 'MTC 非対応',
+      denied: 'MTC BLOCKED',
+      unsupported: 'MTC N/A',
     }[status];
     mtcIndicator.title =
       status === 'denied'
-        ? 'MIDI の使用が許可されていません。ブラウザのサイト設定で許可してください'
+        ? 'MIDI access is blocked. Allow it in the browser site settings.'
         : status === 'unsupported'
-          ? 'このブラウザは Web MIDI に対応していません。Chrome を使ってください'
+          ? 'This browser does not support Web MIDI. Please use Chrome.'
           : '';
   }
 

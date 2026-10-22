@@ -30,7 +30,7 @@ function repeatButton(label: string, title: string, action: () => void): HTMLBut
 }
 
 export function createFooter(app: App) {
-  const play = h('button', { class: 'play', title: '再生 / 停止 (Space)', onclick: () => app.togglePlay() }, '▶');
+  const play = h('button', { class: 'play', title: 'Play / Stop (Space)', onclick: () => app.togglePlay() }, '▶');
   const element = h(
     'footer',
     { class: 'footer' },
@@ -38,12 +38,12 @@ export function createFooter(app: App) {
     h(
       'div',
       { class: 'transport' },
-      h('button', { title: '頭出し (Home)', onclick: () => app.toStart() }, '⏮'),
-      repeatButton('◀◀', '巻き戻し 5 秒 ([)', () => app.rewind()),
+      h('button', { title: 'Go to start (Home)', onclick: () => app.toStart() }, '⏮'),
+      repeatButton('◀◀', 'Rewind 5s (⌥← / [)', () => app.rewind()),
       play,
-      repeatButton('▶▶', '早送り 5 秒 (])', () => app.fastForward()),
-      h('button', { title: '前のマーカー', onclick: () => app.previousMarker() }, '|◀'),
-      h('button', { title: '次のマーカー', onclick: () => app.nextMarker() }, '▶|'),
+      repeatButton('▶▶', 'Fast forward 5s (⌥→ / ])', () => app.fastForward()),
+      h('button', { title: 'Previous marker (←)', onclick: () => app.previousMarker() }, '|◀'),
+      h('button', { title: 'Next marker (→)', onclick: () => app.nextMarker() }, '▶|'),
     ),
     h('div', { class: 'app-name' }, APP_NAME),
   );

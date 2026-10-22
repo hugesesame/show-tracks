@@ -182,9 +182,9 @@ export function createTrack(app: App) {
     const page = app.page;
     const missing = app.missingMediaPageIds().includes(page.id);
     empty.textContent = missing
-      ? 'メディア未設定：上のボタンからファイルを選び直してください'
+      ? 'Media missing: choose the file again with the buttons above.'
       : !page.audioMediaId && !page.videoMediaId
-        ? '音声か映像のファイルを選んでください'
+        ? 'Choose an audio or video file.'
         : '';
   }
 

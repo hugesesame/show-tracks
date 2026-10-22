@@ -38,7 +38,7 @@ export function createCueList(app: App) {
     const time = editableInput('time', formatClock(marker.time), (text) => {
       const seconds = parseClock(text);
       if (seconds === null) {
-        app.error('時間は 01:23.45 の形式で入力してください');
+        app.error('Enter the time as 01:23.45.');
         render();
       } else app.setMarkerTime(marker.id, seconds);
     });
@@ -57,7 +57,7 @@ export function createCueList(app: App) {
         'button',
         {
           class: 'delete',
-          title: '削除',
+          title: 'Delete',
           onclick: (e: Event) => {
             e.stopPropagation();
             app.removeMarker(marker.id);
@@ -72,7 +72,7 @@ export function createCueList(app: App) {
     dirty = false;
     const { markers } = app.page;
     if (markers.length === 0) {
-      list.replaceChildren(h('div', { class: 'cue-empty' }, 'マーカーがありません。M キーで再生位置に追加できます'));
+      list.replaceChildren(h('div', { class: 'cue-empty' }, 'No markers. Press M to add one at the playhead.'));
       return;
     }
     list.replaceChildren(...markers.map(row));

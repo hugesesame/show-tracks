@@ -29,7 +29,7 @@ async function main(): Promise<void> {
   const project = (await loadProject(db)) ?? createProject();
 
   const monitorVideo = h('video', { muted: true, playsInline: true });
-  const monitorEmpty = h('div', { class: 'monitor-empty' }, '映像なし');
+  const monitorEmpty = h('div', { class: 'monitor-empty' }, 'No video');
   const app = new App(db, project, monitorVideo);
   app.onError((message) => showToast(toasts, message));
 
@@ -81,5 +81,5 @@ async function main(): Promise<void> {
 
 main().catch((error) => {
   console.error(error);
-  document.body.textContent = `起動できませんでした: ${(error as Error).message}`;
+  document.body.textContent = `Failed to start: ${(error as Error).message}`;
 });

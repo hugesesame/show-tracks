@@ -101,10 +101,10 @@ export function exportProjectJson(project: Project, media: MediaRecord[]): strin
 
 export function importProjectJson(text: string): { project: Project; media: ExportedMedia } {
   const data = JSON.parse(text);
-  if (data?.version !== EXPORT_VERSION) throw new Error('対応していないファイルです');
+  if (data?.version !== EXPORT_VERSION) throw new Error('Unsupported file');
   const project = data.project;
   if (!Array.isArray(project?.pages) || project.pages.length === 0 || typeof project.currentPageId !== 'string') {
-    throw new Error('プロジェクトの形式が正しくありません');
+    throw new Error('Invalid project format');
   }
   return { project: project as Project, media: (data.media ?? {}) as ExportedMedia };
 }

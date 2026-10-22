@@ -33,7 +33,7 @@ export class OutputWindow {
     if (!win) return false;
     this.win = win;
     const doc = win.document;
-    doc.title = '映像出力';
+    doc.title = 'Video Output';
     doc.body.replaceChildren();
     const style = doc.createElement('style');
     style.textContent = `

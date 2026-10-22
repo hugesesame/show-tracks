@@ -3,7 +3,7 @@ import { MtcOutput } from '../engine/mtc';
 import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
 import { importMediaFile } from '../media/importMedia';
-import { addMarker, nudgeMarker, removeMarker, renameMarker, setMarkerTime } from '../model/markers';
+import { addMarker, removeMarker, renameMarker, setMarkerTime } from '../model/markers';
 import {
   addPage,
   createPage,
@@ -60,7 +60,7 @@ export class App {
     this.output = new OutputWindow(this.transport);
     this.autosaver = createAutosaver(
       (p) => saveProject(db, p),
-      () => this.error('保存に失敗しました。保存領域が不足している可能性があります'),
+      () => this.error('Saving failed. Storage may be full.'),
     );
     this.transport.on('locate', () => this.mtc.locate(this.transport.now()));
     this.transport.on('playstate', () => {
@@ -152,7 +152,7 @@ export class App {
       try {
         await this.transport.load(audio?.blob ?? null, video?.blob ?? null);
       } catch {
-        this.error('メディアを読み込めませんでした');
+        this.error('Could not load the media.');
       }
       this.loadedPageId = page.id;
       this.applyPageSettings();
@@ -233,7 +233,7 @@ export class App {
 
   addMarkerAtPlayhead(): void {
     if (!this.transport.hasMedia) {
-      this.error('先に音声か映像を読み込んでください');
+      this.error('Load audio or video first.');
       return;
     }
     const page = this.page;
@@ -250,13 +250,6 @@ export class App {
   seekToCue(markerId: string): void {
     const marker = this.page.markers.find((m) => m.id === markerId);
     if (marker) this.transport.seek(marker.time);
-  }
-
-  /** Moves the standby cue's marker. */
-  nudgeStandby(delta: number): void {
-    const { standby } = this._cue;
-    if (standby.kind !== 'cue') return;
-    this.updateCurrentPage((page, duration) => nudgeMarker(page, standby.markerId, delta, duration));
   }
 
   renameMarker(markerId: string, name: string): void {
@@ -293,7 +286,7 @@ export class App {
   removeCurrentPage(): void {
     const page = this.page;
     if (this._project.pages.length === 1) {
-      this.error('最後のページは削除できません');
+      this.error('The last page cannot be deleted.');
       return;
     }
     this.commit(removePage(this._project, page.id));
@@ -313,7 +306,7 @@ export class App {
     try {
       await putMedia(this.db, record);
     } catch {
-      this.error('保存領域が不足しているため、メディアを保存できませんでした。リロードすると選び直しが必要です');
+      this.error('Storage is full, so the media was not saved. You will need to re-select it after reloading.');
     }
     this.media.set(record.id, record);
     this.storedMediaIds.add(record.id);
@@ -380,7 +373,7 @@ export class App {
     try {
       imported = importProjectJson(text);
     } catch (e) {
-      this.error(`読み込めませんでした: ${(e as Error).message}`);
+      this.error(`Import failed: ${(e as Error).message}`);
       return;
     }
     this.transport.pause();

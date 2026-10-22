@@ -28,14 +28,14 @@ export function createSettings(app: App) {
     const midiSelect = h(
       'select',
       { onchange: () => app.setMidiOutput(midiSelect.value || null) },
-      h('option', { value: '' }, 'なし'),
+      h('option', { value: '' }, 'None'),
       ...app.mtc.outputs().map((o) => h('option', { value: o.id, selected: o.id === settings.midiOutputId }, o.name)),
     );
     const midiHint = {
-      on: '送信中',
-      off: app.mtc.outputs().length === 0 ? '出力先がありません（Mac は Audio MIDI 設定で IAC ドライバを有効にしてください）' : '',
-      denied: 'MIDI の使用が許可されていません。アドレスバーのサイト設定から許可してください',
-      unsupported: 'このブラウザは Web MIDI に対応していません',
+      on: 'Sending',
+      off: app.mtc.outputs().length === 0 ? 'No MIDI outputs. On a Mac, enable the IAC Driver in Audio MIDI Setup.' : '',
+      denied: 'MIDI access is blocked. Allow it from the site settings in the address bar.',
+      unsupported: 'This browser does not support Web MIDI.',
     }[app.mtc.status];
 
     const fpsSelect = h(
@@ -56,7 +56,7 @@ export function createSettings(app: App) {
         const tc = parseTimecode(offset.value, settings.mtcFps);
         if (tc) app.setPageOffset(timecodeToSeconds(tc, settings.mtcFps));
         else {
-          app.error('オフセットは 01:00:00:00 の形式で入力してください');
+          app.error('Enter the offset as 01:00:00:00.');
           render();
         }
       },
@@ -88,35 +88,35 @@ export function createSettings(app: App) {
       },
     });
 
-    const usage = h('span', { class: 'hint' }, '計算中…');
+    const usage = h('span', { class: 'hint' }, 'Calculating…');
     void storageEstimate().then((estimate) => {
-      usage.textContent = estimate ? `${formatBytes(estimate.usage)} / ${formatBytes(estimate.quota)}` : '不明';
+      usage.textContent = estimate ? `${formatBytes(estimate.usage)} / ${formatBytes(estimate.quota)}` : 'Unknown';
     });
 
     dialog.replaceChildren(
       h(
         'form',
         { class: 'settings', method: 'dialog' },
-        h('h2', {}, '設定'),
+        h('h2', {}, 'Settings'),
         h('h3', {}, 'MTC'),
-        row('MIDI 出力', midiSelect),
+        row('MIDI output', midiSelect),
         midiHint ? h('div', { class: 'hint' }, midiHint) : null,
-        row('フレームレート', fpsSelect),
-        h('h3', {}, `このページ（${page.name}）`),
-        row('ページ名', pageName),
-        row('MTC オフセット', offset),
-        row('映像の音を出す', videoAudio, ' ', volume),
-        h('h3', {}, 'プロジェクト'),
+        row('Frame rate', fpsSelect),
+        h('h3', {}, `This page (${page.name})`),
+        row('Page name', pageName),
+        row('MTC offset', offset),
+        row('Video sound', videoAudio, ' ', volume),
+        h('h3', {}, 'Project'),
         row(
-          'ファイル',
-          h('button', { type: 'button', onclick: () => download('cue-player-project.json', app.exportJson()) }, '書き出し'),
+          'File',
+          h('button', { type: 'button', onclick: () => download('cue-player-project.json', app.exportJson()) }, 'Export'),
           ' ',
-          h('button', { type: 'button', onclick: () => importInput.click() }, '読み込み'),
+          h('button', { type: 'button', onclick: () => importInput.click() }, 'Import'),
           importInput,
         ),
-        h('div', { class: 'hint' }, '書き出したファイルには音声・映像は含まれません。読み込み後に各ページで選び直してください'),
-        row('保存領域', usage),
-        h('div', { class: 'actions' }, h('button', { value: 'close' }, '閉じる')),
+        h('div', { class: 'hint' }, 'Exported files do not include audio or video. Re-select the media on each page after importing.'),
+        row('Storage', usage),
+        h('div', { class: 'actions' }, h('button', { value: 'close' }, 'Close')),
       ),
     );
   }

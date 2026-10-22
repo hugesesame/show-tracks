@@ -14,13 +14,13 @@ function mediaSlot(app: App, kind: MediaRecord['kind'], label: string) {
     },
   });
   const name = h('span', { class: 'name' });
-  const clear = h('button', { class: 'small', title: `${label}を外す`, onclick: () => void app.clearMedia(kind) }, '×');
+  const clear = h('button', { class: 'small', title: `Remove ${label.toLowerCase()}`, onclick: () => void app.clearMedia(kind) }, '×');
   const element = h(
     'div',
     { class: 'media-slot' },
     h('span', {}, label),
     name,
-    h('button', { class: 'small', onclick: () => input.click() }, '選択'),
+    h('button', { class: 'small', onclick: () => input.click() }, 'Choose'),
     clear,
     input,
   );
@@ -31,8 +31,8 @@ function mediaSlot(app: App, kind: MediaRecord['kind'], label: string) {
     const missing = id !== null && !media && app.missingMediaPageIds().includes(app.page.id);
     name.classList.toggle('missing', missing);
     if (media) name.textContent = media.fileName;
-    else if (missing) name.textContent = `未設定（${app.importedMediaNames[id!] ?? '元のファイル'}）`;
-    else name.textContent = id ? '読み込み中…' : 'なし';
+    else if (missing) name.textContent = `Missing (${app.importedMediaNames[id!] ?? 'original file'})`;
+    else name.textContent = id ? 'Loading…' : 'None';
     name.title = name.textContent;
     clear.hidden = id === null;
   }
@@ -41,11 +41,11 @@ function mediaSlot(app: App, kind: MediaRecord['kind'], label: string) {
 }
 
 export function createMediaBar(app: App, openSettings: () => void) {
-  const audio = mediaSlot(app, 'audio', '音声');
-  const video = mediaSlot(app, 'video', '映像');
+  const audio = mediaSlot(app, 'audio', 'Audio');
+  const video = mediaSlot(app, 'video', 'Video');
   const outputButton = h('button', { class: 'small' });
   outputButton.addEventListener('click', () => {
-    if (!app.output.open()) app.error('映像出力のウィンドウを開けませんでした。ポップアップを許可してください');
+    if (!app.output.open()) app.error('Could not open the output window. Please allow pop-ups.');
   });
 
   const element = h(
@@ -55,14 +55,14 @@ export function createMediaBar(app: App, openSettings: () => void) {
     video.element,
     h('div', { class: 'spacer' }),
     outputButton,
-    h('button', { class: 'small', onclick: openSettings }, '⚙ 設定'),
+    h('button', { class: 'small', onclick: openSettings }, '⚙ Settings'),
   );
 
   function update(): void {
     audio.update();
     video.update();
     const open = app.output.isOpen;
-    outputButton.textContent = open ? '映像出力中' : '映像出力を開く';
+    outputButton.textContent = open ? 'Output open' : 'Open video output';
     outputButton.classList.toggle('active', open);
   }
 

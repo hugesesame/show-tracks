@@ -27,11 +27,11 @@ function probeDuration(blob: Blob, kind: MediaRecord['kind']): Promise<number> {
       const { duration } = element;
       done();
       if (Number.isFinite(duration) && duration > 0) resolve(duration);
-      else reject(new Error('長さを取得できません'));
+      else reject(new Error('Could not read the duration'));
     };
     element.onerror = () => {
       done();
-      reject(new Error('このブラウザでは再生できない形式です'));
+      reject(new Error('This format cannot be played in this browser'));
     };
     element.src = url;
   });
@@ -40,7 +40,7 @@ function probeDuration(blob: Blob, kind: MediaRecord['kind']): Promise<number> {
 export async function importMediaFile(file: File, expected: MediaRecord['kind']): Promise<MediaRecord> {
   const kind = mediaKind(file);
   if (kind !== expected) {
-    throw new Error(expected === 'audio' ? '音声ファイルを選んでください' : '映像ファイルを選んでください');
+    throw new Error(expected === 'audio' ? 'Please choose an audio file' : 'Please choose a video file');
   }
   const duration = await probeDuration(file, kind);
   const peaks = (await peaksFromBlob(file)) ?? undefined;

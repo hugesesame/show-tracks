@@ -1,9 +1,6 @@
 import type { App } from '../app/app';
 import { isEditing } from './dom';
 
-const NUDGE_SECONDS = 1;
-const NUDGE_SECONDS_WITH_OPTION = 5;
-
 export function installKeyboard(app: App): void {
   window.addEventListener('keydown', (e) => {
     if (isEditing(e.target) || e.metaKey || e.ctrlKey) return;
@@ -13,8 +10,9 @@ export function installKeyboard(app: App): void {
       Space: () => app.togglePlay(),
       KeyG: () => app.go(),
       KeyM: () => app.addMarkerAtPlayhead(),
-      ArrowLeft: () => app.nudgeStandby(-(e.altKey ? NUDGE_SECONDS_WITH_OPTION : NUDGE_SECONDS)),
-      ArrowRight: () => app.nudgeStandby(e.altKey ? NUDGE_SECONDS_WITH_OPTION : NUDGE_SECONDS),
+      // Arrows jump between markers; with Option they rewind / fast forward.
+      ArrowLeft: () => (e.altKey ? app.rewind() : app.previousMarker()),
+      ArrowRight: () => (e.altKey ? app.fastForward() : app.nextMarker()),
       Home: () => app.toStart(),
       BracketLeft: () => app.rewind(),
       BracketRight: () => app.fastForward(),

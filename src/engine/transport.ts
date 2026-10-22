@@ -7,7 +7,7 @@ function waitForMetadata(element: HTMLMediaElement): Promise<void> {
   if (element.readyState >= HTMLMediaElement.HAVE_METADATA) return Promise.resolve();
   return new Promise((resolve, reject) => {
     element.addEventListener('loadedmetadata', () => resolve(), { once: true });
-    element.addEventListener('error', () => reject(new Error('メディアを読み込めません')), { once: true });
+    element.addEventListener('error', () => reject(new Error('Could not load media')), { once: true });
   });
 }
 
