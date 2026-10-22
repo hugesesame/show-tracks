@@ -153,7 +153,7 @@ button:focus-visible {
   /* Sized like the page name so 5ch is five of its characters. */
   font-size: 24px;
   margin-right: calc(clamp(8px, 2vw, 32px) + 5ch);
-  text-align: right;
+  text-align: center;
 }
 
 .header-right {
