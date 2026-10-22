@@ -50,7 +50,7 @@ export function createFooter(app: App, files: FileMenu) {
       h('button', { title: 'Next marker (→)', onclick: () => app.nextMarker() }, '▶|'),
       loop,
     ),
-    h('div', { class: 'footer-right' }, clock, h('div', { class: 'app-name' }, APP_NAME)),
+    h('div', { class: 'footer-right' }, h('div', { class: 'app-name' }, APP_NAME), clock),
   );
 
   // The computer's time of day, for keeping to a running order.
