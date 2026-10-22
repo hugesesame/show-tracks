@@ -65,6 +65,12 @@ export function createSplitters(main: HTMLElement) {
       el.addEventListener('pointermove', move);
       el.addEventListener('pointerup', up);
     });
+    el.addEventListener('dblclick', () => {
+      sizes[key] = DEFAULTS[key];
+      apply();
+      save(sizes);
+    });
+    el.title = 'Drag to resize, double-click to reset';
     return el;
   }
 
