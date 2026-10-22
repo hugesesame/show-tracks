@@ -103,6 +103,9 @@ export function createCueList(app: App) {
     list.querySelector('.standby')?.scrollIntoView({ block: 'nearest' });
   }
 
+  /** Only a field being typed in holds back a rebuild; a focused button does not. */
+  const isTyping = () => document.activeElement instanceof HTMLInputElement && list.contains(document.activeElement);
+
   function render(): void {
     dirty = false;
     const { markers } = app.page;
@@ -117,7 +120,7 @@ export function createCueList(app: App) {
 
   function update(): void {
     // Rebuilding while a field is focused would throw away what is being typed.
-    if (list.contains(document.activeElement)) {
+    if (isTyping()) {
       dirty = true;
       return;
     }
@@ -127,7 +130,7 @@ export function createCueList(app: App) {
 
   list.addEventListener('focusout', () => {
     queueMicrotask(() => {
-      if (dirty && !list.contains(document.activeElement)) render();
+      if (dirty && !isTyping()) render();
     });
   });
 

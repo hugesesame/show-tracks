@@ -512,7 +512,7 @@ button.active {
 
 .page-row {
   display: grid;
-  grid-template-columns: 22px 1fr auto;
+  grid-template-columns: 22px 1fr auto auto;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
@@ -527,6 +527,19 @@ button.active {
 .page-row.current {
   background: rgba(46, 204, 113, 0.15);
   box-shadow: inset 3px 0 0 var(--go);
+}
+
+.end-action {
+  min-width: 52px;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.end-action.next,
+.end-action.nextPlay {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .page-row .num,

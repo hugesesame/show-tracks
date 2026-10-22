@@ -1,9 +1,15 @@
 import type { App } from '../app/app';
-import type { Page } from '../model/types';
+import type { EndAction, Page } from '../model/types';
 import { editableCell } from './cueList';
 import { h } from './dom';
 
 const DELETE_CONFIRM_MS = 3000;
+
+const END_ACTIONS: { action: EndAction; label: string; title: string }[] = [
+  { action: 'stop', label: 'Stop', title: 'At the end: stop' },
+  { action: 'next', label: 'Next', title: 'At the end: go to the next page and wait' },
+  { action: 'nextPlay', label: 'Next ▶', title: 'At the end: play the next page' },
+];
 /** Pointer travel before a press on a row becomes a drag. */
 const DRAG_START_PX = 4;
 
@@ -66,6 +72,7 @@ export function createPageList(app: App) {
       h('span', { class: 'num' }, String(index + 1)),
       name,
       h('span', { class: 'count' }, cues === 1 ? '1 cue' : `${cues} cues`),
+      endActionButton(page),
     );
     el.addEventListener('dblclick', () => name.dispatchEvent(new MouseEvent('dblclick')));
     makeDraggable(el, page.id);
@@ -78,6 +85,27 @@ export function createPageList(app: App) {
     list.querySelectorAll('.page-row').forEach((el, i) => el.classList.toggle('current', pages[i].id === app.page.id));
     list.querySelector('.current')?.scrollIntoView({ block: 'nearest' });
     removeButton.disabled = pages.length === 1;
+  }
+
+  /** Cycles Stop → Next → Next ▶ for what happens at the end of the page. */
+  function endActionButton(page: Page): HTMLButtonElement {
+    const index = END_ACTIONS.findIndex((a) => a.action === page.endAction);
+    const current = END_ACTIONS[index];
+    return h(
+      'button',
+      {
+        class: `end-action ${current.action}`,
+        title: `${current.title} (click to change)`,
+        onclick: (e: Event) => {
+          e.stopPropagation();
+          app.setEndAction(page.id, END_ACTIONS[(index + 1) % END_ACTIONS.length].action);
+        },
+        // Double-clicking the button must not start renaming the page.
+        ondblclick: (e: Event) => e.stopPropagation(),
+        onpointerdown: (e: Event) => e.stopPropagation(),
+      },
+      current.label,
+    );
   }
 
   /** Where a page dropped at clientY lands, as an index in the list without it. */
@@ -130,6 +158,9 @@ export function createPageList(app: App) {
     });
   }
 
+  /** Only a field being typed in holds back a rebuild; a focused button does not. */
+  const isTyping = () => document.activeElement instanceof HTMLInputElement && list.contains(document.activeElement);
+
   function render(): void {
     dirty = false;
     renderedPages = app.project.pages;
@@ -139,7 +170,7 @@ export function createPageList(app: App) {
 
   function update(): void {
     // Rebuilding while a name is being edited would throw the typing away.
-    if (list.contains(document.activeElement)) {
+    if (isTyping()) {
       dirty = true;
       return;
     }
@@ -149,7 +180,7 @@ export function createPageList(app: App) {
 
   list.addEventListener('focusout', () => {
     queueMicrotask(() => {
-      if (dirty && !list.contains(document.activeElement)) render();
+      if (dirty && !isTyping()) render();
     });
   });
 

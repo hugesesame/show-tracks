@@ -3,7 +3,7 @@ import { ClockInterpolator, PageClock } from './clock';
 import { Mixer } from './mixer';
 import { VideoSync } from './videoSync';
 
-export type TransportEvent = 'load' | 'playstate' | 'locate';
+export type TransportEvent = 'load' | 'playstate' | 'locate' | 'ended';
 
 function waitForMetadata(element: HTMLMediaElement): Promise<void> {
   if (element.readyState >= HTMLMediaElement.HAVE_METADATA) return Promise.resolve();
@@ -201,7 +201,10 @@ export class Transport {
     const time = this.now();
     if (this._playing && time >= this._duration) {
       if (this.loop) this.seek(0);
-      else this.pause();
+      else {
+        this.pause();
+        this.emit('ended');
+      }
       return this.now();
     }
     this.syncAudio(time, false);

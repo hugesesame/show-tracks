@@ -112,6 +112,7 @@ describe('project', () => {
       videoAudioEnabled: false,
       videoAudioVolume: 0.75,
       mtcOffset: 0,
+      endAction: 'stop',
       markers: [],
       nextCueNumber: 1,
     });

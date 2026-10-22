@@ -17,7 +17,7 @@ import {
   updatePage,
   updateSettings,
 } from '../model/project';
-import type { MediaRecord, Page, Project } from '../model/types';
+import type { EndAction, MediaRecord, Page, Project } from '../model/types';
 import { OutputWindow } from '../output/outputWindow';
 import {
   createAutosaver,
@@ -70,6 +70,7 @@ export class App {
       this.emit('change');
     });
     this.transport.on('load', () => this.emit('change'));
+    this.transport.on('ended', () => void this.handlePageEnd());
     window.addEventListener('pagehide', () => {
       const unsaved = this.autosaver.pending();
       if (unsaved) stashUnsaved(unsaved);
@@ -203,6 +204,21 @@ export class App {
   toggleLoop(): void {
     this.transport.loop = !this.transport.loop;
     this.emit('change');
+  }
+
+  /** Follows the page's end action once playback reaches its end. */
+  private async handlePageEnd(): Promise<void> {
+    const { endAction } = this.page;
+    const index = this._project.pages.findIndex((p) => p.id === this.page.id);
+    const next = this._project.pages[index + 1];
+    if (endAction === 'stop' || !next) return;
+    this.commit(setCurrentPage(this._project, next.id));
+    await this.loading;
+    if (endAction === 'nextPlay') this.transport.play();
+  }
+
+  setEndAction(pageId: string, endAction: EndAction): void {
+    this.commit(updatePage(this._project, pageId, { endAction }));
   }
 
   togglePlay(): void {

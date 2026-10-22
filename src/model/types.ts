@@ -11,6 +11,9 @@ export type Project = {
   settings: Settings;
 };
 
+/** What happens when playback reaches the end of a page. */
+export type EndAction = 'stop' | 'next' | 'nextPlay';
+
 export type Page = {
   id: string;
   name: string;
@@ -25,6 +28,7 @@ export type Page = {
   /** The video's own sound; disabled means the Video track is muted. */
   videoAudioEnabled: boolean;
   videoAudioVolume: number;
+  endAction: EndAction;
   /** Seconds added to the page time when sending MTC. */
   mtcOffset: number;
   /** Always sorted by time. */

@@ -63,6 +63,7 @@ describe('normalizeProject', () => {
     delete legacy.videoOffset;
     delete legacy.audioVolume;
     delete legacy.audioMuted;
+    delete legacy.endAction;
     const project = normalizeProject({
       pages: [legacy as Page],
       currentPageId: 'old',
@@ -72,5 +73,6 @@ describe('normalizeProject', () => {
     expect(project.pages[0].videoOffset).toBe(0);
     expect(project.pages[0].audioVolume).toBe(1);
     expect(project.pages[0].audioMuted).toBe(false);
+    expect(project.pages[0].endAction).toBe('stop');
   });
 });
