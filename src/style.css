@@ -790,7 +790,7 @@ button.active {
 }
 
 .wall-clock {
-  font: 600 16px var(--mono);
+  font: 600 20px var(--mono);
   font-variant-numeric: tabular-nums;
 }
 
