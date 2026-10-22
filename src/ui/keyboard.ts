@@ -13,6 +13,9 @@ export function installKeyboard(app: App): void {
       // Arrows jump between markers; with Option they rewind / fast forward.
       ArrowLeft: () => (e.altKey ? app.rewind() : app.previousMarker()),
       ArrowRight: () => (e.altKey ? app.fastForward() : app.nextMarker()),
+      // Up / down follow the Cue List order.
+      ArrowUp: () => app.previousMarker(),
+      ArrowDown: () => app.nextMarker(),
       Home: () => app.toStart(),
       BracketLeft: () => app.rewind(),
       BracketRight: () => app.fastForward(),
