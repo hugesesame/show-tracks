@@ -84,7 +84,9 @@ export function createHeader(app: App) {
   function tick(time: number): void {
     const { mtcFps } = app.project.settings;
     tc.textContent = formatTimecode(secondsToTimecode(time, mtcFps, app.page.mtcOffset), mtcFps);
-    elapsed.textContent = `${formatClock(time)} / ${formatClock(app.duration)}`;
+    // Remaining time counts down, with a minus sign as on most playback devices.
+    elapsed.textContent = `-${formatClock(Math.max(0, app.duration - time))} / ${formatClock(app.duration)}`;
+    elapsed.title = `Remaining / total (elapsed ${formatClock(time)})`;
   }
 
   return { element, update, tick };
