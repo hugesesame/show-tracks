@@ -221,12 +221,15 @@ export class App {
     const now = this.transport.now();
     const marker = [...this.page.markers].reverse().find((m) => m.time < now - MARKER_EPSILON);
     this.transport.seek(marker?.time ?? 0);
+    if (marker) this.selectCue(marker.id);
   }
 
   nextMarker(): void {
     const now = this.transport.now();
     const marker = this.page.markers.find((m) => m.time > now + MARKER_EPSILON);
-    if (marker) this.transport.seek(marker.time);
+    if (!marker) return;
+    this.transport.seek(marker.time);
+    this.selectCue(marker.id);
   }
 
   // ---- markers ----

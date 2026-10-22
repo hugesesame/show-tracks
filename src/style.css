@@ -327,14 +327,29 @@ button.active {
   font: 12px var(--mono);
 }
 
-.cue-row input {
-  width: 100%;
-  background: transparent;
-  border-color: transparent;
+.cue-row .cell {
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.cue-row input:hover {
-  border-color: var(--line);
+.cue-row .cell.time {
+  font-family: var(--mono);
+  text-align: right;
+}
+
+.cue-row .cell:has(input) {
+  padding: 0;
+  border: none;
+}
+
+.cue-row input {
+  width: 100%;
+  border-color: var(--accent);
+  user-select: text;
 }
 
 .cue-row input.time {
