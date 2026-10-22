@@ -2,6 +2,7 @@ import type { App } from '../app/app';
 import { formatTimecode, secondsToTimecode } from '../engine/timecode';
 import { h } from './dom';
 import { formatClock } from './format';
+import { toggleFullscreen } from './fullscreen';
 
 const DELETE_CONFIRM_MS = 3000;
 
@@ -42,6 +43,14 @@ export function createHeader(app: App) {
   const mtcIndicator = h('div', { class: 'mtc' });
   const tc = h('div', { class: 'tc' });
   const elapsed = h('div', { class: 'elapsed' });
+  const fullscreenButton = h('button', { class: 'fullscreen', onclick: () => toggleFullscreen() });
+  const updateFullscreen = () => {
+    const on = document.fullscreenElement !== null;
+    fullscreenButton.textContent = on ? '🗗' : '⛶';
+    fullscreenButton.title = on ? 'Exit fullscreen' : 'Fullscreen';
+  };
+  document.addEventListener('fullscreenchange', updateFullscreen);
+  updateFullscreen();
 
   const element = h(
     'header',
@@ -61,7 +70,13 @@ export function createHeader(app: App) {
       moveRight,
       removeButton,
     ),
-    h('div', { class: 'header-right' }, mtcIndicator, h('div', { class: 'clock' }, tc, elapsed)),
+    h(
+      'div',
+      { class: 'header-right' },
+      mtcIndicator,
+      h('div', { class: 'clock', title: 'Double-click for fullscreen', ondblclick: () => toggleFullscreen() }, tc, elapsed),
+      fullscreenButton,
+    ),
   );
 
   function standbyText(): string {

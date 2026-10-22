@@ -1,4 +1,5 @@
 import type { Transport } from '../engine/transport';
+import { toggleFullscreen } from '../ui/fullscreen';
 
 const WINDOW_NAME = 'cue-player-output';
 
@@ -49,6 +50,9 @@ export class OutputWindow {
     this.updateSource();
     this.transport.videoSync.add(video);
     win.addEventListener('pagehide', () => this.handleClosed());
+    // There are no controls on the output, so double-click anywhere toggles fullscreen.
+    // Assigned rather than added: reopening an existing window must not stack handlers.
+    doc.ondblclick = () => toggleFullscreen(doc);
     this.events.dispatchEvent(new Event('change'));
     return true;
   }

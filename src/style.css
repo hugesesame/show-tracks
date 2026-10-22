@@ -167,6 +167,14 @@ button:focus-visible {
 
 .clock {
   text-align: right;
+  cursor: default;
+}
+
+.fullscreen {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  padding: 0;
 }
 
 .tc {
