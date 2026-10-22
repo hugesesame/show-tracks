@@ -796,8 +796,10 @@ button.active {
 
 .app-name {
   color: var(--marker);
-  font-weight: 600;
-  letter-spacing: 1px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 /* ---- settings ---- */
