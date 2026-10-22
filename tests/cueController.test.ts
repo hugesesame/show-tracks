@@ -124,3 +124,25 @@ describe('reconcile', () => {
     expect(reconcile({ ...pr, currentPageId: 'b' }, state, [])).toEqual(initialCueState(pr, 'b'));
   });
 });
+
+describe('looping all pages', () => {
+  const looped = (pr: Project): Project => ({ ...pr, settings: { ...pr.settings, loopPages: true } });
+
+  it('goes from the last page back to the first', () => {
+    const pr = looped(project(page('a', 10), page('b', 5)));
+    const { actions, state } = run(pr, initialCueState(pr, 'a'), 4);
+    expect(actions).toEqual([
+      { kind: 'seekAndPlay', time: 10 },
+      { kind: 'loadPageAndPlay', pageId: 'b', time: 5 },
+      { kind: 'loadPageAndPlay', pageId: 'a', time: 10 },
+      { kind: 'loadPageAndPlay', pageId: 'b', time: 5 },
+    ]);
+    expect(state.standby).toEqual({ kind: 'nextPage' });
+  });
+
+  it('repeats a single page', () => {
+    const pr = looped(project(page('a', 3)));
+    const { actions } = run(pr, initialCueState(pr, 'a'), 2);
+    expect(actions[1]).toEqual({ kind: 'loadPageAndPlay', pageId: 'a', time: 3 });
+  });
+});

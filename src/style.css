@@ -489,6 +489,18 @@ button.active {
   min-width: 26px;
 }
 
+.loop-pages {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.loop-pages.active {
+  filter: none;
+  opacity: 1;
+  border-color: var(--go);
+  background: rgba(46, 204, 113, 0.15);
+}
+
 /* ---- page list ---- */
 
 .page-list {

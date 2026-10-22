@@ -1,3 +1,4 @@
+import { nextPage } from '../model/project';
 import type { Marker, Page, Project } from '../model/types';
 
 export type Standby =
@@ -21,8 +22,7 @@ function firstStandby(page: Page): Standby {
 }
 
 function afterLast(project: Project, pageId: string): Standby {
-  const index = project.pages.findIndex((p) => p.id === pageId);
-  return index >= 0 && index < project.pages.length - 1 ? { kind: 'nextPage' } : { kind: 'none' };
+  return nextPage(project, pageId) ? { kind: 'nextPage' } : { kind: 'none' };
 }
 
 function standbyAfterIndex(project: Project, page: Page, index: number): Standby {
@@ -49,14 +49,13 @@ export function go(project: Project, state: CueState): { state: CueState; action
   if (!page) return { state, action: { kind: 'none' } };
 
   if (state.standby.kind === 'nextPage') {
-    const index = project.pages.findIndex((p) => p.id === page.id);
-    const nextPage = project.pages[index + 1];
-    if (!nextPage) return { state: { ...state, standby: { kind: 'none' } }, action: { kind: 'none' } };
-    const fired = fireInPage(project, nextPage, firstStandby(nextPage));
+    const next = nextPage(project, page.id);
+    if (!next) return { state: { ...state, standby: { kind: 'none' } }, action: { kind: 'none' } };
+    const fired = fireInPage(project, next, firstStandby(next));
     if (!fired) return { state, action: { kind: 'none' } };
     return {
-      state: { pageId: nextPage.id, standby: fired.standby },
-      action: { kind: 'loadPageAndPlay', pageId: nextPage.id, time: fired.time },
+      state: { pageId: next.id, standby: fired.standby },
+      action: { kind: 'loadPageAndPlay', pageId: next.id, time: fired.time },
     };
   }
 

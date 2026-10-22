@@ -67,7 +67,7 @@ describe('normalizeProject', () => {
     const project = normalizeProject({
       pages: [legacy as Page],
       currentPageId: 'old',
-      settings: { mtcFps: '30', midiOutputId: null },
+      settings: { mtcFps: '30', midiOutputId: null, loopPages: false },
     });
     expect(project.pages[0].audioOffset).toBe(0);
     expect(project.pages[0].videoOffset).toBe(0);

@@ -3,6 +3,8 @@ import type { Fps } from '../engine/timecode';
 export type Settings = {
   mtcFps: Fps;
   midiOutputId: string | null;
+  /** After the last page comes the first one again. */
+  loopPages: boolean;
 };
 
 export type Project = {

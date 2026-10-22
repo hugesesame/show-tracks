@@ -17,6 +17,7 @@ const DRAG_START_PX = 4;
 export function createPageList(app: App) {
   const list = h('div', { class: 'page-list' });
   const dropLine = h('div', { class: 'drop-line', hidden: true });
+  const loopButton = h('button', { class: 'small loop-pages', onclick: () => app.toggleLoopPages() }, '🔁');
 
   // Two-step delete instead of a blocking confirm() dialog.
   let deleteArmed: ReturnType<typeof setTimeout> | undefined;
@@ -48,6 +49,7 @@ export function createPageList(app: App) {
       h(
         'div',
         { class: 'panel-actions' },
+        loopButton,
         h('button', { class: 'small', title: 'Add page', onclick: () => app.addPage() }, '+'),
         removeButton,
       ),
@@ -83,6 +85,9 @@ export function createPageList(app: App) {
     list.querySelectorAll('.page-row').forEach((el, i) => el.classList.toggle('current', pages[i].id === app.page.id));
     list.querySelector('.current')?.scrollIntoView({ block: 'nearest' });
     removeButton.disabled = pages.length === 1;
+    const looping = app.project.settings.loopPages;
+    loopButton.classList.toggle('active', looping);
+    loopButton.title = looping ? 'Loop all pages: on (after the last page comes the first)' : 'Loop all pages: off';
   }
 
   /** Cycles Stop → Next → Next ▶ for what happens at the end of the page. */

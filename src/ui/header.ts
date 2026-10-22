@@ -1,5 +1,6 @@
 import type { App } from '../app/app';
 import { formatTimecode, secondsToTimecode } from '../engine/timecode';
+import { nextPage } from '../model/project';
 import { h } from './dom';
 import { formatClock } from './format';
 import { toggleFullscreen } from './fullscreen';
@@ -43,16 +44,13 @@ export function createHeader(app: App) {
 
   function standbyText(): string {
     const { standby } = app.cue;
-    const pages = app.project.pages;
     switch (standby.kind) {
       case 'cue':
         return app.page.markers.find((m) => m.id === standby.markerId)?.name ?? '—';
       case 'pageStart':
         return 'Page start';
-      case 'nextPage': {
-        const index = pages.findIndex((p) => p.id === app.cue.pageId);
-        return `Next page ▶ ${pages[index + 1]?.name ?? ''}`;
-      }
+      case 'nextPage':
+        return `Next page ▶ ${nextPage(app.project, app.cue.pageId)?.name ?? ''}`;
       case 'none':
         return '—';
     }

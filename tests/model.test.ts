@@ -96,7 +96,7 @@ describe('project', () => {
   it('starts with one page selected and default settings', () => {
     const project = createProject(createPage('A', 'a'));
     expect(project.currentPageId).toBe('a');
-    expect(project.settings).toEqual({ mtcFps: '30', midiOutputId: null });
+    expect(project.settings).toEqual({ mtcFps: '30', midiOutputId: null, loopPages: false });
   });
 
   it('creates pages with defaults', () => {
@@ -159,5 +159,16 @@ describe('project', () => {
   it('updates settings', () => {
     const project = updateSettings(setup(), { mtcFps: '25' });
     expect(project.settings.mtcFps).toBe('25');
+  });
+});
+
+describe('nextPage', () => {
+  it('returns the following page, wrapping only when looping', async () => {
+    const { nextPage } = await import('../src/model/project');
+    let project = createProject(createPage('A', 'a'));
+    project = addPage(project, createPage('B', 'b'));
+    expect(nextPage(project, 'a')?.id).toBe('b');
+    expect(nextPage(project, 'b')).toBeNull();
+    expect(nextPage(updateSettings(project, { loopPages: true }), 'b')?.id).toBe('a');
   });
 });

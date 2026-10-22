@@ -10,6 +10,7 @@ import {
   createPage,
   currentPage,
   movePage,
+  nextPage,
   removePage,
   renamePage,
   replacePage,
@@ -209,12 +210,22 @@ export class App {
   /** Follows the page's end action once playback reaches its end. */
   private async handlePageEnd(): Promise<void> {
     const { endAction } = this.page;
-    const index = this._project.pages.findIndex((p) => p.id === this.page.id);
-    const next = this._project.pages[index + 1];
+    const next = nextPage(this._project, this.page.id);
     if (endAction === 'stop' || !next) return;
-    this.commit(setCurrentPage(this._project, next.id));
-    await this.loading;
+    if (next.id === this.page.id) {
+      // Looping a single page: start it over.
+      this.transport.seek(0);
+      this._cue = initialCueState(this._project, next.id);
+      this.emit('change');
+    } else {
+      this.commit(setCurrentPage(this._project, next.id));
+      await this.loading;
+    }
     if (endAction === 'nextPlay') this.transport.play();
+  }
+
+  toggleLoopPages(): void {
+    this.commit(updateSettings(this._project, { loopPages: !this._project.settings.loopPages }));
   }
 
   setEndAction(pageId: string, endAction: EndAction): void {

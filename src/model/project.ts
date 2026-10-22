@@ -26,6 +26,7 @@ export function createPage(name: string, id: string = randomId()): Page {
 export function normalizeProject(project: Project): Project {
   return {
     ...project,
+    settings: { ...project.settings, loopPages: project.settings.loopPages ?? false },
     pages: project.pages.map((p) => ({
       ...p,
       audioOffset: p.audioOffset ?? 0,
@@ -41,12 +42,20 @@ export function createProject(firstPage: Page = createPage('Page 1')): Project {
   return {
     pages: [firstPage],
     currentPageId: firstPage.id,
-    settings: { mtcFps: '30', midiOutputId: null },
+    settings: { mtcFps: '30', midiOutputId: null, loopPages: false },
   };
 }
 
 export function currentPage(project: Project): Page {
   return project.pages.find((p) => p.id === project.currentPageId) ?? project.pages[0];
+}
+
+/** The page after `pageId`; after the last page, the first one when looping pages. */
+export function nextPage(project: Project, pageId: string): Page | null {
+  const index = project.pages.findIndex((p) => p.id === pageId);
+  if (index < 0) return null;
+  if (index < project.pages.length - 1) return project.pages[index + 1];
+  return project.settings.loopPages ? project.pages[0] : null;
 }
 
 export function setCurrentPage(project: Project, pageId: string): Project {
