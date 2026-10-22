@@ -29,9 +29,9 @@ export function installKeyboard(app: App, zoom: ZoomControls): void {
       // Arrows jump between markers; with Option they rewind / fast forward.
       ArrowLeft: () => (e.altKey ? app.rewind() : app.previousMarker()),
       ArrowRight: () => (e.altKey ? app.fastForward() : app.nextMarker()),
-      // Up / down follow the Cue List order.
-      ArrowUp: () => app.previousMarker(),
-      ArrowDown: () => app.nextMarker(),
+      // Up / down follow the Cue List order; with Option they move between pages.
+      ArrowUp: () => (e.altKey ? app.selectAdjacentPage(-1) : app.previousMarker()),
+      ArrowDown: () => (e.altKey ? app.selectAdjacentPage(1) : app.nextMarker()),
       Home: () => app.toStart(),
       BracketLeft: () => app.rewind(),
       BracketRight: () => app.fastForward(),

@@ -319,6 +319,13 @@ export class App {
     this.commit(setCurrentPage(this._project, pageId));
   }
 
+  /** Opens the previous / next page in the list (no wrap-around). */
+  selectAdjacentPage(direction: -1 | 1): void {
+    const index = this._project.pages.findIndex((p) => p.id === this.page.id);
+    const target = this._project.pages[index + direction];
+    if (target) this.selectPage(target.id);
+  }
+
   addPage(): void {
     this.commit(addPage(this._project, createPage(`Page ${this._project.pages.length + 1}`)));
   }
