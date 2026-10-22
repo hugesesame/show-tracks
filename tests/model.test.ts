@@ -12,6 +12,7 @@ import {
   createProject,
   currentPage,
   movePage,
+  normalizeProject,
   removePage,
   renamePage,
   setCurrentPage,
@@ -33,12 +34,12 @@ const pageWith = (...times: number[]): Page => {
 };
 
 describe('markers', () => {
-  it('adds markers with sequential names, kept in time order', () => {
+  it('keeps markers in time order with automatic names numbered by row', () => {
     const page = pageWith(30, 10, 20);
-    expect(page.markers.map((m) => [m.name, m.time])).toEqual([
-      ['Cue 2', 10],
-      ['Cue 3', 20],
-      ['Cue 1', 30],
+    expect(page.markers.map((m) => [m.id, m.name, m.time])).toEqual([
+      ['id2', 'Cue 1', 10],
+      ['id3', 'Cue 2', 20],
+      ['id1', 'Cue 3', 30],
     ]);
   });
 
@@ -47,21 +48,41 @@ describe('markers', () => {
     expect(marker).toEqual({ id: 'm', name: 'Cue 1', time: 5 });
   });
 
-  it('never reuses a number after a marker is removed', () => {
-    let page = pageWith(10, 20);
+  it('closes the gap in the numbers when a marker is removed', () => {
+    let page = pageWith(10, 20, 30);
     page = removeMarker(page, 'id2');
-    page = addMarker(page, 30, 100, () => 'new').page;
-    expect(page.markers.map((m) => m.name)).toEqual(['Cue 1', 'Cue 3']);
+    expect(page.markers.map((m) => [m.id, m.name])).toEqual([
+      ['id1', 'Cue 1'],
+      ['id3', 'Cue 2'],
+    ]);
   });
 
-  it('re-sorts when a marker passes another, keeping its name', () => {
+  it('renumbers when a marker passes another', () => {
     let page = pageWith(10, 20, 30);
     page = nudgeMarker(page, 'id1', 15, 100);
-    expect(page.markers.map((m) => [m.name, m.time])).toEqual([
-      ['Cue 2', 20],
-      ['Cue 1', 25],
-      ['Cue 3', 30],
+    expect(page.markers.map((m) => [m.id, m.name, m.time])).toEqual([
+      ['id2', 'Cue 1', 20],
+      ['id1', 'Cue 2', 25],
+      ['id3', 'Cue 3', 30],
     ]);
+  });
+
+  it('keeps typed-in names and counts their rows', () => {
+    let page = pageWith(10, 20, 30);
+    page = renameMarker(page, 'id1', 'Starts');
+    page = addMarker(page, 5, 100, () => 'new').page;
+    expect(page.markers.map((m) => m.name)).toEqual(['Cue 1', 'Starts', 'Cue 3', 'Cue 4']);
+  });
+
+  it('renumbers markers from older saves', () => {
+    let project = createProject(createPage('A', 'a'));
+    project = updatePage(project, 'a', {
+      markers: [
+        { id: 'x', name: 'Cue 12', time: 9 },
+        { id: 'y', name: 'Cue 10', time: 3 },
+      ],
+    });
+    expect(normalizeProject(project).pages[0].markers.map((m) => m.name)).toEqual(['Cue 1', 'Cue 2']);
   });
 
   it('clamps times to the media length', () => {
@@ -114,7 +135,6 @@ describe('project', () => {
       mtcOffset: 0,
       endAction: 'stop',
       markers: [],
-      nextCueNumber: 1,
     });
   });
 

@@ -36,7 +36,6 @@ export type Page = {
   /** Always sorted by time. */
   markers: Marker[];
   /** Number used for the next default marker name, so names are never reused. */
-  nextCueNumber: number;
 };
 
 export type Marker = {

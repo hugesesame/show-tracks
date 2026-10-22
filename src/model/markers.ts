@@ -4,8 +4,19 @@ const clamp = (time: number, duration: number) => Math.min(Math.max(time, 0), du
 
 const byTime = (a: Marker, b: Marker) => a.time - b.time;
 
+/** Matches the names markers get automatically; any other name was typed in and is kept. */
+const AUTO_NAME = /^Cue \d+$/;
+
+/** Sorts by time and renumbers automatic names to match their row, so they always count up. */
+export function orderMarkers(markers: Marker[]): Marker[] {
+  return [...markers].sort(byTime).map((m, i) => {
+    const name = `Cue ${i + 1}`;
+    return AUTO_NAME.test(m.name) && m.name !== name ? { ...m, name } : m;
+  });
+}
+
 function withMarkers(page: Page, markers: Marker[]): Page {
-  return { ...page, markers: [...markers].sort(byTime) };
+  return { ...page, markers: orderMarkers(markers) };
 }
 
 export function addMarker(
@@ -14,16 +25,14 @@ export function addMarker(
   duration: number,
   nextId: IdGenerator = randomId,
 ): { page: Page; marker: Marker } {
-  const marker: Marker = { id: nextId(), name: `Cue ${page.nextCueNumber}`, time: clamp(time, duration) };
-  return {
-    page: { ...withMarkers(page, [...page.markers, marker]), nextCueNumber: page.nextCueNumber + 1 },
-    marker,
-  };
+  const added = withMarkers(page, [...page.markers, { id: nextId(), name: 'Cue 0', time: clamp(time, duration) }]);
+  const marker = added.markers.find((m) => !page.markers.some((old) => old.id === m.id))!;
+  return { page: added, marker };
 }
 
 export function removeMarker(page: Page, markerId: string): Page {
   if (!page.markers.some((m) => m.id === markerId)) return page;
-  return { ...page, markers: page.markers.filter((m) => m.id !== markerId) };
+  return withMarkers(page, page.markers.filter((m) => m.id !== markerId));
 }
 
 function updateMarker(page: Page, markerId: string, update: (m: Marker) => Marker): Page {

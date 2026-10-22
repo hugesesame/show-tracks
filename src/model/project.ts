@@ -1,4 +1,5 @@
 import { randomId, type Page, type Project, type Settings } from './types';
+import { orderMarkers } from './markers';
 
 /** Initial track volume for new pages: leaves headroom to turn a track up. */
 export const DEFAULT_VOLUME = 0.75;
@@ -18,7 +19,6 @@ export function createPage(name: string, id: string = randomId()): Page {
     mtcOffset: 0,
     endAction: 'stop',
     markers: [],
-    nextCueNumber: 1,
   };
 }
 
@@ -34,6 +34,7 @@ export function normalizeProject(project: Project): Project {
       audioVolume: p.audioVolume ?? 1,
       audioMuted: p.audioMuted ?? false,
       endAction: p.endAction ?? 'stop',
+      markers: orderMarkers(p.markers),
     })),
   };
 }
