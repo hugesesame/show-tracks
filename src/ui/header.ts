@@ -25,8 +25,13 @@ export function createHeader(app: App) {
       'div',
       { class: 'header-left' },
       go,
-      h('div', { class: 'standby' }, h('div', { class: 'standby-label' }, 'STANDBY'), standbyName),
-      h('div', { class: 'page-info' }, pageNumber, pageName),
+      // The page sits centred between GO and the timecode; STANDBY takes the room on its left.
+      h(
+        'div',
+        { class: 'header-middle' },
+        h('div', { class: 'standby' }, h('div', { class: 'standby-label' }, 'STANDBY'), standbyName),
+        h('div', { class: 'page-info' }, pageNumber, pageName),
+      ),
     ),
     readout(mtcIndicator, tc, { title: 'Double-click for fullscreen', ondblclick: () => toggleFullscreen() }),
     h(

@@ -129,8 +129,19 @@ button:focus-visible {
   transform: translateY(1px);
 }
 
+.header-middle {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
 .standby {
   min-width: 0;
+  /* Stops before the centred page info. */
+  max-width: 31%;
 }
 
 .standby-label {
@@ -148,10 +159,12 @@ button:focus-visible {
 }
 
 .page-info {
-  margin-left: auto;
-  padding-left: 12px;
-  text-align: right;
-  min-width: 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 36%;
+  text-align: center;
 }
 
 .header-right {
@@ -201,7 +214,6 @@ button:focus-visible {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 220px;
 }
 
 .mtc {
