@@ -492,8 +492,22 @@ button.active {
 /* ---- page list ---- */
 
 .page-list {
+  position: relative;
   flex: 1;
   overflow-y: auto;
+}
+
+.page-row.dragging {
+  opacity: 0.5;
+}
+
+.drop-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  pointer-events: none;
 }
 
 .page-row {

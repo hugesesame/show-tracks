@@ -4,12 +4,13 @@ import { editableCell } from './cueList';
 import { h } from './dom';
 
 const DELETE_CONFIRM_MS = 3000;
+/** Pointer travel before a press on a row becomes a drag. */
+const DRAG_START_PX = 4;
 
 /** All pages: click to open one, double-click its name to rename. */
 export function createPageList(app: App) {
   const list = h('div', { class: 'page-list' });
-  const moveUp = h('button', { class: 'small', title: 'Move page up', onclick: () => app.movePage(-1) }, '↑');
-  const moveDown = h('button', { class: 'small', title: 'Move page down', onclick: () => app.movePage(1) }, '↓');
+  const dropLine = h('div', { class: 'drop-line', hidden: true });
 
   // Two-step delete instead of a blocking confirm() dialog.
   let deleteArmed: ReturnType<typeof setTimeout> | undefined;
@@ -42,14 +43,13 @@ export function createPageList(app: App) {
         'div',
         { class: 'panel-actions' },
         h('button', { class: 'small', title: 'Add page', onclick: () => app.addPage() }, '+'),
-        moveUp,
-        moveDown,
         removeButton,
       ),
     ),
     list,
   );
   let renderedPages: Page[] | null = null;
+  let justDragged = false;
   let dirty = false;
 
   function row(page: Page, index: number): HTMLElement {
@@ -62,12 +62,13 @@ export function createPageList(app: App) {
     const cues = page.markers.length;
     const el = h(
       'div',
-      { class: 'page-row', onclick: () => app.selectPage(page.id) },
+      { class: 'page-row', onclick: () => !justDragged && app.selectPage(page.id) },
       h('span', { class: 'num' }, String(index + 1)),
       name,
       h('span', { class: 'count' }, cues === 1 ? '1 cue' : `${cues} cues`),
     );
     el.addEventListener('dblclick', () => name.dispatchEvent(new MouseEvent('dblclick')));
+    makeDraggable(el, page.id);
     return el;
   }
 
@@ -76,16 +77,63 @@ export function createPageList(app: App) {
     const pages = app.project.pages;
     list.querySelectorAll('.page-row').forEach((el, i) => el.classList.toggle('current', pages[i].id === app.page.id));
     list.querySelector('.current')?.scrollIntoView({ block: 'nearest' });
-    const index = pages.findIndex((p) => p.id === app.page.id);
-    moveUp.disabled = index <= 0;
-    moveDown.disabled = index >= pages.length - 1;
     removeButton.disabled = pages.length === 1;
+  }
+
+  /** Where a page dropped at clientY lands, as an index in the list without it. */
+  function dropIndex(clientY: number, draggedId: string): number {
+    const rows = [...list.querySelectorAll<HTMLElement>('.page-row')].filter((r) => r.dataset.pageId !== draggedId);
+    return rows.filter((r) => {
+      const rect = r.getBoundingClientRect();
+      return rect.top + rect.height / 2 < clientY;
+    }).length;
+  }
+
+  function showDropLine(index: number, draggedId: string): void {
+    const rows = [...list.querySelectorAll<HTMLElement>('.page-row')].filter((r) => r.dataset.pageId !== draggedId);
+    const top = index < rows.length ? rows[index].offsetTop : rows.length ? rows[rows.length - 1].offsetTop + rows[rows.length - 1].offsetHeight : 0;
+    dropLine.style.top = `${top - 1}px`;
+    dropLine.hidden = false;
+  }
+
+  /** Press and drag a row to reorder; a press without moving stays a click. */
+  function makeDraggable(el: HTMLElement, pageId: string): void {
+    el.dataset.pageId = pageId;
+    el.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || (e.target as HTMLElement).closest('input')) return;
+      const startY = e.clientY;
+      let dragging = false;
+      const move = (ev: PointerEvent) => {
+        if (!dragging && Math.abs(ev.clientY - startY) < DRAG_START_PX) return;
+        if (!dragging) {
+          dragging = true;
+          el.setPointerCapture(ev.pointerId);
+          el.classList.add('dragging');
+        }
+        showDropLine(dropIndex(ev.clientY, pageId), pageId);
+      };
+      const up = (ev: PointerEvent) => {
+        el.removeEventListener('pointermove', move);
+        el.removeEventListener('pointerup', up);
+        el.removeEventListener('pointercancel', up);
+        if (!dragging) return;
+        el.classList.remove('dragging');
+        dropLine.hidden = true;
+        // The click that follows a drag must not also select the page.
+        justDragged = true;
+        setTimeout(() => (justDragged = false));
+        if (ev.type === 'pointerup') app.movePage(pageId, dropIndex(ev.clientY, pageId));
+      };
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', up);
+      el.addEventListener('pointercancel', up);
+    });
   }
 
   function render(): void {
     dirty = false;
     renderedPages = app.project.pages;
-    list.replaceChildren(...renderedPages.map(row));
+    list.replaceChildren(...renderedPages.map(row), dropLine);
     updateCurrent();
   }
 

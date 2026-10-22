@@ -300,9 +300,9 @@ export class App {
     this.commit(renamePage(this._project, pageId, name));
   }
 
-  movePage(direction: -1 | 1): void {
-    const index = this._project.pages.findIndex((p) => p.id === this.page.id);
-    this.commit(movePage(this._project, this.page.id, index + direction));
+  /** Moves a page to `toIndex` in the list without it. */
+  movePage(pageId: string, toIndex: number): void {
+    this.commit(movePage(this._project, pageId, toIndex));
   }
 
   removeCurrentPage(): void {
