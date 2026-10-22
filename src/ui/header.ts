@@ -29,7 +29,7 @@ export function createHeader(app: App) {
       h(
         'div',
         { class: 'header-middle' },
-        h('div', { class: 'standby' }, h('div', { class: 'standby-label' }, 'STANDBY'), standbyName),
+        h('div', { class: 'header-standby' }, h('div', { class: 'standby-label' }, 'STANDBY'), standbyName),
         h('div', { class: 'page-info' }, pageNumber, pageName),
       ),
     ),

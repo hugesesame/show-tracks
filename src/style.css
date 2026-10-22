@@ -138,7 +138,7 @@ button:focus-visible {
   align-items: center;
 }
 
-.standby {
+.header-standby {
   min-width: 0;
   /* Stops before the centred page info. */
   max-width: 31%;
