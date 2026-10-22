@@ -795,7 +795,7 @@ button.active {
 }
 
 .app-name {
-  color: var(--muted);
+  color: var(--marker);
   font-weight: 600;
   letter-spacing: 1px;
 }
