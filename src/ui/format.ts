@@ -21,12 +21,11 @@ export function parseClock(text: string): number | null {
   return h * 3600 + m * 60 + s;
 }
 
-/** Remaining time in whole seconds ("-mm:ss"), rounded up so it reads 00:00 only at the very end. */
+/** Remaining time in whole seconds ("mm:ss"), rounded up so it reads 00:00 only at the very end. */
 export function formatCountdown(seconds: number): string {
   const total = Math.ceil(Math.max(0, seconds) - 1e-6);
-  if (total <= 0) return '00:00';
   const s = total % 60;
   const m = Math.floor(total / 60) % 60;
   const h = Math.floor(total / 3600);
-  return `-${h > 0 ? `${h}:` : ''}${pad(m)}:${pad(s)}`;
+  return `${h > 0 ? `${h}:` : ''}${pad(m)}:${pad(s)}`;
 }
