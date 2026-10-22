@@ -35,6 +35,8 @@ export class Transport {
   private _videoUrl: string | null = null;
   private _duration = 0;
   private _playing = false;
+  /** When on, playback jumps back to the start of the page at its end. */
+  loop = false;
 
   constructor(readonly monitor: HTMLVideoElement) {
     this.audio.preload = 'auto';
@@ -198,7 +200,8 @@ export class Transport {
   tick(): number {
     const time = this.now();
     if (this._playing && time >= this._duration) {
-      this.pause();
+      if (this.loop) this.seek(0);
+      else this.pause();
       return this.now();
     }
     this.syncAudio(time, false);

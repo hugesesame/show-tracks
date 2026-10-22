@@ -196,6 +196,11 @@ export class App {
     this.emit('change');
   }
 
+  toggleLoop(): void {
+    this.transport.loop = !this.transport.loop;
+    this.emit('change');
+  }
+
   togglePlay(): void {
     this.transport.toggle();
   }

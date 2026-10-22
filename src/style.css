@@ -525,6 +525,19 @@ button.active {
   font-size: 15px;
 }
 
+.transport button.loop {
+  margin-left: 12px;
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.transport button.loop.active {
+  filter: none;
+  opacity: 1;
+  border-color: var(--go);
+  background: rgba(46, 204, 113, 0.15);
+}
+
 .transport button.play.playing {
   color: var(--go);
   border-color: var(--go);

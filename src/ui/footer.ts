@@ -30,6 +30,7 @@ function repeatButton(label: string, title: string, action: () => void): HTMLBut
 }
 
 export function createFooter(app: App) {
+  const loop = h('button', { class: 'loop', title: 'Loop the page', onclick: () => app.toggleLoop() }, '🔁');
   const play = h('button', { class: 'play', title: 'Play / Stop (Space)', onclick: () => app.togglePlay() }, '▶');
   const element = h(
     'footer',
@@ -44,6 +45,7 @@ export function createFooter(app: App) {
       repeatButton('▶▶', 'Fast forward 5s (⌥→ / ])', () => app.fastForward()),
       h('button', { title: 'Previous marker (←)', onclick: () => app.previousMarker() }, '|◀'),
       h('button', { title: 'Next marker (→)', onclick: () => app.nextMarker() }, '▶|'),
+      loop,
     ),
     h('div', { class: 'app-name' }, APP_NAME),
   );
@@ -52,6 +54,8 @@ export function createFooter(app: App) {
     const playing = app.transport.playing;
     play.textContent = playing ? '■' : '▶';
     play.classList.toggle('playing', playing);
+    loop.classList.toggle('active', app.transport.loop);
+    loop.title = app.transport.loop ? 'Loop: on' : 'Loop: off';
   }
 
   return { element, update };
