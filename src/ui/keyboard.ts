@@ -5,15 +5,18 @@ export type ZoomControls = { zoomIn(): void; zoomOut(): void };
 
 export function installKeyboard(app: App, zoom: ZoomControls): void {
   window.addEventListener('keydown', (e) => {
-    if (isEditing(e.target) || e.metaKey) return;
+    if (isEditing(e.target) || e.metaKey || e.ctrlKey) return;
     if (document.querySelector('dialog[open]')) return;
-    if (e.ctrlKey) {
-      // Control + left / right zooms the track out / in.
-      if (e.code === 'ArrowRight' || e.code === 'ArrowLeft') {
-        e.preventDefault();
-        if (e.code === 'ArrowRight') zoom.zoomIn();
-        else zoom.zoomOut();
-      }
+
+    // = / + zoom in, - zooms out. e.key first so a JIS keyboard's Shift+- ("=") zooms in;
+    // e.code covers an active IME, where e.key is "Process".
+    const zoomKey =
+      e.key === '=' || e.key === '+' ? 'in' : e.key === '-' ? 'out'
+      : e.code === 'Equal' ? 'in' : e.code === 'Minus' ? 'out' : null;
+    if (zoomKey) {
+      e.preventDefault();
+      if (zoomKey === 'in') zoom.zoomIn();
+      else zoom.zoomOut();
       return;
     }
 

@@ -59,8 +59,8 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
     h(
       'div',
       { class: 'zoom' },
-      h('button', { class: 'small', title: 'Zoom out (Ctrl+←)', onclick: zoom.zoomOut }, '−'),
-      h('button', { class: 'small', title: 'Zoom in (Ctrl+→)', onclick: zoom.zoomIn }, '+'),
+      h('button', { class: 'small', title: 'Zoom out (-)', onclick: zoom.zoomOut }, '−'),
+      h('button', { class: 'small', title: 'Zoom in (=)', onclick: zoom.zoomIn }, '+'),
       h('button', { class: 'small', title: 'Show the whole page', onclick: zoom.zoomFit }, 'Fit'),
     ),
     outputButton,
