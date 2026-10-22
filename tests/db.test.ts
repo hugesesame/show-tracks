@@ -11,6 +11,8 @@ import {
   pagesWithMissingMedia,
   putMedia,
   saveProject,
+  stashUnsaved,
+  takeStashed,
 } from '../src/storage/db';
 import { addMarker } from '../src/model/markers';
 import { createPage, createProject, replacePage, updatePage } from '../src/model/project';
@@ -80,6 +82,17 @@ describe('createAutosaver', () => {
     expect(save).toHaveBeenCalledExactlyOnceWith(second);
   });
 
+  it('still saves during a long run of changes, at most 2s after the first', async () => {
+    vi.useFakeTimers();
+    const save = vi.fn().mockResolvedValue(undefined);
+    const autosaver = createAutosaver(save);
+    for (let t = 0; t < 2000; t += 300) {
+      autosaver.schedule(createProject(createPage(`P${t}`, `p${t}`)));
+      vi.advanceTimersByTime(300);
+    }
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
   it('saves immediately on flush', async () => {
     vi.useFakeTimers();
     const save = vi.fn().mockResolvedValue(undefined);
@@ -123,5 +136,40 @@ describe('pagesWithMissingMedia', () => {
     project = updatePage(project, 'a', { videoMediaId: 'video1' });
     expect(pagesWithMissingMedia(project, new Set(['audio1']))).toEqual(['a']);
     expect(pagesWithMissingMedia(project, new Set(['audio1', 'video1']))).toEqual([]);
+  });
+});
+
+describe('stash for unsaved changes on unload', () => {
+  const memoryStorage = () => {
+    const data = new Map<string, string>();
+    return {
+      getItem: (k: string) => data.get(k) ?? null,
+      setItem: (k: string, v: string) => void data.set(k, v),
+      removeItem: (k: string) => void data.delete(k),
+    } as Storage;
+  };
+
+  it('returns the stashed project once', () => {
+    const storage = memoryStorage();
+    stashUnsaved(sampleProject(), storage);
+    expect(takeStashed(storage)).toEqual(sampleProject());
+    expect(takeStashed(storage)).toBeNull();
+  });
+
+  it('ignores a broken stash', () => {
+    const storage = memoryStorage();
+    storage.setItem('cue-player-unsaved', '{oops');
+    expect(takeStashed(storage)).toBeNull();
+  });
+});
+
+describe('Autosaver.pending', () => {
+  it('exposes the project that is not saved yet', async () => {
+    const autosaver = createAutosaver(() => Promise.resolve());
+    expect(autosaver.pending()).toBeNull();
+    autosaver.schedule(sampleProject());
+    expect(autosaver.pending()).toEqual(sampleProject());
+    await autosaver.flush();
+    expect(autosaver.pending()).toBeNull();
   });
 });

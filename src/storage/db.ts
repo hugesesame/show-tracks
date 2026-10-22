@@ -56,15 +56,23 @@ export async function listMediaIds(db: IDBDatabase): Promise<Set<string>> {
 export type Autosaver = {
   schedule(project: Project): void;
   flush(): Promise<void>;
+  /** The latest project not saved yet, if any. */
+  pending(): Project | null;
 };
 
-/** Saves the latest scheduled project `delayMs` after the last change. */
+/**
+ * Saves the latest scheduled project `delayMs` after the last change, and at
+ * most `maxWaitMs` after the first unsaved one so a steady stream of edits
+ * cannot postpone saving indefinitely.
+ */
 export function createAutosaver(
   save: (project: Project) => Promise<void>,
   onError: (error: unknown) => void = console.error,
   delayMs = 500,
+  maxWaitMs = 2000,
 ): Autosaver {
   let pending: Project | null = null;
+  let pendingSince = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const flush = async () => {
@@ -82,12 +90,40 @@ export function createAutosaver(
 
   return {
     schedule(project) {
+      if (!pending) pendingSince = Date.now();
       pending = project;
       clearTimeout(timer);
-      timer = setTimeout(() => void flush(), delayMs);
+      const untilMaxWait = maxWaitMs - (Date.now() - pendingSince);
+      timer = setTimeout(() => void flush(), Math.max(0, Math.min(delayMs, untilMaxWait)));
     },
     flush,
+    pending: () => pending,
   };
+}
+
+const STASH_KEY = 'cue-player-unsaved';
+
+/**
+ * IndexedDB writes started while the page unloads often never finish, so
+ * unsaved changes are stashed synchronously in localStorage instead.
+ */
+export function stashUnsaved(project: Project, storage: Storage = localStorage): void {
+  try {
+    storage.setItem(STASH_KEY, JSON.stringify(project));
+  } catch {
+    // Nothing more can be done while the page is going away.
+  }
+}
+
+/** Returns (and removes) changes stashed on the last unload. */
+export function takeStashed(storage: Storage = localStorage): Project | null {
+  try {
+    const text = storage.getItem(STASH_KEY);
+    storage.removeItem(STASH_KEY);
+    return text ? normalizeProject(JSON.parse(text) as Project) : null;
+  } catch {
+    return null;
+  }
 }
 
 const EXPORT_VERSION = 1;

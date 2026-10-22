@@ -29,6 +29,7 @@ import {
   pagesWithMissingMedia,
   putMedia,
   saveProject,
+  stashUnsaved,
   type Autosaver,
 } from '../storage/db';
 
@@ -69,7 +70,10 @@ export class App {
       this.emit('change');
     });
     this.transport.on('load', () => this.emit('change'));
-    window.addEventListener('pagehide', () => void this.autosaver.flush());
+    window.addEventListener('pagehide', () => {
+      const unsaved = this.autosaver.pending();
+      if (unsaved) stashUnsaved(unsaved);
+    });
   }
 
   async start(): Promise<void> {
@@ -292,8 +296,8 @@ export class App {
     this.commit(addPage(this._project, createPage(`Page ${this._project.pages.length + 1}`)));
   }
 
-  renamePage(name: string): void {
-    this.commit(renamePage(this._project, this.page.id, name));
+  renamePage(name: string, pageId = this.page.id): void {
+    this.commit(renamePage(this._project, pageId, name));
   }
 
   movePage(direction: -1 | 1): void {
