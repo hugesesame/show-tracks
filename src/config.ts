@@ -1,1 +1,1 @@
-export const APP_NAME = 'Cue Player';
+export const APP_NAME = 'Show Tracks';

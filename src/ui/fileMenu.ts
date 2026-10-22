@@ -23,8 +23,8 @@ type PermissionHandle = FileSystemFileHandle & {
 };
 
 const pickers = window as unknown as Partial<FilePickers>;
-const FILE_TYPES = [{ description: 'Cue Player project', accept: { 'application/json': ['.json'] } }];
-const DEFAULT_NAME = 'cue-player-project.json';
+const FILE_TYPES = [{ description: 'Show Tracks project', accept: { 'application/json': ['.json'] } }];
+const DEFAULT_NAME = 'show-tracks.json';
 
 const isAbort = (e: unknown) => e instanceof DOMException && e.name === 'AbortError';
 
