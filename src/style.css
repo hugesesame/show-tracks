@@ -359,8 +359,8 @@ button.active {
 }
 
 .volume::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 2px;
+  height: 2px;
+  border-radius: 1px;
   background: linear-gradient(
     to right,
     var(--go) calc(6px + (100% - 12px) * var(--fill, 0)),
@@ -372,7 +372,7 @@ button.active {
   -webkit-appearance: none;
   width: 12px;
   height: 12px;
-  margin-top: -4px;
+  margin-top: -5px;
   border-radius: 50%;
   background: var(--text);
   border: 2px solid var(--go);
