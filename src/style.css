@@ -324,13 +324,64 @@ button.active {
   color: #fff;
 }
 
+.volume-wrap {
+  position: relative;
+  height: 14px;
+}
+
+/* Ticks sit where the thumb centre lands for that value. */
+.volume-wrap .tick {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  width: 1px;
+  left: calc(6px + (100% - 12px) * var(--at));
+  background: var(--muted);
+  opacity: 0.6;
+}
+
 .volume {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
   border: none;
   background: transparent;
-  accent-color: var(--go);
+  cursor: pointer;
+}
+
+.volume:focus {
+  outline: none;
+}
+
+.volume::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--go) calc(6px + (100% - 12px) * var(--fill, 0)),
+    var(--line) calc(6px + (100% - 12px) * var(--fill, 0))
+  );
+}
+
+.volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--go);
+  box-sizing: border-box;
+}
+
+.volume:disabled {
+  cursor: default;
+  opacity: 0.4;
 }
 
 .meter {

@@ -2,6 +2,7 @@ import type { App } from '../app/app';
 import { PEAK_PAIRS_PER_SECOND } from '../media/peaks';
 import type { MediaRecord } from '../model/types';
 import { h } from './dom';
+import { DEFAULT_VOLUME } from '../model/project';
 import { formatClock } from './format';
 
 const MARKER_HIT_PX = 5;
@@ -19,6 +20,10 @@ const FOLLOW_EDGE = 0.95;
 
 type Kind = MediaRecord['kind'];
 type Rect = { x: number; y: number; w: number; h: number };
+
+const VOLUME_TICKS = [0.25, 0.5, 0.75];
+/** Must match the thumb width in style.css, to find the thumb under the pointer. */
+const VOLUME_THUMB_PX = 12;
 
 /** How fast the meters fall back, in meter widths per second. */
 const METER_FALL_PER_SECOND = 1.5;
@@ -394,12 +399,19 @@ function laneHeader(app: App, kind: Kind) {
     step: 0.01,
     oninput: () => app.setTrackLevel(kind, Number(volume.value), level().muted),
   });
+  resetOnThumbClick(volume, () => app.setTrackLevel(kind, DEFAULT_VOLUME, level().muted));
+  const volumeWrap = h(
+    'div',
+    { class: 'volume-wrap' },
+    ...VOLUME_TICKS.map((t) => h('span', { class: 'tick', style: `--at: ${t}` })),
+    volume,
+  );
   const masks = [h('div', { class: 'meter-mask' }), h('div', { class: 'meter-mask' })];
   const element = h(
     'div',
     { class: 'lane-header' },
     h('div', { class: 'lane-top' }, h('span', { class: 'lane-name' }, kind === 'audio' ? 'Audio' : 'Video'), mute),
-    volume,
+    volumeWrap,
     h('div', { class: 'meter' }, ...masks.map((mask) => h('div', { class: 'meter-bar' }, mask))),
   );
 
@@ -410,6 +422,7 @@ function laneHeader(app: App, kind: Kind) {
     const { volume: v, muted } = level();
     const hasMedia = (kind === 'audio' ? app.page.audioMediaId : app.page.videoMediaId) !== null;
     volume.value = String(v);
+    volume.style.setProperty('--fill', String(v));
     volume.title = `Volume ${Math.round(v * 100)}%`;
     volume.disabled = mute.disabled = !hasMedia;
     mute.classList.toggle('on', muted);
@@ -428,4 +441,21 @@ function laneHeader(app: App, kind: Kind) {
   }
 
   return { element, update, tick };
+}
+
+/** A click on the thumb that does not drag it resets the slider. */
+function resetOnThumbClick(slider: HTMLInputElement, reset: () => void): void {
+  let pressedOnThumb = false;
+  let startValue = '';
+  slider.addEventListener('pointerdown', (e) => {
+    const rect = slider.getBoundingClientRect();
+    const value = (Number(slider.value) - Number(slider.min)) / (Number(slider.max) - Number(slider.min));
+    const thumbX = rect.left + VOLUME_THUMB_PX / 2 + value * (rect.width - VOLUME_THUMB_PX);
+    pressedOnThumb = Math.abs(e.clientX - thumbX) <= VOLUME_THUMB_PX / 2 + 2;
+    startValue = slider.value;
+  });
+  slider.addEventListener('pointerup', () => {
+    if (pressedOnThumb && slider.value === startValue) reset();
+    pressedOnThumb = false;
+  });
 }

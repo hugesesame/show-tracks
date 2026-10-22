@@ -1,5 +1,8 @@
 import { randomId, type Page, type Project, type Settings } from './types';
 
+/** Initial track volume for new pages: leaves headroom to turn a track up. */
+export const DEFAULT_VOLUME = 0.75;
+
 export function createPage(name: string, id: string = randomId()): Page {
   return {
     id,
@@ -8,10 +11,10 @@ export function createPage(name: string, id: string = randomId()): Page {
     videoMediaId: null,
     audioOffset: 0,
     videoOffset: 0,
-    audioVolume: 1,
+    audioVolume: DEFAULT_VOLUME,
     audioMuted: false,
     videoAudioEnabled: false,
-    videoAudioVolume: 1,
+    videoAudioVolume: DEFAULT_VOLUME,
     mtcOffset: 0,
     markers: [],
     nextCueNumber: 1,
