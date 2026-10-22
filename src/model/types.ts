@@ -1,0 +1,50 @@
+import type { Fps } from '../engine/timecode';
+
+export type Settings = {
+  mtcFps: Fps;
+  midiOutputId: string | null;
+};
+
+export type Project = {
+  pages: Page[];
+  currentPageId: string;
+  settings: Settings;
+};
+
+export type Page = {
+  id: string;
+  name: string;
+  /** At least one of audio and video is required for playback. */
+  audioMediaId: string | null;
+  videoMediaId: string | null;
+  videoAudioEnabled: boolean;
+  videoAudioVolume: number;
+  /** Seconds added to the page time when sending MTC. */
+  mtcOffset: number;
+  /** Always sorted by time. */
+  markers: Marker[];
+  /** Number used for the next default marker name, so names are never reused. */
+  nextCueNumber: number;
+};
+
+export type Marker = {
+  id: string;
+  name: string;
+  /** Seconds from the start of the page. */
+  time: number;
+};
+
+export type MediaRecord = {
+  id: string;
+  kind: 'audio' | 'video';
+  fileName: string;
+  mimeType: string;
+  blob: Blob;
+  duration: number;
+  /** Interleaved min/max pairs of the waveform. */
+  peaks?: Float32Array;
+};
+
+export type IdGenerator = () => string;
+
+export const randomId: IdGenerator = () => crypto.randomUUID();
