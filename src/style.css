@@ -512,7 +512,7 @@ button.active {
 
 .page-row {
   display: grid;
-  grid-template-columns: 22px 1fr auto auto;
+  grid-template-columns: 22px 1fr auto;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
@@ -542,8 +542,7 @@ button.active {
   border-color: var(--accent);
 }
 
-.page-row .num,
-.page-row .count {
+.page-row .num {
   color: var(--muted);
   font-size: 11px;
 }

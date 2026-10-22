@@ -65,13 +65,11 @@ export function createPageList(app: App) {
       (text) => text.trim() && app.renamePage(text.trim(), page.id),
       render,
     );
-    const cues = page.markers.length;
     const el = h(
       'div',
       { class: 'page-row', onclick: () => !justDragged && app.selectPage(page.id) },
       h('span', { class: 'num' }, String(index + 1)),
       name,
-      h('span', { class: 'count' }, cues === 1 ? '1 cue' : `${cues} cues`),
       endActionButton(page),
     );
     el.addEventListener('dblclick', () => name.dispatchEvent(new MouseEvent('dblclick')));
