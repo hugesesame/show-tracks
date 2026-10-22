@@ -782,8 +782,19 @@ button.active {
   color: var(--go);
 }
 
-.app-name {
+.footer-right {
   justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.wall-clock {
+  font: 600 16px var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.app-name {
   color: var(--muted);
   font-weight: 600;
   letter-spacing: 1px;

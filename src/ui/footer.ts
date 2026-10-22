@@ -32,6 +32,7 @@ function repeatButton(label: string, title: string, action: () => void): HTMLBut
 
 export function createFooter(app: App, files: FileMenu) {
   const fileName = h('span', { class: 'file-name' });
+  const clock = h('div', { class: 'wall-clock', title: 'Current time' });
   const loop = h('button', { class: 'loop', title: 'Loop the page', onclick: () => app.toggleLoop() }, '🔁');
   const play = h('button', { class: 'play', title: 'Play / Stop (Space)', onclick: () => app.togglePlay() }, '▶');
   const element = h(
@@ -49,8 +50,15 @@ export function createFooter(app: App, files: FileMenu) {
       h('button', { title: 'Next marker (→)', onclick: () => app.nextMarker() }, '▶|'),
       loop,
     ),
-    h('div', { class: 'app-name' }, APP_NAME),
+    h('div', { class: 'footer-right' }, clock, h('div', { class: 'app-name' }, APP_NAME)),
   );
+
+  // The computer's time of day, for keeping to a running order.
+  const showTime = () => {
+    clock.textContent = new Date().toLocaleTimeString('en-GB', { hour12: false });
+  };
+  showTime();
+  setInterval(showTime, 250);
 
   function update(): void {
     const playing = app.transport.playing;
