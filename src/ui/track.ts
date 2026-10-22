@@ -217,7 +217,7 @@ export function createTrack(app: App) {
       const labelWidth = ctx.measureText(marker.name).width + 8;
       ctx.fillStyle = color;
       ctx.fillRect(x, 2, labelWidth, LABEL_HEIGHT - 4);
-      // Dark text on the yellow selection, light text on the blue markers.
+      // Dark text on the green selection, light text on the blue markers.
       ctx.fillStyle = isStandby ? '#111' : '#fff';
       ctx.fillText(marker.name, x + 4, LABEL_HEIGHT / 2);
     }
