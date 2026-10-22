@@ -7,7 +7,7 @@ import { formatClock, parseClock } from './format';
  * Text that turns into an input on double click.
  * Commits on Enter or blur, reverts on Escape; `done` runs either way.
  */
-function editableCell(
+export function editableCell(
   className: string,
   value: string,
   commit: (text: string) => void,

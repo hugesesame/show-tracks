@@ -4,41 +4,11 @@ import { h } from './dom';
 import { formatClock } from './format';
 import { toggleFullscreen } from './fullscreen';
 
-const DELETE_CONFIRM_MS = 3000;
-
 export function createHeader(app: App) {
   const go = h('button', { class: 'go', title: 'GO (G)', onclick: () => app.go() }, 'GO');
   const standbyName = h('div', { class: 'standby-name' });
-  const pageSelect = h('select', {
-    title: 'Page',
-    onchange: () => {
-      app.selectPage(pageSelect.value);
-      // Hand the keyboard back to the shortcuts.
-      pageSelect.blur();
-    },
-  });
-  const moveLeft = h('button', { title: 'Move page left', onclick: () => app.movePage(-1) }, '◀');
-  const moveRight = h('button', { title: 'Move page right', onclick: () => app.movePage(1) }, '▶');
-
-  // Two-step delete instead of a blocking confirm() dialog.
-  let deleteArmed: ReturnType<typeof setTimeout> | undefined;
-  const removeButton = h('button', { title: 'Delete page' }, '🗑');
-  const disarm = () => {
-    clearTimeout(deleteArmed);
-    deleteArmed = undefined;
-    removeButton.textContent = '🗑';
-    removeButton.classList.remove('active');
-  };
-  removeButton.addEventListener('click', () => {
-    if (deleteArmed) {
-      disarm();
-      app.removeCurrentPage();
-      return;
-    }
-    removeButton.textContent = 'Delete?';
-    removeButton.classList.add('active');
-    deleteArmed = setTimeout(disarm, DELETE_CONFIRM_MS);
-  });
+  const pageNumber = h('div', { class: 'page-number' });
+  const pageName = h('div', { class: 'page-name' });
 
   const mtcIndicator = h('div', { class: 'mtc' });
   const tc = h('div', { class: 'tc' });
@@ -61,15 +31,7 @@ export function createHeader(app: App) {
       go,
       h('div', { class: 'standby' }, h('div', { class: 'standby-label' }, 'STANDBY'), standbyName),
     ),
-    h(
-      'div',
-      { class: 'pages' },
-      pageSelect,
-      h('button', { title: 'Add page', onclick: () => app.addPage() }, '＋'),
-      moveLeft,
-      moveRight,
-      removeButton,
-    ),
+    h('div', { class: 'page-info' }, pageNumber, pageName),
     h(
       'div',
       { class: 'header-right' },
@@ -101,13 +63,9 @@ export function createHeader(app: App) {
     go.disabled = app.cue.standby.kind === 'none';
 
     const pages = app.project.pages;
-    pageSelect.replaceChildren(
-      ...pages.map((p, i) => h('option', { value: p.id, selected: p.id === app.page.id }, `${i + 1}. ${p.name}`)),
-    );
     const index = pages.findIndex((p) => p.id === app.page.id);
-    moveLeft.disabled = index <= 0;
-    moveRight.disabled = index >= pages.length - 1;
-    removeButton.disabled = pages.length === 1;
+    pageNumber.textContent = `PAGE ${index + 1} / ${pages.length}`;
+    pageName.textContent = app.page.name;
 
     const status = app.mtc.status;
     mtcIndicator.className = `mtc ${status}`;

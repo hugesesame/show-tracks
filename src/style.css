@@ -147,15 +147,24 @@ button:focus-visible {
   text-overflow: ellipsis;
 }
 
-.pages {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.page-info {
+  text-align: center;
+  min-width: 0;
 }
 
-.pages select {
-  min-width: 180px;
-  padding: 5px 8px;
+.page-number {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.page-name {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40vw;
 }
 
 .header-right {
@@ -210,11 +219,32 @@ button:focus-visible {
 
 .main {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: minmax(140px, 38%) 1fr;
-  gap: 1px;
-  background: var(--line);
+  grid-template-rows: var(--track-h, 260px) 5px minmax(0, 1fr);
+  grid-template-columns: var(--pages-w, 220px) 5px minmax(0, 1fr) 5px var(--monitor-w, 360px);
   min-height: 0;
+  min-width: 0;
+}
+
+/* ---- splitters ---- */
+
+.splitter {
+  background: var(--line);
+  transition: background 0.15s;
+  touch-action: none;
+}
+
+.splitter.row {
+  grid-column: 1 / -1;
+  cursor: row-resize;
+}
+
+.splitter.col {
+  cursor: col-resize;
+}
+
+.splitter:hover,
+.splitter.dragging {
+  background: var(--accent);
 }
 
 .track-area {
@@ -439,11 +469,76 @@ button.active {
 }
 
 .panel-title {
-  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 31px;
+  padding: 4px 8px 4px 12px;
   font-size: 11px;
   letter-spacing: 1px;
   color: var(--muted);
   border-bottom: 1px solid var(--line);
+}
+
+.panel-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.panel-actions button {
+  min-width: 26px;
+}
+
+/* ---- page list ---- */
+
+.page-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.page-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.page-row:hover {
+  background: var(--panel-2);
+}
+
+.page-row.current {
+  background: rgba(46, 204, 113, 0.15);
+  box-shadow: inset 3px 0 0 var(--go);
+}
+
+.page-row .num,
+.page-row .count {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.page-row .cell {
+  min-width: 0;
+  padding: 3px 4px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page-row .cell:has(input) {
+  padding: 0;
+  border: none;
+}
+
+.page-row input {
+  width: 100%;
+  border-color: var(--accent);
+  user-select: text;
 }
 
 /* ---- cue list ---- */
