@@ -2,7 +2,7 @@ import type { App } from '../app/app';
 import { formatTimecode, secondsToTimecode } from '../engine/timecode';
 import { nextPage } from '../model/project';
 import { h } from './dom';
-import { formatClock } from './format';
+import { formatClock, formatCountdown } from './format';
 import { toggleFullscreen } from './fullscreen';
 
 export function createHeader(app: App) {
@@ -84,8 +84,8 @@ export function createHeader(app: App) {
   function tick(time: number): void {
     const { mtcFps } = app.project.settings;
     tc.textContent = formatTimecode(secondsToTimecode(time, mtcFps, app.page.mtcOffset), mtcFps);
-    // Remaining time counts down, with a minus sign as on most playback devices.
-    remaining.textContent = `-${formatClock(Math.max(0, app.duration - time))}`;
+    // Whole seconds counting down to 00:00, with a minus sign as on most playback devices.
+    remaining.textContent = formatCountdown(app.duration - time);
     total.textContent = formatClock(app.duration);
   }
 

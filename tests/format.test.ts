@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatClock, parseClock } from '../src/ui/format';
+import { formatClock, formatCountdown, parseClock } from '../src/ui/format';
 
 describe('formatClock', () => {
   it('shows minutes, seconds and hundredths', () => {
@@ -25,5 +25,19 @@ describe('parseClock', () => {
     expect(parseClock('abc')).toBeNull();
     expect(parseClock('1:75')).toBeNull();
     expect(parseClock('-3')).toBeNull();
+  });
+});
+
+describe('formatCountdown', () => {
+  it('rounds up to whole seconds so it reaches 0 exactly at the end', () => {
+    expect(formatCountdown(3.2)).toBe('-00:04');
+    expect(formatCountdown(1)).toBe('-00:01');
+    expect(formatCountdown(0.01)).toBe('-00:01');
+    expect(formatCountdown(0)).toBe('00:00');
+    expect(formatCountdown(-0.5)).toBe('00:00');
+  });
+
+  it('adds hours when needed', () => {
+    expect(formatCountdown(3725.5)).toBe('-1:02:06');
   });
 });
