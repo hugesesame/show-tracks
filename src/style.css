@@ -155,8 +155,9 @@ button:focus-visible {
 }
 
 .header-right {
-  display: flex;
-  justify-content: space-between;
+  /* Remaining sits centred in the space between the timecode and the total. */
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 16px;
 }
