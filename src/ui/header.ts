@@ -25,18 +25,14 @@ export function createHeader(app: App) {
       'div',
       { class: 'header-left' },
       go,
-      // The page sits centred between GO and the timecode; STANDBY takes the room on its left.
-      h(
-        'div',
-        { class: 'header-middle' },
-        h('div', { class: 'header-standby' }, h('div', { class: 'standby-label' }, 'STANDBY'), standbyName),
-        h('div', { class: 'page-info' }, pageNumber, pageName),
-      ),
+      // STANDBY takes the free room; the page sits on its right, next to the readouts.
+      h('div', { class: 'header-standby' }, h('div', { class: 'standby-label' }, 'STANDBY'), standbyName),
+      h('div', { class: 'page-info' }, pageNumber, pageName),
     ),
-    readout(mtcIndicator, tc, { title: 'Double-click for fullscreen', ondblclick: () => toggleFullscreen() }),
     h(
       'div',
       { class: 'header-right' },
+      readout(mtcIndicator, tc, { title: 'Double-click for fullscreen', ondblclick: () => toggleFullscreen() }),
       readout('REMAINING', remaining),
       readout('TOTAL', total),
     ),
