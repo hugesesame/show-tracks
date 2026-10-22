@@ -9,7 +9,7 @@
   --go: #2ecc71;
   --playhead: #ff4d4d;
   --marker: #0061b7;
-  --selected: #ecb819;
+  --selected: #ff6ec7;
   --danger: #ff5c5c;
   --wave: #7fa3c4;
   --clip-audio: #20364a;
@@ -318,7 +318,7 @@ button.active {
 }
 
 .cue-row.standby {
-  background: rgba(236, 184, 25, 0.15);
+  background: rgba(255, 110, 199, 0.15);
   box-shadow: inset 3px 0 0 var(--selected);
 }
 
