@@ -1,5 +1,6 @@
 import type { App } from '../app/app';
 import { isEditing } from './dom';
+import { toggleFullscreen } from './fullscreen';
 
 export type ZoomControls = { zoomIn(): void; zoomOut(): void };
 
@@ -24,6 +25,7 @@ export function installKeyboard(app: App, zoom: ZoomControls): void {
       Space: () => app.togglePlay(),
       KeyG: () => app.go(),
       KeyM: () => app.addMarkerAtPlayhead(),
+      KeyF: () => toggleFullscreen(),
       // Arrows jump between markers; with Option they rewind / fast forward.
       ArrowLeft: () => (e.altKey ? app.rewind() : app.previousMarker()),
       ArrowRight: () => (e.altKey ? app.fastForward() : app.nextMarker()),
@@ -39,7 +41,7 @@ export function installKeyboard(app: App, zoom: ZoomControls): void {
     const action = actions[e.code];
     if (!action) return;
     // GO and marker shortcuts must not fire repeatedly while a key is held.
-    if (e.repeat && (e.code === 'KeyG' || e.code === 'KeyM' || e.code === 'Space')) return;
+    if (e.repeat && ['KeyG', 'KeyM', 'KeyF', 'Space'].includes(e.code)) return;
     e.preventDefault();
     // A focused button would otherwise also react to Space.
     if (document.activeElement instanceof HTMLButtonElement) document.activeElement.blur();

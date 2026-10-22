@@ -47,7 +47,7 @@ export function createHeader(app: App) {
   const updateFullscreen = () => {
     const on = document.fullscreenElement !== null;
     fullscreenButton.textContent = on ? '🗗' : '⛶';
-    fullscreenButton.title = on ? 'Exit fullscreen' : 'Fullscreen';
+    fullscreenButton.title = on ? 'Exit fullscreen (F)' : 'Fullscreen (F)';
   };
   document.addEventListener('fullscreenchange', updateFullscreen);
   updateFullscreen();

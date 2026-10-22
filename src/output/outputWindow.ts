@@ -53,6 +53,9 @@ export class OutputWindow {
     // There are no controls on the output, so double-click anywhere toggles fullscreen.
     // Assigned rather than added: reopening an existing window must not stack handlers.
     doc.ondblclick = () => toggleFullscreen(doc);
+    doc.onkeydown = (e) => {
+      if (e.code === 'KeyF' && !e.repeat) toggleFullscreen(doc);
+    };
     this.events.dispatchEvent(new Event('change'));
     return true;
   }
