@@ -12,16 +12,11 @@ export function createHeader(app: App) {
   const pageName = h('div', { class: 'page-name' });
 
   const mtcIndicator = h('div', { class: 'mtc' });
-  const tc = h('div', { class: 'tc' });
-  const elapsed = h('div', { class: 'elapsed' });
-  const fullscreenButton = h('button', { class: 'fullscreen', onclick: () => toggleFullscreen() });
-  const updateFullscreen = () => {
-    const on = document.fullscreenElement !== null;
-    fullscreenButton.textContent = on ? '🗗' : '⛶';
-    fullscreenButton.title = on ? 'Exit fullscreen (F)' : 'Fullscreen (F)';
-  };
-  document.addEventListener('fullscreenchange', updateFullscreen);
-  updateFullscreen();
+  const tc = h('div', { class: 'readout-value' });
+  const remaining = h('div', { class: 'readout-value' });
+  const total = h('div', { class: 'readout-value' });
+  const readout = (label: Node | string, value: HTMLElement, props = {}) =>
+    h('div', { class: 'readout', ...props }, h('div', { class: 'readout-label' }, label), value);
 
   const element = h(
     'header',
@@ -31,14 +26,14 @@ export function createHeader(app: App) {
       { class: 'header-left' },
       go,
       h('div', { class: 'standby' }, h('div', { class: 'standby-label' }, 'STANDBY'), standbyName),
+      h('div', { class: 'page-info' }, pageNumber, pageName),
     ),
-    h('div', { class: 'page-info' }, pageNumber, pageName),
+    readout(mtcIndicator, tc, { title: 'Double-click for fullscreen', ondblclick: () => toggleFullscreen() }),
     h(
       'div',
       { class: 'header-right' },
-      mtcIndicator,
-      h('div', { class: 'clock', title: 'Double-click for fullscreen', ondblclick: () => toggleFullscreen() }, tc, elapsed),
-      fullscreenButton,
+      readout('REMAINING', remaining),
+      readout('TOTAL', total),
     ),
   );
 
@@ -85,9 +80,10 @@ export function createHeader(app: App) {
     const { mtcFps } = app.project.settings;
     tc.textContent = formatTimecode(secondsToTimecode(time, mtcFps, app.page.mtcOffset), mtcFps);
     // Remaining time counts down, with a minus sign as on most playback devices.
-    elapsed.textContent = `-${formatClock(Math.max(0, app.duration - time))} / ${formatClock(app.duration)}`;
-    elapsed.title = `Remaining / total (elapsed ${formatClock(time)})`;
+    remaining.textContent = `-${formatClock(Math.max(0, app.duration - time))}`;
+    total.textContent = formatClock(app.duration);
   }
+
 
   return { element, update, tick };
 }

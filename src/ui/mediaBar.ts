@@ -1,6 +1,7 @@
 import type { App } from '../app/app';
 import type { MediaRecord } from '../model/types';
 import { h } from './dom';
+import { toggleFullscreen } from './fullscreen';
 
 function mediaSlot(app: App, kind: MediaRecord['kind'], label: string) {
   const input = h('input', {
@@ -50,6 +51,15 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
     if (!app.output.open()) app.error('Could not open the output window. Please allow pop-ups.');
   });
 
+  const fullscreenButton = h('button', { class: 'small fullscreen', onclick: () => toggleFullscreen() });
+  const updateFullscreen = () => {
+    const on = document.fullscreenElement !== null;
+    fullscreenButton.textContent = on ? '🗗' : '⛶';
+    fullscreenButton.title = on ? 'Exit fullscreen (F)' : 'Fullscreen (F)';
+  };
+  document.addEventListener('fullscreenchange', updateFullscreen);
+  updateFullscreen();
+
   const element = h(
     'div',
     { class: 'media-bar' },
@@ -65,6 +75,7 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
     ),
     outputButton,
     h('button', { class: 'small', onclick: openSettings }, '⚙ Settings'),
+    fullscreenButton,
   );
 
   function update(): void {
