@@ -150,7 +150,9 @@ button:focus-visible {
 
 .page-info {
   max-width: 40%;
-  margin-right: clamp(8px, 2vw, 32px);
+  /* Sized like the page name so 5ch is five of its characters. */
+  font-size: 24px;
+  margin-right: calc(clamp(8px, 2vw, 32px) + 5ch);
   text-align: right;
 }
 
