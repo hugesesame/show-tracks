@@ -1,11 +1,20 @@
 import type { App } from '../app/app';
 import { isEditing } from './dom';
+import type { FileMenu } from './fileMenu';
 import { toggleFullscreen } from './fullscreen';
 
 export type ZoomControls = { zoomIn(): void; zoomOut(): void };
 
-export function installKeyboard(app: App, zoom: ZoomControls): void {
+export function installKeyboard(app: App, zoom: ZoomControls, files: FileMenu): void {
   window.addEventListener('keydown', (e) => {
+    // ⌘S saves, ⇧⌘S saves to a new file; they work while typing too.
+    if ((e.metaKey || e.ctrlKey) && e.code === 'KeyS') {
+      e.preventDefault();
+      // Blurring commits a field being edited before the project is written.
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      void (e.shiftKey ? files.saveAs() : files.save());
+      return;
+    }
     if (isEditing(e.target) || e.metaKey || e.ctrlKey) return;
     if (document.querySelector('dialog[open]')) return;
 

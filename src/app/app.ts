@@ -8,6 +8,7 @@ import { addMarker, removeMarker, renameMarker, setMarkerTime } from '../model/m
 import {
   addPage,
   createPage,
+  createProject,
   currentPage,
   movePage,
   nextPage,
@@ -428,23 +429,34 @@ export class App {
   /** Media names from the last imported file, keyed by media id, for "please re-select" hints. */
   importedMediaNames: Record<string, string> = {};
 
-  async importJson(text: string): Promise<void> {
+  /** Returns false when the file could not be read. */
+  async importJson(text: string): Promise<boolean> {
     let imported: ReturnType<typeof importProjectJson>;
     try {
       imported = importProjectJson(text);
     } catch (e) {
       this.error(`Import failed: ${(e as Error).message}`);
-      return;
+      return false;
     }
-    this.transport.pause();
     this.importedMediaNames = Object.fromEntries(
       Object.entries(imported.media).map(([id, m]) => [id, m.fileName]),
     );
-    this._project = imported.project;
-    this._cue = initialCueState(imported.project, imported.project.currentPageId);
-    this.autosaver.schedule(imported.project);
+    await this.replaceProject(imported.project);
+    return true;
+  }
+
+  async newProject(): Promise<void> {
+    this.importedMediaNames = {};
+    await this.replaceProject(createProject());
+  }
+
+  private async replaceProject(project: Project): Promise<void> {
+    this.transport.pause();
+    this._project = project;
+    this._cue = initialCueState(project, project.currentPageId);
+    this.autosaver.schedule(project);
     this.applyPageSettings();
-    this.mtc.selectOutput(imported.project.settings.midiOutputId);
+    this.mtc.selectOutput(project.settings.midiOutputId);
     await this.loadCurrentPage();
   }
 }

@@ -1,6 +1,7 @@
 import type { App } from '../app/app';
 import { APP_NAME } from '../config';
 import { h } from './dom';
+import { fileButtons, type FileMenu } from './fileMenu';
 
 const REPEAT_DELAY_MS = 400;
 const REPEAT_INTERVAL_MS = 150;
@@ -29,13 +30,14 @@ function repeatButton(label: string, title: string, action: () => void): HTMLBut
   return button;
 }
 
-export function createFooter(app: App) {
+export function createFooter(app: App, files: FileMenu) {
+  const fileName = h('span', { class: 'file-name' });
   const loop = h('button', { class: 'loop', title: 'Loop the page', onclick: () => app.toggleLoop() }, '🔁');
   const play = h('button', { class: 'play', title: 'Play / Stop (Space)', onclick: () => app.togglePlay() }, '▶');
   const element = h(
     'footer',
     { class: 'footer' },
-    h('div'),
+    h('div', { class: 'file-buttons' }, ...fileButtons(files), fileName),
     h(
       'div',
       { class: 'transport' },
@@ -56,6 +58,10 @@ export function createFooter(app: App) {
     play.classList.toggle('playing', playing);
     loop.classList.toggle('active', app.transport.loop);
     loop.title = app.transport.loop ? 'Loop: on' : 'Loop: off';
+    const unsaved = files.unsaved;
+    fileName.textContent = `${files.fileName ?? 'Untitled'}${unsaved ? ' ●' : ''}`;
+    fileName.title = unsaved ? 'Not saved to a file' : 'Saved';
+    fileName.classList.toggle('unsaved', unsaved);
   }
 
   return { element, update };

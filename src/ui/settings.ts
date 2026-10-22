@@ -2,6 +2,7 @@ import type { App } from '../app/app';
 import { FPS_OPTIONS, formatTimecode, parseTimecode, secondsToTimecode, timecodeToSeconds, type Fps } from '../engine/timecode';
 import { storageEstimate } from '../storage/db';
 import { h } from './dom';
+import { fileButtons, type FileMenu } from './fileMenu';
 
 const FPS_LABELS: Record<Fps, string> = { '24': '24', '25': '25', '29.97df': '29.97 DF', '30': '30' };
 
@@ -12,13 +13,7 @@ function row(label: string, ...controls: (Node | string)[]): HTMLElement {
   return h('label', { class: 'row' }, h('span', {}, label), h('div', {}, ...controls));
 }
 
-function download(fileName: string, text: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-  h('a', { href: url, download: fileName }).click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-export function createSettings(app: App) {
+export function createSettings(app: App, files: FileMenu) {
   const dialog = h('dialog');
 
   function render(): void {
@@ -62,18 +57,6 @@ export function createSettings(app: App) {
       },
     });
 
-    const importInput = h('input', {
-      type: 'file',
-      accept: 'application/json,.json',
-      hidden: true,
-      onchange: async () => {
-        const file = importInput.files?.[0];
-        if (!file) return;
-        await app.importJson(await file.text());
-        render();
-      },
-    });
-
     const usage = h('span', { class: 'hint' }, 'Calculating…');
     void storageEstimate().then((estimate) => {
       usage.textContent = estimate ? `${formatBytes(estimate.usage)} / ${formatBytes(estimate.quota)}` : 'Unknown';
@@ -92,14 +75,8 @@ export function createSettings(app: App) {
         row('Page name', pageName),
         row('MTC offset', offset),
         h('h3', {}, 'Project'),
-        row(
-          'File',
-          h('button', { type: 'button', onclick: () => download('cue-player-project.json', app.exportJson()) }, 'Export'),
-          ' ',
-          h('button', { type: 'button', onclick: () => importInput.click() }, 'Import'),
-          importInput,
-        ),
-        h('div', { class: 'hint' }, 'Exported files do not include audio or video. Re-select the media on each page after importing.'),
+        row('File', h('div', { class: 'file-buttons' }, ...fileButtons(files, render))),
+        h('div', { class: 'hint' }, 'Project files do not include audio or video. They stay in this browser; on another computer, re-select the media on each page.'),
         row('Storage', usage),
         h('div', { class: 'actions' }, h('button', { value: 'close' }, 'Close')),
       ),

@@ -4,6 +4,7 @@ import { createProject } from './model/project';
 import { loadProject, openDb, requestPersistentStorage, saveProject, takeStashed } from './storage/db';
 import { createCueList } from './ui/cueList';
 import { byId, h } from './ui/dom';
+import { createFileMenu } from './ui/fileMenu';
 import { createFooter } from './ui/footer';
 import { createHeader } from './ui/header';
 import { installKeyboard } from './ui/keyboard';
@@ -42,8 +43,9 @@ async function main(): Promise<void> {
   const track = createTrack(app);
   const cueList = createCueList(app);
   const pageList = createPageList(app);
-  const footer = createFooter(app);
-  const settings = createSettings(app);
+  const files = createFileMenu(app, db);
+  const footer = createFooter(app, files);
+  const settings = createSettings(app, files);
   const mediaBar = createMediaBar(app, settings.open, track);
 
   const main = h('main', { class: 'main' });
@@ -57,7 +59,7 @@ async function main(): Promise<void> {
     splitters.monitorSplitter,
     h('section', { class: 'monitor' }, monitorVideo, monitorEmpty),
   );
-  root.replaceChildren(header.element, main, footer.element, settings.element);
+  root.replaceChildren(header.element, main, footer.element, settings.element, files.confirmDialog);
   splitters.apply();
 
   const update = () => {
@@ -71,7 +73,8 @@ async function main(): Promise<void> {
   };
   app.onChange(update);
   app.mtc.onChange(update);
-  installKeyboard(app, track);
+  files.onChange(update);
+  installKeyboard(app, track, files);
   update();
 
   const frame = () => {
@@ -83,6 +86,7 @@ async function main(): Promise<void> {
   };
   requestAnimationFrame(frame);
 
+  await files.load();
   await app.start();
   update();
 }

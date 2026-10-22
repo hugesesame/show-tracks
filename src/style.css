@@ -746,6 +746,55 @@ button.active {
   border-color: var(--go);
 }
 
+.footer .file-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.footer .file-buttons button {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.file-name {
+  margin-left: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.file-name.unsaved {
+  color: var(--text);
+}
+
+.settings .file-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.confirm {
+  width: min(420px, 92vw);
+}
+
+.confirm p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.confirm .actions {
+  gap: 8px;
+}
+
+.confirm .primary {
+  border-color: var(--go);
+  color: var(--go);
+}
+
 .app-name {
   justify-self: end;
   color: var(--muted);
