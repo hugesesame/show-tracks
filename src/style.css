@@ -7,6 +7,7 @@
   --muted: #8b9199;
   --accent: #3fa7ff;
   --go: #2ecc71;
+  --go-button: #0061b7;
   --playhead: #ff4d4d;
   --marker: #f5b942;
   --danger: #ff5c5c;
@@ -106,18 +107,18 @@ button:focus-visible {
   font-weight: 800;
   letter-spacing: 2px;
   background: transparent;
-  color: var(--go);
-  border: 2px solid var(--go);
+  color: var(--go-button);
+  border: 2px solid var(--go-button);
   border-radius: 10px;
 }
 
 .go:hover:not(:disabled) {
-  background: rgba(46, 204, 113, 0.12);
-  border-color: var(--go);
+  background: rgba(0, 97, 183, 0.15);
+  border-color: var(--go-button);
 }
 
 .go:active:not(:disabled) {
-  background: rgba(46, 204, 113, 0.25);
+  background: rgba(0, 97, 183, 0.3);
 }
 
 .go:active:not(:disabled) {
