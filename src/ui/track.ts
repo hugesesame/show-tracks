@@ -25,6 +25,15 @@ const VOLUME_TICKS = [0, 0.25, 0.5, 0.75, 1];
 /** Must match the thumb width in style.css, to find the thumb under the pointer. */
 const VOLUME_THUMB_PX = 12;
 
+/** Ruler steps in seconds as [labelled, minor]; the first whose labels are this far apart is used. */
+const RULER_STEPS: [number, number][] = [
+  [1, 0.2], [2, 0.5], [5, 1], [10, 2], [15, 5], [30, 5], [60, 10], [120, 30], [300, 60], [600, 120],
+];
+const RULER_LABEL_PX = 64;
+
+const rulerLabel = (seconds: number) =>
+  `${Math.floor(seconds / 60)}:${String(Math.round(seconds % 60)).padStart(2, '0')}`;
+
 /** How fast the meters fall back, in meter widths per second. */
 const METER_FALL_PER_SECOND = 1.5;
 
@@ -225,6 +234,8 @@ export function createTrack(app: App) {
       ctx.fillRect(end, LABEL_HEIGHT, width - end, height - LABEL_HEIGHT);
     }
 
+    drawRuler();
+
     const { standby } = app.cue;
     for (const marker of app.page.markers) {
       const x = Math.round(timeToX(marker.time)) + 0.5;
@@ -255,6 +266,30 @@ export function createTrack(app: App) {
       ctx.stroke();
       ctx.lineWidth = 1;
     }
+  }
+
+  /** Time ticks along the marker strip, behind the marker flags. */
+  function drawRuler(): void {
+    if (span() <= 0) return;
+    const pxPerSecond = width / span();
+    const [major, minor] =
+      RULER_STEPS.find(([step]) => step * pxPerSecond >= RULER_LABEL_PX) ?? RULER_STEPS[RULER_STEPS.length - 1];
+    const end = viewStart + span();
+    ctx.strokeStyle = colors['--muted'];
+    ctx.fillStyle = colors['--muted'];
+    ctx.globalAlpha = 0.6;
+    ctx.beginPath();
+    // Count in minor steps from 0 so labelled ticks land on exact multiples.
+    const perMajor = Math.round(major / minor);
+    for (let i = Math.max(0, Math.floor(viewStart / minor)); i * minor <= end; i++) {
+      const x = Math.round(timeToX(i * minor)) + 0.5;
+      const isMajor = i % perMajor === 0;
+      ctx.moveTo(x, LABEL_HEIGHT - (isMajor ? 8 : 4));
+      ctx.lineTo(x, LABEL_HEIGHT);
+      if (isMajor) ctx.fillText(rulerLabel(i * minor), x + 3, LABEL_HEIGHT / 2 - 1);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   function markerAt(x: number): string | null {
