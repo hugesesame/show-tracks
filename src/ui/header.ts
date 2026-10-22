@@ -58,7 +58,7 @@ export function createHeader(app: App) {
 
     const pages = app.project.pages;
     const index = pages.findIndex((p) => p.id === app.page.id);
-    pageNumber.textContent = `PAGE ${index + 1} / ${pages.length}`;
+    pageNumber.textContent = `PAGE ${index + 1}`;
     pageName.textContent = app.page.name;
 
     const status = app.mtc.status;
