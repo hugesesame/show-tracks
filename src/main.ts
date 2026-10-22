@@ -38,7 +38,7 @@ async function main(): Promise<void> {
   const cueList = createCueList(app);
   const footer = createFooter(app);
   const settings = createSettings(app);
-  const mediaBar = createMediaBar(app, settings.open);
+  const mediaBar = createMediaBar(app, settings.open, track);
 
   root.replaceChildren(
     header.element,
@@ -63,7 +63,7 @@ async function main(): Promise<void> {
   };
   app.onChange(update);
   app.mtc.onChange(update);
-  installKeyboard(app);
+  installKeyboard(app, track);
   update();
 
   const frame = () => {

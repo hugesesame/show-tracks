@@ -40,7 +40,9 @@ function mediaSlot(app: App, kind: MediaRecord['kind'], label: string) {
   return { element, update };
 }
 
-export function createMediaBar(app: App, openSettings: () => void) {
+export type TrackZoom = { zoomIn(): void; zoomOut(): void; zoomFit(): void };
+
+export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZoom) {
   const audio = mediaSlot(app, 'audio', 'Audio');
   const video = mediaSlot(app, 'video', 'Video');
   const outputButton = h('button', { class: 'small' });
@@ -54,6 +56,13 @@ export function createMediaBar(app: App, openSettings: () => void) {
     audio.element,
     video.element,
     h('div', { class: 'spacer' }),
+    h(
+      'div',
+      { class: 'zoom' },
+      h('button', { class: 'small', title: 'Zoom out (Ctrl+←)', onclick: zoom.zoomOut }, '−'),
+      h('button', { class: 'small', title: 'Zoom in (Ctrl+→)', onclick: zoom.zoomIn }, '+'),
+      h('button', { class: 'small', title: 'Show the whole page', onclick: zoom.zoomFit }, 'Fit'),
+    ),
     outputButton,
     h('button', { class: 'small', onclick: openSettings }, '⚙ Settings'),
   );

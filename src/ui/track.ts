@@ -12,6 +12,10 @@ const CLIP_HEADER = 16;
 /** Room after the last clip so it can be dragged later. */
 const VIEW_HEADROOM = 1.15;
 const MIN_VIEW_SECONDS = 10;
+const ZOOM_STEP = 1.5;
+const MAX_ZOOM = 200;
+/** While playing, the view scrolls when the playhead gets this close to the right edge. */
+const FOLLOW_EDGE = 0.95;
 
 type Kind = MediaRecord['kind'];
 type Rect = { x: number; y: number; w: number; h: number };
@@ -35,12 +39,43 @@ export function createTrack(app: App) {
   let frozenView: number | null = null;
   /** Per-pixel min/max of the audio waveform, rebuilt when the layout changes. */
   let columns: Float32Array | null = null;
+  let columnsStart = 0;
   let columnsKey = '';
+  /** 1 shows the whole page; larger values show a shorter span starting at viewStart. */
+  let zoom = 1;
+  let viewStart = 0;
+  let lastTime = 0;
 
+  /** Seconds covered at zoom 1. */
   const viewDuration = () =>
     frozenView ?? (app.duration > 0 ? Math.max(app.duration * VIEW_HEADROOM, MIN_VIEW_SECONDS) : 0);
-  const timeToX = (t: number) => (viewDuration() > 0 ? (t / viewDuration()) * width : 0);
-  const xToTime = (x: number) => (width > 0 ? (x / width) * viewDuration() : 0);
+  const span = () => viewDuration() / zoom;
+  const timeToX = (t: number) => (span() > 0 ? ((t - viewStart) / span()) * width : 0);
+  const xToTime = (x: number) => (width > 0 ? viewStart + (x / width) * span() : 0);
+  const dxToTime = (dx: number) => (width > 0 ? (dx / width) * span() : 0);
+
+  function clampView(): void {
+    viewStart = Math.min(Math.max(viewStart, 0), Math.max(0, viewDuration() - span()));
+  }
+
+  /** Zooms keeping `anchor` (default: the playhead, or the centre if it is off screen) in place. */
+  function zoomBy(factor: number, anchor?: number): void {
+    if (viewDuration() <= 0) return;
+    let time = anchor ?? app.transport.now();
+    let x = timeToX(time);
+    if (anchor === undefined && (x < 0 || x > width)) {
+      x = width / 2;
+      time = xToTime(x);
+    }
+    zoom = Math.min(Math.max(zoom * factor, 1), MAX_ZOOM);
+    viewStart = time - (x / width) * span();
+    clampView();
+  }
+
+  function zoomFit(): void {
+    zoom = 1;
+    viewStart = 0;
+  }
 
   function lane(kind: Kind): Rect {
     const laneHeight = (height - LABEL_HEIGHT - LANE_GAP * 3) / 2;
@@ -72,16 +107,19 @@ export function createTrack(app: App) {
   }
 
   function buildColumns(rect: Rect, media: MediaRecord, offset: number): void {
-    const key = `${media.id}:${width}:${viewDuration()}:${offset}`;
+    const key = `${media.id}:${width}:${span()}:${viewStart}:${offset}`;
     if (key === columnsKey) return;
     columnsKey = key;
     columns = null;
     const peaks = media.peaks;
     if (!peaks) return;
     const pairs = peaks.length / 2;
-    const out = new Float32Array(Math.ceil(rect.w) * 2);
-    for (let i = 0; i < rect.w; i++) {
-      const x = rect.x + i;
+    // Only the visible part: a zoomed-in long clip can be far wider than the screen.
+    columnsStart = Math.max(0, Math.floor(rect.x));
+    const end = Math.min(width, Math.ceil(rect.x + rect.w));
+    const out = new Float32Array(Math.max(0, end - columnsStart) * 2);
+    for (let i = 0; i < out.length / 2; i++) {
+      const x = columnsStart + i;
       const from = Math.floor((xToTime(x) - offset) * PEAK_PAIRS_PER_SECOND);
       const to = Math.max(from + 1, Math.floor((xToTime(x + 1) - offset) * PEAK_PAIRS_PER_SECOND));
       let min = 0;
@@ -126,7 +164,7 @@ export function createTrack(app: App) {
         for (let i = 0; i < columns.length / 2; i++) {
           const y1 = mid - columns[i * 2 + 1] * amp;
           const y2 = mid - columns[i * 2] * amp;
-          ctx.fillRect(rect.x + i, y1, 1, Math.max(1, y2 - y1));
+          ctx.fillRect(columnsStart + i, y1, 1, Math.max(1, y2 - y1));
         }
       }
     }
@@ -135,6 +173,17 @@ export function createTrack(app: App) {
 
   function draw(time: number): void {
     if (element.clientWidth !== width || element.clientHeight !== height) resize();
+    clampView();
+    // Keep a moving playhead in view (playback, marker jumps), but leave the
+    // view alone when only the user scrolled.
+    if (zoom > 1 && frozenView === null && time !== lastTime) {
+      const x = timeToX(time);
+      if (x > width * FOLLOW_EDGE || x < 0) {
+        viewStart = app.transport.playing ? time - span() * (1 - FOLLOW_EDGE) : time - span() / 2;
+        clampView();
+      }
+    }
+    lastTime = time;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = colors['--panel'];
     ctx.fillRect(0, 0, width, height);
@@ -236,7 +285,7 @@ export function createTrack(app: App) {
       move = (ev) => {
         if (!dragged && Math.abs(xOf(ev) - startX) < CLICK_SLOP_PX) return;
         dragged = true;
-        app.moveClip(target.clip, startOffset + xToTime(xOf(ev) - startX));
+        app.moveClip(target.clip, startOffset + dxToTime(xOf(ev) - startX));
       };
       // A click on a clip without dragging seeks, like on an empty lane.
       onClick = () => app.seek(xToTime(startX));
@@ -265,6 +314,26 @@ export function createTrack(app: App) {
     element.style.cursor = !target ? '' : 'marker' in target ? 'ew-resize' : 'grab';
   });
 
+  // Trackpad: pinch (reported as ctrl+wheel) zooms at the pointer, horizontal swipe scrolls.
+  element.addEventListener(
+    'wheel',
+    (e) => {
+      if (viewDuration() <= 0) return;
+      const x = e.clientX - element.getBoundingClientRect().left;
+      if (e.ctrlKey) {
+        e.preventDefault();
+        zoomBy(Math.exp(-e.deltaY * 0.01), xToTime(x));
+        return;
+      }
+      const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
+      if (!dx || zoom === 1) return;
+      e.preventDefault();
+      viewStart += dxToTime(dx);
+      clampView();
+    },
+    { passive: false },
+  );
+
   function update(): void {
     const page = app.page;
     const missing = app.missingMediaPageIds().includes(page.id);
@@ -275,5 +344,12 @@ export function createTrack(app: App) {
         : '';
   }
 
-  return { element, draw, update };
+  return {
+    element,
+    draw,
+    update,
+    zoomIn: () => zoomBy(ZOOM_STEP),
+    zoomOut: () => zoomBy(1 / ZOOM_STEP),
+    zoomFit,
+  };
 }

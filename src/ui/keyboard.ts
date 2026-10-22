@@ -1,10 +1,21 @@
 import type { App } from '../app/app';
 import { isEditing } from './dom';
 
-export function installKeyboard(app: App): void {
+export type ZoomControls = { zoomIn(): void; zoomOut(): void };
+
+export function installKeyboard(app: App, zoom: ZoomControls): void {
   window.addEventListener('keydown', (e) => {
-    if (isEditing(e.target) || e.metaKey || e.ctrlKey) return;
+    if (isEditing(e.target) || e.metaKey) return;
     if (document.querySelector('dialog[open]')) return;
+    if (e.ctrlKey) {
+      // Control + left / right zooms the track out / in.
+      if (e.code === 'ArrowRight' || e.code === 'ArrowLeft') {
+        e.preventDefault();
+        if (e.code === 'ArrowRight') zoom.zoomIn();
+        else zoom.zoomOut();
+      }
+      return;
+    }
 
     const actions: Record<string, () => void> = {
       Space: () => app.togglePlay(),

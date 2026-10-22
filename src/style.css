@@ -256,6 +256,15 @@ button:focus-visible {
   flex: 1;
 }
 
+.zoom {
+  display: flex;
+  gap: 4px;
+}
+
+.zoom button {
+  min-width: 28px;
+}
+
 button.small {
   padding: 2px 8px;
   font-size: 12px;
