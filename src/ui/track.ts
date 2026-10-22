@@ -21,7 +21,7 @@ const FOLLOW_EDGE = 0.95;
 type Kind = MediaRecord['kind'];
 type Rect = { x: number; y: number; w: number; h: number };
 
-const VOLUME_TICKS = [0.25, 0.5, 0.75];
+const VOLUME_TICKS = [0, 0.25, 0.5, 0.75, 1];
 /** Must match the thumb width in style.css, to find the thumb under the pointer. */
 const VOLUME_THUMB_PX = 12;
 
