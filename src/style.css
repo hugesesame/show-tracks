@@ -1200,6 +1200,11 @@ button.active {
   gap: 20px;
 }
 
+.offline-ready {
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .wall-clock {
   font: 600 20px var(--mono);
   font-variant-numeric: tabular-nums;

@@ -109,6 +109,7 @@ const HELP: Record<Lang, Text> = {
         points: [
           'The overlap mark is for audio files: only the audio rings out; the video does not overlap.',
           'Cues outside the in / out points are skipped by GO and send no MIDI Notes.',
+          'When Offline ready shows at the bottom right, the app also opens and reloads on this computer without a connection.',
         ],
       },
     ],
@@ -211,6 +212,7 @@ const HELP: Record<Lang, Text> = {
         points: [
           'オーバーラップ機能は Audio ファイル用です。鳴り残るのは音だけで、映像は重なりません。',
           'イン点 / アウト点の外の Cue は、GO で飛ばされ、MIDI Note も送りません。',
+          '右下に Offline ready と出ていれば、この PC では接続がなくてもアプリを開いたり再読み込みしたりできます。',
         ],
       },
     ],

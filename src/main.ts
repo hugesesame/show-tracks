@@ -1,6 +1,7 @@
 import './style.css';
 import { App } from './app/app';
 import { createProject } from './model/project';
+import { enableOffline } from './offline';
 import { loadProject, openDb, requestPersistentStorage, saveProject, takeStashed } from './storage/db';
 import { createCueList } from './ui/cueList';
 import { byId, h } from './ui/dom';
@@ -103,6 +104,7 @@ async function main(): Promise<void> {
   };
   requestAnimationFrame(frame);
 
+  enableOffline(footer.showOfflineReady);
   await files.load();
   await app.start();
   update();

@@ -33,6 +33,11 @@ function repeatButton(label: string, title: string, action: () => void): HTMLBut
 export function createFooter(app: App, files: FileMenu) {
   const fileName = h('span', { class: 'file-name' });
   const clock = h('div', { class: 'wall-clock', title: 'Current time' });
+  const offline = h(
+    'div',
+    { class: 'offline-ready', hidden: true, title: 'A copy of the app is kept in this browser: it also opens without a connection' },
+    'Offline ready',
+  );
   const loop = h('button', { class: 'loop', title: 'Loop the page', onclick: () => app.toggleLoop() }, '🔁');
   const play = h('button', { class: 'play', title: 'Play / Stop (Space)', onclick: () => app.togglePlay() }, '▶');
   const element = h(
@@ -50,7 +55,7 @@ export function createFooter(app: App, files: FileMenu) {
       h('button', { title: 'Next marker (→)', onclick: () => app.nextMarker() }, '▶|'),
       loop,
     ),
-    h('div', { class: 'footer-right' }, h('div', { class: 'app-name' }, APP_NAME), clock),
+    h('div', { class: 'footer-right' }, offline, h('div', { class: 'app-name' }, APP_NAME), clock),
   );
 
   // The computer's time of day, for keeping to a running order.
@@ -72,5 +77,5 @@ export function createFooter(app: App, files: FileMenu) {
     fileName.classList.toggle('unsaved', unsaved);
   }
 
-  return { element, update };
+  return { element, update, showOfflineReady: () => (offline.hidden = false) };
 }

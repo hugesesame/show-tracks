@@ -36,7 +36,6 @@ export class OutputWindow {
     if (!win) return false;
     this.win = win;
     const doc = win.document;
-    doc.title = 'Video Output';
     doc.body.replaceChildren();
     const style = doc.createElement('style');
     style.textContent = `
@@ -45,6 +44,8 @@ export class OutputWindow {
       video { width: 100%; height: 100%; object-fit: contain; display: block; }
     `;
     doc.head.replaceChildren(style);
+    // After the head is replaced, which would drop the title element.
+    doc.title = 'Video Output';
     const video = doc.createElement('video');
     video.muted = true;
     video.playsInline = true;
