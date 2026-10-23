@@ -1,4 +1,5 @@
 import { pageDuration } from '../model/clips';
+import { playRange, type PlayRange } from '../model/range';
 import { ClockInterpolator, PageClock } from './clock';
 import { Mixer } from './mixer';
 import { VideoSync } from './videoSync';
@@ -34,8 +35,12 @@ export class Transport {
   private audioUrl: string | null = null;
   private _videoUrl: string | null = null;
   private _duration = 0;
+  private rangeStart: number | null = null;
+  private rangeEnd: number | null = null;
+  /** The time of the last tick or seek, to see playback cross the out point. */
+  private lastTime = 0;
   private _playing = false;
-  /** When on, playback jumps back to the start of the page at its end. */
+  /** When on, playback jumps back to the in point at the out point. */
   loop = false;
 
   constructor(readonly monitor: HTMLVideoElement) {
@@ -48,6 +53,17 @@ export class Transport {
 
   get duration(): number {
     return this._duration;
+  }
+
+  /** The part of the page that plays. */
+  get range(): PlayRange {
+    return playRange({ rangeStart: this.rangeStart, rangeEnd: this.rangeEnd }, this._duration);
+  }
+
+  /** Sets the page's in / out points (null is the page's start / end). */
+  setRange(start: number | null, end: number | null): void {
+    this.rangeStart = start;
+    this.rangeEnd = end;
   }
 
   get audioDuration(): number | null {
@@ -144,7 +160,10 @@ export class Transport {
   play(): void {
     if (!this.hasMedia) return;
     void this.mixer.resume();
-    const from = this.now() >= this._duration ? 0 : this.now();
+    const { start, end } = this.range;
+    // From the out point on, play starts over at the in point.
+    const from = this.now() >= end ? start : this.now();
+    this.lastTime = from;
     this._playing = true;
     this.clock.start(from, performance.now());
     this.syncAudio(from, true);
@@ -168,6 +187,7 @@ export class Transport {
   seek(time: number): void {
     if (!this.hasMedia) return;
     const target = Math.min(Math.max(time, 0), this._duration);
+    this.lastTime = target;
     if (this._playing) this.clock.start(target, performance.now());
     else this.clock.stop(target);
     this.syncAudio(target, true);
@@ -199,8 +219,12 @@ export class Transport {
   /** Call every animation frame: follows the clips and returns the current time. */
   tick(): number {
     const time = this.now();
-    if (this._playing && time >= this._duration) {
-      if (this.loop) this.seek(0);
+    const { start, end } = this.range;
+    // Playback started past the out point runs on to the end of the page.
+    const ended = time >= this._duration || (this.lastTime < end && time >= end);
+    this.lastTime = time;
+    if (this._playing && ended) {
+      if (this.loop) this.seek(start);
       else {
         this.pause();
         this.emit('ended');

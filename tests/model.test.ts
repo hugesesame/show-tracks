@@ -132,6 +132,8 @@ describe('project', () => {
       audioMuted: false,
       videoAudioEnabled: false,
       videoAudioVolume: 0.75,
+      rangeStart: null,
+      rangeEnd: null,
       mtcOffset: 0,
       endAction: 'stop',
       markers: [],

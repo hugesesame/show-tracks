@@ -80,9 +80,10 @@ export function createHeader(app: App) {
   function tick(time: number): void {
     const { mtcFps } = app.project.settings;
     tc.textContent = formatTimecode(secondsToTimecode(time, mtcFps, app.page.mtcOffset), mtcFps);
-    // Whole seconds counting down to 00:00.
-    remaining.textContent = formatCountdown(app.duration - time);
-    total.textContent = formatClock(app.duration);
+    // Whole seconds counting down to 00:00 at the out point.
+    const { start, end } = app.range;
+    remaining.textContent = formatCountdown(Math.max(end - time, 0));
+    total.textContent = formatClock(end - start);
   }
 
 

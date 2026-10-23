@@ -16,6 +16,8 @@ export function createPage(name: string, id: string = randomId()): Page {
     audioMuted: false,
     videoAudioEnabled: false,
     videoAudioVolume: DEFAULT_VOLUME,
+    rangeStart: null,
+    rangeEnd: null,
     mtcOffset: 0,
     endAction: 'stop',
     markers: [],
@@ -34,6 +36,8 @@ export function normalizeProject(project: Project): Project {
       audioVolume: p.audioVolume ?? 1,
       audioMuted: p.audioMuted ?? false,
       endAction: p.endAction ?? 'stop',
+      rangeStart: p.rangeStart ?? null,
+      rangeEnd: p.rangeEnd ?? null,
       markers: orderMarkers(p.markers),
     })),
   };

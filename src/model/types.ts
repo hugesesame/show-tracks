@@ -31,11 +31,13 @@ export type Page = {
   videoAudioEnabled: boolean;
   videoAudioVolume: number;
   endAction: EndAction;
+  /** In / out points on the page timeline in seconds; null is the page's start / end. */
+  rangeStart: number | null;
+  rangeEnd: number | null;
   /** Seconds added to the page time when sending MTC. */
   mtcOffset: number;
   /** Always sorted by time. */
   markers: Marker[];
-  /** Number used for the next default marker name, so names are never reused. */
 };
 
 export type Marker = {

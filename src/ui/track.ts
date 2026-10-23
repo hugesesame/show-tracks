@@ -1,11 +1,16 @@
 import type { App } from '../app/app';
 import { PEAK_PAIRS_PER_SECOND } from '../media/peaks';
+import { inRange } from '../model/range';
 import type { MediaRecord } from '../model/types';
 import { h } from './dom';
 import { DEFAULT_VOLUME } from '../model/project';
 import { formatClock } from './format';
 
 const MARKER_HIT_PX = 5;
+/** Width of the in / out point flags in the marker strip. */
+const RANGE_FLAG_PX = 10;
+/** The in and out points never come closer than this while dragged. */
+const MIN_RANGE_SECONDS = 0.1;
 const CLICK_SLOP_PX = 3;
 const LABEL_HEIGHT = 18;
 const LANE_GAP = 4;
@@ -19,6 +24,7 @@ const MAX_ZOOM = 200;
 const FOLLOW_EDGE = 0.95;
 
 type Kind = MediaRecord['kind'];
+type RangePoint = 'start' | 'end';
 type Rect = { x: number; y: number; w: number; h: number };
 
 const VOLUME_TICKS = [0, 0.25, 0.5, 0.75, 1];
@@ -130,7 +136,7 @@ export function createTrack(app: App) {
       headers[kind].element.style.height = `${laneHeight}px`;
     }
     colors = Object.fromEntries(
-      ['--panel', '--panel-2', '--wave', '--line', '--marker', '--selected', '--playhead', '--text', '--muted',
+      ['--panel', '--panel-2', '--wave', '--line', '--marker', '--selected', '--playhead', '--range', '--text', '--muted',
         '--clip-audio', '--clip-audio-edge', '--clip-video', '--clip-video-edge'].map((n) => [n, cssVar(n)]),
     );
   }
@@ -232,12 +238,20 @@ export function createTrack(app: App) {
       const end = timeToX(app.duration);
       ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
       ctx.fillRect(end, LABEL_HEIGHT, width - end, height - LABEL_HEIGHT);
+      // And outside the in / out points.
+      const range = app.range;
+      const inX = timeToX(range.start);
+      const outX = timeToX(range.end);
+      ctx.fillRect(0, LABEL_HEIGHT, Math.max(0, inX), height - LABEL_HEIGHT);
+      ctx.fillRect(outX, LABEL_HEIGHT, Math.max(0, end - outX), height - LABEL_HEIGHT);
     }
 
     drawRuler();
 
     const { standby } = app.cue;
-    for (const marker of app.page.markers) {
+    const page = app.page;
+    for (const marker of page.markers) {
+      ctx.globalAlpha = inRange(page, marker.time) ? 1 : 0.4;
       const x = Math.round(timeToX(marker.time)) + 0.5;
       const isStandby = standby.kind === 'cue' && standby.markerId === marker.id;
       const color = isStandby ? colors['--selected'] : colors['--marker'];
@@ -254,7 +268,9 @@ export function createTrack(app: App) {
       ctx.fillStyle = isStandby ? '#111' : '#fff';
       ctx.fillText(marker.name, x + 4, LABEL_HEIGHT / 2);
     }
+    ctx.globalAlpha = 1;
     ctx.lineWidth = 1;
+    if (app.duration > 0) drawRange();
 
     if (app.duration > 0) {
       const x = Math.round(timeToX(time)) + 0.5;
@@ -265,6 +281,24 @@ export function createTrack(app: App) {
       ctx.lineTo(x, height);
       ctx.stroke();
       ctx.lineWidth = 1;
+    }
+  }
+
+  /** The in / out points: a line across the lanes and a flag in the marker strip, pointing into the range. */
+  function drawRange(): void {
+    const { start, end } = app.range;
+    ctx.strokeStyle = ctx.fillStyle = colors['--range'];
+    for (const [time, direction] of [[start, 1], [end, -1]] as const) {
+      const x = Math.round(timeToX(time)) + 0.5;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + direction * RANGE_FLAG_PX, 0);
+      ctx.lineTo(x, LABEL_HEIGHT);
+      ctx.fill();
     }
   }
 
@@ -313,7 +347,21 @@ export function createTrack(app: App) {
     return null;
   }
 
-  function hit(x: number, y: number): { marker: string } | { clip: Kind } | null {
+  /** An in / out point flag under the pointer; they sit in the marker strip only. */
+  function rangeAt(x: number, y: number): RangePoint | null {
+    if (y > LABEL_HEIGHT) return null;
+    const { start, end } = app.range;
+    // The flags point inwards, so their grab area leans that way too.
+    const startX = timeToX(start);
+    const endX = timeToX(end);
+    if (x >= startX - MARKER_HIT_PX && x <= startX + RANGE_FLAG_PX) return 'start';
+    if (x >= endX - RANGE_FLAG_PX && x <= endX + MARKER_HIT_PX) return 'end';
+    return null;
+  }
+
+  function hit(x: number, y: number): { range: RangePoint } | { marker: string } | { clip: Kind } | null {
+    const range = rangeAt(x, y);
+    if (range) return { range };
     const marker = markerAt(x);
     if (marker) return { marker };
     const kind = clipAt(x, y);
@@ -331,7 +379,22 @@ export function createTrack(app: App) {
     let move: (ev: PointerEvent) => void;
     let onClick: (() => void) | null = null;
     let dragged = false;
-    if (target && 'marker' in target) {
+    if (target && 'range' in target) {
+      // Option-click clears the point; dragging it to the page's edge does too.
+      if (e.altKey) {
+        app.setRangePoint(target.range, null);
+        move = () => {};
+      } else {
+        move = (ev) => {
+          const { start, end } = app.range;
+          const time = xToTime(xOf(ev));
+          app.setRangePoint(
+            target.range,
+            target.range === 'start' ? Math.min(time, end - MIN_RANGE_SECONDS) : Math.max(time, start + MIN_RANGE_SECONDS),
+          );
+        };
+      }
+    } else if (target && 'marker' in target) {
       app.selectCue(target.marker);
       move = (ev) => app.setMarkerTime(target.marker, Math.min(xToTime(xOf(ev)), app.duration));
     } else if (target && 'clip' in target) {
@@ -368,7 +431,7 @@ export function createTrack(app: App) {
     if (e.buttons) return;
     const rect = element.getBoundingClientRect();
     const target = hit(e.clientX - rect.left, e.clientY - rect.top);
-    element.style.cursor = !target ? '' : 'marker' in target ? 'ew-resize' : 'grab';
+    element.style.cursor = !target ? '' : 'clip' in target ? 'grab' : 'ew-resize';
   });
 
   // Trackpad: pinch (reported as ctrl+wheel) zooms at the pointer, horizontal swipe scrolls.

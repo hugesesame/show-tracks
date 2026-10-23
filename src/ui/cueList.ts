@@ -1,4 +1,5 @@
 import type { App } from '../app/app';
+import { inRange } from '../model/range';
 import type { Marker } from '../model/types';
 import { h } from './dom';
 import { formatClock, parseClock } from './format';
@@ -95,7 +96,11 @@ export function createCueList(app: App) {
   /** Moves the highlight without rebuilding, so a double click lands on the same element. */
   function updateStandby(): void {
     const { standby } = app.cue;
+    const page = app.page;
     for (const el of list.querySelectorAll<HTMLElement>('.cue-row')) {
+      // Cues outside the in / out points are skipped by GO.
+      const marker = page.markers.find((m) => m.id === el.dataset.markerId);
+      el.classList.toggle('outside', marker !== undefined && !inRange(page, marker.time));
       const isStandby = standby.kind === 'cue' && standby.markerId === el.dataset.markerId;
       el.classList.toggle('standby', isStandby);
       el.querySelector('.arrow')!.textContent = isStandby ? '▶' : '';

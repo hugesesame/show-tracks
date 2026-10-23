@@ -5,6 +5,7 @@ import { Transport } from '../engine/transport';
 import { importMediaFile } from '../media/importMedia';
 import { moveClip } from '../model/clips';
 import { addMarker, removeMarker, renameMarker, setMarkerTime } from '../model/markers';
+import { setRangeEnd, setRangeStart, type PlayRange } from '../model/range';
 import {
   addPage,
   createPage,
@@ -105,6 +106,11 @@ export class App {
     return this.loadedPageId === this.page.id ? this.transport.duration : 0;
   }
 
+  /** The part of the current page that plays. */
+  get range(): PlayRange {
+    return this.loadedPageId === this.page.id ? this.transport.range : { start: 0, end: 0 };
+  }
+
   mediaFor(id: string | null): MediaRecord | null {
     return id ? (this.media.get(id) ?? null) : null;
   }
@@ -149,6 +155,7 @@ export class App {
 
   private applyPageSettings(): void {
     const page = this.page;
+    this.transport.setRange(page.rangeStart, page.rangeEnd);
     if (this.loadedPageId === page.id) this.transport.setOffsets(page.audioOffset, page.videoOffset);
     this.transport.mixer.setLevel('audio', page.audioVolume, page.audioMuted);
     this.transport.mixer.setLevel('video', page.videoAudioVolume, !page.videoAudioEnabled);
@@ -166,6 +173,7 @@ export class App {
       }
       this.loadedPageId = page.id;
       this.applyPageSettings();
+      this.transport.seek(this.range.start);
       this.emit('change');
     };
     this.loading = this.loading.then(load, load);
@@ -215,7 +223,7 @@ export class App {
     if (endAction === 'stop' || !next) return;
     if (next.id === this.page.id) {
       // Looping a single page: start it over.
-      this.transport.seek(0);
+      this.transport.seek(this.range.start);
       this._cue = initialCueState(this._project, next.id);
       this.emit('change');
     } else {
@@ -246,7 +254,7 @@ export class App {
   }
 
   toStart(): void {
-    this.transport.seek(0);
+    this.transport.seek(this.range.start);
   }
 
   rewind(): void {
@@ -260,7 +268,7 @@ export class App {
   previousMarker(): void {
     const now = this.transport.now();
     const marker = [...this.page.markers].reverse().find((m) => m.time < now - MARKER_EPSILON);
-    this.transport.seek(marker?.time ?? 0);
+    this.transport.seek(marker?.time ?? this.range.start);
     if (marker) this.selectCue(marker.id);
   }
 
@@ -312,6 +320,28 @@ export class App {
     const durations = { audio: this.transport.audioDuration, video: this.transport.videoDuration };
     const page = this.page;
     this.commit(replacePage(this._project, moveClip(page, kind, offset, durations)), page.markers);
+  }
+
+  // ---- in / out points ----
+
+  /** Sets the in or out point; null clears it. GO stands by on the range's first cue again. */
+  setRangePoint(point: 'start' | 'end', time: number | null): void {
+    if (!this.transport.hasMedia) {
+      this.error('Load audio or video first.');
+      return;
+    }
+    const page = this.page;
+    const set = point === 'start' ? setRangeStart : setRangeEnd;
+    const updated = set(page, time, this.duration);
+    if (updated === page) return;
+    this.commit(replacePage(this._project, updated), page.markers);
+    this._cue = initialCueState(this._project, page.id);
+    this.emit('change');
+  }
+
+  /** I / O: puts the in or out point at the playhead. */
+  setRangePointAtPlayhead(point: 'start' | 'end'): void {
+    this.setRangePoint(point, this.transport.now());
   }
 
   // ---- pages ----

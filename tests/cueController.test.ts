@@ -146,3 +146,40 @@ describe('looping all pages', () => {
     expect(actions[1]).toEqual({ kind: 'loadPageAndPlay', pageId: 'a', time: 3 });
   });
 });
+
+describe('in / out points', () => {
+  const ranged = (p: Page, rangeStart: number | null, rangeEnd: number | null): Page => ({ ...p, rangeStart, rangeEnd });
+
+  it('stands by on the first cue inside the range and skips the rest', () => {
+    const pr = project(ranged(page('a', 10, 20, 30, 40), 15, 40), page('b'));
+    const state = initialCueState(pr, 'a');
+    expect(state.standby).toEqual({ kind: 'cue', markerId: 'a2' });
+    const { actions, state: after } = run(pr, state, 2);
+    expect(actions).toEqual([
+      { kind: 'seekAndPlay', time: 20 },
+      { kind: 'seekAndPlay', time: 30 },
+    ]);
+    // The cue on the out point is skipped too.
+    expect(after.standby).toEqual({ kind: 'nextPage' });
+  });
+
+  it('plays a page without cues in its range from the in point', () => {
+    const pr = project(ranged(page('a', 5), 12, null), ranged(page('b'), 8, null));
+    expect(go(pr, initialCueState(pr, 'a')).action).toEqual({ kind: 'seekAndPlay', time: 12 });
+    expect(go(pr, { pageId: 'a', standby: { kind: 'nextPage' } }).action).toEqual({
+      kind: 'loadPageAndPlay',
+      pageId: 'b',
+      time: 8,
+    });
+  });
+
+  it('keeps a cue picked by hand outside the range on standby', () => {
+    const pr = project(ranged(page('a', 5, 20), 10, null));
+    const state = select(initialCueState(pr, 'a'), 'a1');
+    expect(reconcile(pr, state, pr.pages[0].markers)).toEqual(state);
+    expect(go(pr, state)).toEqual({
+      state: { pageId: 'a', standby: { kind: 'cue', markerId: 'a2' } },
+      action: { kind: 'seekAndPlay', time: 5 },
+    });
+  });
+});

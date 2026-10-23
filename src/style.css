@@ -10,6 +10,7 @@
   --playhead: #ff4d4d;
   --marker: #0061b7;
   --selected: #2ecc71;
+  --range: #f5a623;
   --danger: #ff5c5c;
   --wave: #7fa3c4;
   --clip-audio: #20364a;
@@ -604,6 +605,10 @@ button.active {
 
 .cue-row:hover {
   background: var(--panel-2);
+}
+
+.cue-row.outside {
+  opacity: 0.4;
 }
 
 .cue-row.standby {
