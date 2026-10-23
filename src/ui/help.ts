@@ -19,8 +19,11 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'What it is',
         points: [
-          `${APP_NAME} plays a show: one song (audio and / or video) per page, with cues on it. No editing — just playback, cues, MTC, MIDI Notes and what the audience or performers see.`,
-          'Rehearse with the Cue List; in the show, let pages run on by themselves (each page’s end action).',
+          `${APP_NAME} is a playback-only web app made for live shows. Each page holds one audio file and one video file. There is no editing: you can only set where a track starts and ends.`,
+          'At the markers on the track it can show text: lyrics in time with the music, or text over the video for a karaoke-style video.',
+          'In the same way, it can send a MIDI Note at each marker, to control external gear.',
+          'Pages set the running order. When a song ends, the next page can play on by itself, or start over the end of the song with the overlap mark.',
+          'It sends MTC from the playback time.',
           'Chrome only. Media and the project are kept in this browser.',
         ],
       },
@@ -118,8 +121,11 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'このアプリについて',
         points: [
-          `${APP_NAME} は本番用の再生アプリです。1 ページに 1 曲（音声や映像）を置き、Cue を付けて再生します。編集機能はなく、再生、きっかけ出し、MTC、MIDI Note、お客さんや演者に見せる映像と文字に絞っています。`,
-          'リハーサルは Cue List で詰め、本番はページの終わりの設定で自動的に次へ進められます。',
+          `${APP_NAME} は、ショーの本番向けに開発した再生専用の Web アプリです。1 ページで扱えるのは、オーディオファイル 1 つと映像ファイル 1 つだけです。編集機能はついていません。できるのは、トラックの最初と最後のポイントを指定することだけです。`,
+          'トラックに打ったマーカーのタイミングで、文字を出力できます。音楽に合わせて歌詞を表示したり、文字を映像の上に載せてカラオケビデオ風にしたりできます。',
+          '同じようにマーカーのタイミングで MIDI Note を出力できます。外部機器の制御用です。',
+          'ページ管理で曲順を決めます。曲が終わったら次のページを自動で再生したり、オーバーラップ機能で曲の終わりに重ねて次の曲を始めたりできます。',
+          '再生時間で MTC を出力します。',
           'Chrome 専用です。メディアとプロジェクトは、このブラウザの中に保存されます。',
         ],
       },
