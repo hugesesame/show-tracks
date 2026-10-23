@@ -130,13 +130,16 @@ export class Transport {
 
   /** Moves the clips on the timeline. */
   setOffsets(audioOffset: number, videoOffset: number): void {
+    // Page settings are re-applied on every edit (e.g. each volume step); relocating
+    // the audio then would click, so only a real move does.
+    const moved = audioOffset !== this.audioOffset;
     this.audioOffset = audioOffset;
     this.videoOffset = videoOffset;
     this._duration = pageDuration(
       { audioMediaId: this.hasAudio ? 'a' : null, videoMediaId: this.hasVideo ? 'v' : null, audioOffset, videoOffset },
       { audio: this.audioDuration, video: this.videoDuration },
     );
-    this.syncAudio(this.now(), true);
+    if (moved) this.syncAudio(this.now(), true);
   }
 
   /** The page time read from the audio while it is actually playing, else null. */
