@@ -85,8 +85,8 @@ const HELP: Record<Lang, Text> = {
         title: 'Monitor',
         rows: [
           ['Video', 'The video; + Memo lays the memos over it'],
-          ['Mixer', 'Audio, Video and Master faders with pan and mute; double-click resets'],
           ['Memo', 'The memo of the last cue passed (lyrics, prompts); ⚙ shows the settings'],
+          ['Mixer', 'Audio, Video and Master faders with pan and mute; double-click resets'],
           ['Output', 'Also show the memos on the video output'],
           ['Open video output', 'A window for the second display; double-click it or press F for fullscreen'],
         ],
@@ -190,8 +190,8 @@ const HELP: Record<Lang, Text> = {
         title: 'モニター',
         rows: [
           ['Video', '映像。+ Memo で映像の上にメモを重ねる'],
-          ['Mixer', 'Audio、Video、Master のフェーダー、Pan、ミュート。ダブルクリックで元に戻る'],
           ['Memo', '最後に通過した Cue のメモ（歌詞、カンペ）。⚙ で設定を表示'],
+          ['Mixer', 'Audio、Video、Master のフェーダー、Pan、ミュート。ダブルクリックで元に戻る'],
           ['Output', '外部モニターにもメモを出す'],
           ['Open video output', '外部モニター用のウィンドウ。ダブルクリックか F で全画面'],
         ],

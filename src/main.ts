@@ -130,7 +130,7 @@ function createMonitor(
   }
   const tab = (name: string, label: string) =>
     h('button', { type: 'button', class: 'small', 'data-view': name, onclick: () => show(name, true) }, label);
-  const tabs = h('div', { class: 'monitor-tabs' }, tab('video', 'Video'), tab('mixer', 'Mixer'), tab('memo', 'Memo'));
+  const tabs = h('div', { class: 'monitor-tabs' }, tab('video', 'Video'), tab('memo', 'Memo'), tab('mixer', 'Mixer'));
   // The video element keeps playing under the others: it is also the Video track's sound.
   // "+ Memo" lays the memos over the video, as on the video output.
   const videoMemo = createMemoStage();
