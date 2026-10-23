@@ -5,7 +5,7 @@ import { toggleFullscreen } from './fullscreen';
 
 export type ZoomControls = { zoomIn(): void; zoomOut(): void };
 
-export function installKeyboard(app: App, zoom: ZoomControls, files: FileMenu): void {
+export function installKeyboard(app: App, zoom: ZoomControls, files: FileMenu, openSettings: () => void): void {
   window.addEventListener('keydown', (e) => {
     // ⌘S saves, ⇧⌘S saves to a new file; they work while typing too.
     if ((e.metaKey || e.ctrlKey) && e.code === 'KeyS') {
@@ -13,6 +13,12 @@ export function installKeyboard(app: App, zoom: ZoomControls, files: FileMenu): 
       // Blurring commits a field being edited before the project is written.
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       void (e.shiftKey ? files.saveAs() : files.save());
+      return;
+    }
+    // ⌘, (Ctrl+, elsewhere) opens Settings, as in most apps.
+    if ((e.metaKey || e.ctrlKey) && e.code === 'Comma') {
+      e.preventDefault();
+      if (!document.querySelector('dialog[open]')) openSettings();
       return;
     }
     if (isEditing(e.target) || e.metaKey || e.ctrlKey) return;

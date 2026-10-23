@@ -74,7 +74,7 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
       h('button', { class: 'small', title: 'Show the whole page', onclick: zoom.zoomFit }, 'Fit'),
     ),
     outputButton,
-    h('button', { class: 'small', onclick: openSettings }, '⚙ Settings'),
+    h('button', { class: 'small', title: 'Settings (⌘,)', onclick: openSettings }, '⚙ Settings'),
     fullscreenButton,
   );
 

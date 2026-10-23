@@ -78,7 +78,7 @@ async function main(): Promise<void> {
   app.onChange(update);
   app.mtc.onChange(update);
   files.onChange(update);
-  installKeyboard(app, track, files);
+  installKeyboard(app, track, files, settings.open);
   update();
 
   const frame = () => {
