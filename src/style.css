@@ -564,9 +564,10 @@ button.active {
   background: var(--panel-2);
 }
 
+/* The page playing, in the same blue as the cue playing. */
 .page-row.current {
-  background: rgba(46, 204, 113, 0.15);
-  box-shadow: inset 3px 0 0 var(--go);
+  background: rgba(0, 97, 183, 0.22);
+  box-shadow: inset 3px 0 0 var(--marker);
 }
 
 .end-action {
@@ -696,6 +697,10 @@ button.active {
 .cue-row .arrow {
   color: var(--selected);
   font-weight: 700;
+}
+
+.cue-row.current:not(.standby) .arrow {
+  color: var(--playhead);
 }
 
 .cue-row .num {

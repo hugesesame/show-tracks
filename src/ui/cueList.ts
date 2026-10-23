@@ -194,7 +194,7 @@ export function createCueList(app: App) {
       el.classList.toggle('outside', marker !== undefined && !inRange(page, marker.time));
       const isStandby = standby.kind === 'cue' && standby.markerId === el.dataset.markerId;
       el.classList.toggle('standby', isStandby);
-      el.querySelector('.arrow')!.textContent = isStandby ? '▶' : '';
+      showArrow(el);
     }
     if (autoScroll.isOn()) list.querySelector('.standby')?.scrollIntoView({ block: 'nearest' });
   }
@@ -242,7 +242,14 @@ export function createCueList(app: App) {
   function markCurrent(): void {
     for (const el of list.querySelectorAll<HTMLElement>('.cue-row')) {
       el.classList.toggle('current', el.dataset.markerId === currentId);
+      showArrow(el);
     }
+  }
+
+  /** A green triangle on the standby, a red one (the playhead's colour) on the cue playing. */
+  function showArrow(row: HTMLElement): void {
+    const marked = row.classList.contains('standby') || row.classList.contains('current');
+    row.querySelector('.arrow')!.textContent = marked ? '▶' : '';
   }
 
   /** Call every frame: marks the cue playing, and keeps it in view with Auto on. */

@@ -71,7 +71,7 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'Cue List',
         rows: [
-          ['Blue row', 'The cue playing. As playback passes a cue, the standby moves on to the next one'],
+          ['Blue row, red ▶', 'The cue playing. As playback passes a cue, the standby moves on to the next one'],
           ['Green row', 'The cue on standby for GO; click a row to choose another'],
           ['Double-click', 'Edit the name, memo, time or note number'],
           ['Title / Memo', 'Show cue names or memos. In a memo, Shift+Enter starts a new line'],
@@ -176,7 +176,7 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'Cue List',
         rows: [
-          ['青い行', '再生中の Cue。再生が Cue を通過すると、待機は次の Cue に進む'],
+          ['青い行、赤い ▶', '再生中の Cue。再生が Cue を通過すると、待機は次の Cue に進む'],
           ['緑の行', 'GO で再生する待機中の Cue。行をクリックで選び直せる'],
           ['ダブルクリック', '名前、メモ、時間、Note 番号の編集'],
           ['Title / Memo', '名前とメモの表示を切り替え。メモは Shift+Enter で改行'],
