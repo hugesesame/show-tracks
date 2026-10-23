@@ -537,6 +537,23 @@ button.active {
   overflow-y: auto;
 }
 
+/* Scrolled by wheel or trackpad, without a scrollbar taking room. */
+.page-list,
+.cue-list {
+  scrollbar-width: none;
+}
+
+/*
+ * Room below the last row, so auto scroll can bring even the last rows to the
+ * top: the playing row stays first, with the next one below it.
+ */
+.page-list::after,
+.cue-list::after {
+  content: '';
+  display: block;
+  height: calc(100% - 30px);
+}
+
 .page-row.dragging {
   opacity: 0.5;
 }
