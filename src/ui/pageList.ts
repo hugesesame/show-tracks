@@ -19,6 +19,8 @@ export function createPageList(app: App, openHelp: () => void) {
 
   const removeButton = deleteButton('Delete page', () => app.removeCurrentPage());
   const autoScroll = autoScrollButton('cue-player-page-autoscroll');
+  /** The page last brought to the top, so the list is only scrolled when the page changes. */
+  let scrolledTo: string | null = null;
 
   const element = h(
     'section',
@@ -67,7 +69,11 @@ export function createPageList(app: App, openHelp: () => void) {
   function updateCurrent(): void {
     const pages = app.project.pages;
     list.querySelectorAll('.page-row').forEach((el, i) => el.classList.toggle('current', pages[i].id === app.page.id));
-    if (autoScroll.isOn()) list.querySelector('.current')?.scrollIntoView({ block: 'nearest' });
+    // The page playing goes to the top, with the pages to come below it.
+    if (autoScroll.isOn() && scrolledTo !== app.page.id) {
+      scrolledTo = app.page.id;
+      list.querySelector('.current')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
     removeButton.disabled = pages.length === 1;
     const looping = app.project.settings.loopPages;
     loopButton.classList.toggle('active', looping);

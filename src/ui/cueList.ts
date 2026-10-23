@@ -251,7 +251,8 @@ export function createCueList(app: App) {
     if (id === currentId) return;
     currentId = id;
     markCurrent();
-    if (autoScroll.isOn()) list.querySelector('.current')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // The cue playing goes to the top, with the ones to come below it.
+    if (autoScroll.isOn()) list.querySelector('.current')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
 
   showColumn(column);
