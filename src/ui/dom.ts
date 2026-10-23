@@ -35,3 +35,28 @@ export function isEditing(target: EventTarget | null): boolean {
   }
   return false;
 }
+
+const DELETE_CONFIRM_MS = 3000;
+
+/** A trash button that asks "Delete?" first, instead of a blocking confirm() dialog. */
+export function deleteButton(title: string, onDelete: () => void): HTMLButtonElement {
+  let armed: ReturnType<typeof setTimeout> | undefined;
+  const button = h('button', { class: 'small', title }, '🗑');
+  const disarm = () => {
+    clearTimeout(armed);
+    armed = undefined;
+    button.textContent = '🗑';
+    button.classList.remove('active');
+  };
+  button.addEventListener('click', () => {
+    if (armed) {
+      disarm();
+      onDelete();
+      return;
+    }
+    button.textContent = 'Delete?';
+    button.classList.add('active');
+    armed = setTimeout(disarm, DELETE_CONFIRM_MS);
+  });
+  return button;
+}

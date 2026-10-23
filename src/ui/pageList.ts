@@ -1,9 +1,7 @@
 import type { App } from '../app/app';
 import type { EndAction, Page } from '../model/types';
 import { editableCell } from './cueList';
-import { h } from './dom';
-
-const DELETE_CONFIRM_MS = 3000;
+import { deleteButton, h } from './dom';
 
 const END_ACTIONS: { action: EndAction; label: string; title: string }[] = [
   { action: 'stop', label: 'Stop', title: 'At the end: stop' },
@@ -19,25 +17,7 @@ export function createPageList(app: App) {
   const dropLine = h('div', { class: 'drop-line', hidden: true });
   const loopButton = h('button', { class: 'small loop-pages', onclick: () => app.toggleLoopPages() }, '🔁');
 
-  // Two-step delete instead of a blocking confirm() dialog.
-  let deleteArmed: ReturnType<typeof setTimeout> | undefined;
-  const removeButton = h('button', { class: 'small', title: 'Delete page' }, '🗑');
-  const disarm = () => {
-    clearTimeout(deleteArmed);
-    deleteArmed = undefined;
-    removeButton.textContent = '🗑';
-    removeButton.classList.remove('active');
-  };
-  removeButton.addEventListener('click', () => {
-    if (deleteArmed) {
-      disarm();
-      app.removeCurrentPage();
-      return;
-    }
-    removeButton.textContent = 'Delete?';
-    removeButton.classList.add('active');
-    deleteArmed = setTimeout(disarm, DELETE_CONFIRM_MS);
-  });
+  const removeButton = deleteButton('Delete page', () => app.removeCurrentPage());
 
   const element = h(
     'section',

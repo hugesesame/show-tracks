@@ -596,7 +596,7 @@ button.active {
 
 .cue-row {
   display: grid;
-  grid-template-columns: 24px 36px 1fr 110px 60px 40px 28px;
+  grid-template-columns: 24px 36px 1fr 110px 60px 56px;
   align-items: center;
   gap: 8px;
   padding: 4px 12px;
@@ -620,9 +620,18 @@ button.active {
   justify-self: end;
 }
 
-/* Over the cues' switches: the row's note and delete columns, gaps and padding, less the title's padding. */
-.panel-title .midi-toggle {
-  margin-right: calc(40px + 28px + 8px * 2 + 12px - 8px);
+/*
+ * The header's + and trash buttons (2 × 30px, gaps and padding) take the
+ * room of the rows' 56px note column, so the page's MIDI button sits over
+ * the cues' switches.
+ */
+.cue-actions button:not(.midi-toggle) {
+  min-width: 30px;
+  padding: 2px 0;
+}
+
+.cue-actions button.active {
+  padding: 2px 6px;
 }
 
 .midi-toggle.on {
@@ -698,20 +707,6 @@ button.active {
   text-align: right;
 }
 
-.cue-row .delete {
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  /* The trash icon is an emoji, so it fades in on hover instead of changing colour. */
-  opacity: 0.45;
-}
-
-.cue-row .delete:hover {
-  opacity: 1;
-}
 
 .cue-empty {
   padding: 16px 12px;

@@ -1,7 +1,7 @@
 import type { App } from '../app/app';
 import { inRange } from '../model/range';
 import type { Marker } from '../model/types';
-import { h } from './dom';
+import { deleteButton, h } from './dom';
 import { formatClock, parseClock } from './format';
 
 /**
@@ -47,10 +47,26 @@ function startEditing(cell: HTMLElement, value: string, commit: (text: string) =
 export function createCueList(app: App) {
   const list = h('div', { class: 'cue-list' });
   const pageMidi = h('button', { class: 'small midi-toggle', onclick: () => app.toggleMidiNotes() }, 'MIDI');
+  // Like PAGES: add at the playhead, delete the cue on standby.
+  const removeButton = deleteButton('Delete the selected cue', () => {
+    const { standby } = app.cue;
+    if (standby.kind === 'cue') app.removeMarker(standby.markerId);
+  });
   const element = h(
     'section',
     { class: 'panel' },
-    h('div', { class: 'panel-title' }, 'CUE LIST', h('div', { class: 'panel-actions' }, pageMidi)),
+    h(
+      'div',
+      { class: 'panel-title' },
+      h('span', {}, 'CUE LIST'),
+      h(
+        'div',
+        { class: 'panel-actions cue-actions' },
+        pageMidi,
+        h('button', { class: 'small', title: 'Add a cue at the playhead (M)', onclick: () => app.addMarkerAtPlayhead() }, '+'),
+        removeButton,
+      ),
+    ),
     list,
   );
   let renderedMarkers: Marker[] | null = null;
@@ -109,18 +125,6 @@ export function createCueList(app: App) {
       time,
       midi,
       note,
-      h(
-        'button',
-        {
-          class: 'delete',
-          title: 'Delete',
-          onclick: (e: Event) => {
-            e.stopPropagation();
-            app.removeMarker(marker.id);
-          },
-        },
-        '🗑',
-      ),
     );
     element.dataset.markerId = marker.id;
     // Double-clicking elsewhere on the row edits the name.
@@ -165,6 +169,7 @@ export function createCueList(app: App) {
       dirty = true;
       return;
     }
+    removeButton.disabled = app.cue.standby.kind !== 'cue';
     const { midiNotes } = app.page;
     pageMidi.classList.toggle('on', midiNotes);
     pageMidi.title = midiNotes ? "This page's MIDI Notes are on: click to turn them off" : "This page's MIDI Notes are off: click to turn them on";
