@@ -177,7 +177,7 @@ export function createMixer(app: App) {
       const now = performance.now();
       const fall = ((now - lastTick) / 1000) * METER_FALL_PER_SECOND;
       lastTick = now;
-      app.transport.mixer.levels(kind).forEach((peak, i) => {
+      app.transport.levels(kind).forEach((peak, i) => {
         shown[i] = Math.max(peak, shown[i] - fall);
         masks[i].style.height = `${(1 - shown[i]) * 100}%`;
       });

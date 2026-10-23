@@ -41,6 +41,8 @@ export type Page = {
   /** In / out points on the page timeline in seconds; null is the page's start / end. */
   rangeStart: number | null;
   rangeEnd: number | null;
+  /** Where the next page starts while this one rings out (page time), or null. */
+  overlapAt: number | null;
   /** Seconds added to the page time when sending MTC. */
   mtcOffset: number;
   /** Always sorted by time. */

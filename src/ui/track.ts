@@ -1,9 +1,9 @@
 import type { App } from '../app/app';
 import { PEAK_PAIRS_PER_SECOND } from '../media/peaks';
-import { inRange } from '../model/range';
+import { activeOverlap, inRange } from '../model/range';
 import type { MediaRecord } from '../model/types';
 import { h } from './dom';
-import { DEFAULT_VOLUME } from '../model/project';
+import { DEFAULT_VOLUME, nextPage } from '../model/project';
 import { formatClock } from './format';
 
 const MARKER_HIT_PX = 5;
@@ -24,7 +24,7 @@ const MAX_ZOOM = 200;
 const FOLLOW_EDGE = 0.95;
 
 type Kind = MediaRecord['kind'];
-type RangePoint = 'start' | 'end';
+type RangePoint = 'start' | 'end' | 'overlap';
 type Rect = { x: number; y: number; w: number; h: number };
 
 const VOLUME_TICKS = [0, 0.25, 0.5, 0.75, 1];
@@ -136,7 +136,7 @@ export function createTrack(app: App) {
       headers[kind].element.style.height = `${laneHeight}px`;
     }
     colors = Object.fromEntries(
-      ['--panel', '--panel-2', '--wave', '--line', '--marker', '--selected', '--playhead', '--range', '--text', '--muted',
+      ['--panel', '--panel-2', '--wave', '--line', '--marker', '--selected', '--playhead', '--range', '--overlap', '--text', '--muted',
         '--clip-audio', '--clip-audio-edge', '--clip-video', '--clip-video-edge'].map((n) => [n, cssVar(n)]),
     );
   }
@@ -284,11 +284,24 @@ export function createTrack(app: App) {
     }
   }
 
-  /** The in / out points: a line across the lanes and a flag in the marker strip, pointing into the range. */
+  /**
+   * The in / out points: a line across the lanes and a flag in the marker strip, pointing into the range.
+   * The overlap mark points on to the next page; it is faint while it would do nothing.
+   */
   function drawRange(): void {
     const { start, end } = app.range;
-    ctx.strokeStyle = ctx.fillStyle = colors['--range'];
-    for (const [time, direction] of [[start, 1], [end, -1]] as const) {
+    const page = app.page;
+    const flags: [number, 1 | -1, string, number][] = [
+      [start, 1, colors['--range'], 1],
+      [end, -1, colors['--range'], 1],
+    ];
+    if (page.overlapAt !== null) {
+      const works = activeOverlap(page, app.duration) !== null && nextPage(app.project, page.id) !== null;
+      flags.push([page.overlapAt, 1, colors['--overlap'], works ? 1 : 0.4]);
+    }
+    for (const [time, direction, color, alpha] of flags) {
+      ctx.strokeStyle = ctx.fillStyle = color;
+      ctx.globalAlpha = alpha;
       const x = Math.round(timeToX(time)) + 0.5;
       ctx.beginPath();
       ctx.moveTo(x, 0);
@@ -300,6 +313,7 @@ export function createTrack(app: App) {
       ctx.lineTo(x, LABEL_HEIGHT);
       ctx.fill();
     }
+    ctx.globalAlpha = 1;
   }
 
   /** Time ticks along the marker strip, behind the marker flags. */
@@ -354,6 +368,11 @@ export function createTrack(app: App) {
     // The flags point inwards, so their grab area leans that way too.
     const startX = timeToX(start);
     const endX = timeToX(end);
+    const { overlapAt } = app.page;
+    if (overlapAt !== null) {
+      const overlapX = timeToX(overlapAt);
+      if (x >= overlapX - MARKER_HIT_PX && x <= overlapX + RANGE_FLAG_PX) return 'overlap';
+    }
     if (x >= startX - MARKER_HIT_PX && x <= startX + RANGE_FLAG_PX) return 'start';
     if (x >= endX - RANGE_FLAG_PX && x <= endX + MARKER_HIT_PX) return 'end';
     return null;
@@ -388,10 +407,11 @@ export function createTrack(app: App) {
         move = (ev) => {
           const { start, end } = app.range;
           const time = xToTime(xOf(ev));
-          app.setRangePoint(
-            target.range,
-            target.range === 'start' ? Math.min(time, end - MIN_RANGE_SECONDS) : Math.max(time, start + MIN_RANGE_SECONDS),
-          );
+          const clamped =
+            target.range === 'start' ? Math.min(time, end - MIN_RANGE_SECONDS)
+            : target.range === 'end' ? Math.max(time, start + MIN_RANGE_SECONDS)
+            : time;
+          app.setRangePoint(target.range, clamped);
         };
       }
     } else if (target && 'marker' in target) {
@@ -532,7 +552,7 @@ function laneHeader(app: App, kind: Kind) {
     const now = performance.now();
     const fall = ((now - lastTick) / 1000) * METER_FALL_PER_SECOND;
     lastTick = now;
-    app.transport.mixer.levels(kind).forEach((peak, i) => {
+    app.transport.levels(kind).forEach((peak, i) => {
       shown[i] = Math.max(peak, shown[i] - fall);
       masks[i].style.width = `${(1 - shown[i]) * 100}%`;
     });

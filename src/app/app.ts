@@ -5,7 +5,7 @@ import { Transport } from '../engine/transport';
 import { importMediaFile } from '../media/importMedia';
 import { moveClip } from '../model/clips';
 import { addMarker, removeMarker, renameMarker, setMarkerTime } from '../model/markers';
-import { setRangeEnd, setRangeStart, type PlayRange } from '../model/range';
+import { activeOverlap, setOverlap, setRangeEnd, setRangeStart, type PlayRange } from '../model/range';
 import {
   addPage,
   createPage,
@@ -74,6 +74,7 @@ export class App {
     });
     this.transport.on('load', () => this.emit('change'));
     this.transport.on('ended', () => void this.handlePageEnd());
+    this.transport.on('overlap', () => void this.handleOverlap());
     window.addEventListener('pagehide', () => {
       const unsaved = this.autosaver.pending();
       if (unsaved) stashUnsaved(unsaved);
@@ -144,7 +145,7 @@ export class App {
     if (pageChanged && this.loadedPageId !== project.currentPageId) {
       this.transport.pause();
       void this.loadCurrentPage();
-    }
+    } else void this.preloadNext();
     this.emit('change');
   }
 
@@ -156,10 +157,12 @@ export class App {
   private applyPageSettings(): void {
     const page = this.page;
     this.transport.setRange(page.rangeStart, page.rangeEnd);
+    const hasNext = nextPage(this._project, page.id) !== null;
+    this.transport.setOverlap(hasNext ? activeOverlap(page, this.duration) : null);
     if (this.loadedPageId === page.id) this.transport.setOffsets(page.audioOffset, page.videoOffset);
     const { mixer } = this.transport;
     const { masterVolume, masterMuted, masterPan } = this._project.settings;
-    mixer.setLevel('audio', page.audioVolume, page.audioMuted, page.audioPan);
+    mixer.setLevel(this.transport.channel('audio'), page.audioVolume, page.audioMuted, page.audioPan);
     mixer.setLevel('video', page.videoAudioVolume, !page.videoAudioEnabled, page.videoPan);
     mixer.setLevel('master', masterVolume, masterMuted, masterPan);
     this.mtc.configure(this._project.settings.mtcFps, page.mtcOffset);
@@ -178,9 +181,20 @@ export class App {
       this.applyPageSettings();
       this.transport.seek(this.range.start);
       this.emit('change');
+      await this.preloadNext();
     };
     this.loading = this.loading.then(load, load);
     return this.loading;
+  }
+
+  /** With an overlap mark, readies the next page's audio on the free deck so it can start at once. */
+  private async preloadNext(): Promise<void> {
+    const page = this.page;
+    if (this.loadedPageId !== page.id || activeOverlap(page, this.duration) === null) return;
+    const next = nextPage(this._project, page.id);
+    const media = await this.fetchMedia(next?.audioMediaId ?? null);
+    if (!next || !media) return;
+    await this.transport.preload(media.blob, Math.max(0, (next.rangeStart ?? 0) - next.audioOffset));
   }
 
   private async fetchMedia(id: string | null): Promise<MediaRecord | null> {
@@ -236,6 +250,20 @@ export class App {
     if (endAction === 'nextPlay') this.transport.play();
   }
 
+  /** At the overlap mark the next page starts while this page's audio rings out to its out point. */
+  private async handleOverlap(): Promise<void> {
+    const next = nextPage(this._project, this.page.id);
+    if (!next) return;
+    this.transport.handOff(this.range.end);
+    this._project = setCurrentPage(this._project, next.id);
+    this._cue = initialCueState(this._project, next.id);
+    this.autosaver.schedule(this._project);
+    this.applyPageSettings();
+    this.emit('change');
+    await this.loadCurrentPage();
+    this.transport.play();
+  }
+
   toggleLoopPages(): void {
     this.commit(updateSettings(this._project, { loopPages: !this._project.settings.loopPages }));
   }
@@ -249,7 +277,7 @@ export class App {
   }
 
   stop(): void {
-    this.transport.pause();
+    this.transport.stop();
   }
 
   seek(time: number): void {
@@ -327,23 +355,24 @@ export class App {
 
   // ---- in / out points ----
 
-  /** Sets the in or out point; null clears it. GO stands by on the range's first cue again. */
-  setRangePoint(point: 'start' | 'end', time: number | null): void {
+  /** Sets the in / out point or the overlap mark; null clears it. A new range re-arms GO on its first cue. */
+  setRangePoint(point: 'start' | 'end' | 'overlap', time: number | null): void {
     if (!this.transport.hasMedia) {
       this.error('Load audio or video first.');
       return;
     }
     const page = this.page;
-    const set = point === 'start' ? setRangeStart : setRangeEnd;
+    const set = point === 'start' ? setRangeStart : point === 'end' ? setRangeEnd : setOverlap;
     const updated = set(page, time, this.duration);
     if (updated === page) return;
     this.commit(replacePage(this._project, updated), page.markers);
+    if (point === 'overlap') return;
     this._cue = initialCueState(this._project, page.id);
     this.emit('change');
   }
 
-  /** I / O: puts the in or out point at the playhead. */
-  setRangePointAtPlayhead(point: 'start' | 'end'): void {
+  /** I / O / X: puts the in point, out point or overlap mark at the playhead. */
+  setRangePointAtPlayhead(point: 'start' | 'end' | 'overlap'): void {
     this.setRangePoint(point, this.transport.now());
   }
 

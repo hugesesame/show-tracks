@@ -1,6 +1,8 @@
 export type TrackKind = 'audio' | 'video';
 /** A track or the Master strip. */
 export type StripKind = TrackKind | 'master';
+/** The audio track plays on two decks in turn, so one can ring out while the next page starts. */
+export type ChannelKey = 'deck0' | 'deck1' | 'video' | 'master';
 
 const METER_FLOOR_DB = -60;
 
@@ -25,10 +27,10 @@ type Channel = {
  */
 export class Mixer {
   private readonly context = new AudioContext();
-  private readonly channels: Record<StripKind, Channel>;
+  private readonly channels: Record<ChannelKey, Channel>;
   private readonly buffer = new Float32Array(1024);
 
-  constructor(elements: Record<TrackKind, HTMLMediaElement>) {
+  constructor(elements: { decks: [HTMLMediaElement, HTMLMediaElement]; video: HTMLMediaElement }) {
     const strip = (output: AudioNode): Channel => {
       // Upmix mono files so both meter bars move.
       const gain = new GainNode(this.context, { channelCount: 2, channelCountMode: 'explicit' });
@@ -52,7 +54,12 @@ export class Mixer {
       this.context.createMediaElementSource(element).connect(channel.gain);
       return channel;
     };
-    this.channels = { audio: track(elements.audio), video: track(elements.video), master };
+    this.channels = {
+      deck0: track(elements.decks[0]),
+      deck1: track(elements.decks[1]),
+      video: track(elements.video),
+      master,
+    };
 
     // Browsers keep audio suspended until the user interacts with the page.
     const resume = () => void this.resume();
@@ -64,16 +71,21 @@ export class Mixer {
   }
 
   /** Volume 0..1, pan -1 (left) .. 1 (right); changes glide so they never click. */
-  setLevel(kind: StripKind, volume: number, muted: boolean, pan: number): void {
-    const channel = this.channels[kind];
+  setLevel(key: ChannelKey, volume: number, muted: boolean, pan: number): void {
+    const channel = this.channels[key];
     const now = this.context.currentTime;
     channel.gain.gain.setTargetAtTime(muted ? 0 : Math.min(1, Math.max(0, volume)), now, 0.01);
     channel.panner.pan.setTargetAtTime(Math.min(1, Math.max(-1, pan)), now, 0.01);
   }
 
+  /** Fades a channel out quickly, without the click of a hard stop. */
+  fadeOut(key: ChannelKey): void {
+    this.channels[key].gain.gain.setTargetAtTime(0, this.context.currentTime, 0.01);
+  }
+
   /** Current peak of each channel, as meter positions (0..1). */
-  levels(kind: StripKind): [number, number] {
-    return this.channels[kind].analysers.map((analyser) => {
+  levels(key: ChannelKey): [number, number] {
+    return this.channels[key].analysers.map((analyser) => {
       analyser.getFloatTimeDomainData(this.buffer);
       let peak = 0;
       for (const v of this.buffer) peak = Math.max(peak, Math.abs(v));

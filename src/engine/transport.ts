@@ -1,10 +1,13 @@
 import { pageDuration } from '../model/clips';
 import { playRange, type PlayRange } from '../model/range';
 import { ClockInterpolator, PageClock } from './clock';
-import { Mixer } from './mixer';
+import { Mixer, type ChannelKey, type StripKind } from './mixer';
 import { VideoSync } from './videoSync';
 
-export type TransportEvent = 'load' | 'playstate' | 'locate' | 'ended';
+export type TransportEvent = 'load' | 'playstate' | 'locate' | 'ended' | 'overlap';
+
+/** One of the two audio players; the page's audio plays on one while the other rings out or waits. */
+type Deck = { element: HTMLAudioElement; url: string | null; blob: Blob | null };
 
 function waitForMetadata(element: HTMLMediaElement): Promise<void> {
   if (element.readyState >= HTMLMediaElement.HAVE_METADATA) return Promise.resolve();
@@ -20,9 +23,21 @@ const finiteDuration = (element: HTMLMediaElement) => (Number.isFinite(element.d
  * Plays one page. The page has its own timeline clock; the audio and video
  * clips sit on it at their offsets. While the audio clip plays it drives the
  * clock, so the music itself is never corrected.
+ *
+ * The audio alternates between two decks: at a page's overlap mark its audio
+ * rings out on its deck while the next page starts on the other one.
  */
 export class Transport {
-  readonly audio = new Audio();
+  private readonly decks: [Deck, Deck] = [0, 1].map(() => {
+    const element = new Audio();
+    element.preload = 'auto';
+    return { element, url: null, blob: null };
+  }) as [Deck, Deck];
+  private deck: 0 | 1 = 0;
+  /** The previous page's audio ringing out after an overlap, until `end` in its clip time. */
+  private tail: { deck: 0 | 1; end: number } | null = null;
+  /** A preload that waits for the ringing deck to come free. */
+  private pendingPreload: { blob: Blob; time: number } | null = null;
   readonly videoSync = new VideoSync();
   readonly mixer: Mixer;
   private readonly clock = new PageClock();
@@ -32,11 +47,11 @@ export class Transport {
   private hasVideo = false;
   private audioOffset = 0;
   private videoOffset = 0;
-  private audioUrl: string | null = null;
   private _videoUrl: string | null = null;
   private _duration = 0;
   private rangeStart: number | null = null;
   private rangeEnd: number | null = null;
+  private overlapAt: number | null = null;
   /** The time of the last tick or seek, to see playback cross the out point. */
   private lastTime = 0;
   private _playing = false;
@@ -44,11 +59,98 @@ export class Transport {
   loop = false;
 
   constructor(readonly monitor: HTMLVideoElement) {
-    this.audio.preload = 'auto';
     monitor.preload = 'auto';
     monitor.playsInline = true;
-    this.mixer = new Mixer({ audio: this.audio, video: monitor });
+    this.mixer = new Mixer({ decks: [this.decks[0].element, this.decks[1].element], video: monitor });
     this.videoSync.add(monitor);
+  }
+
+  /** The current page's audio player. */
+  private get audio(): HTMLAudioElement {
+    return this.decks[this.deck].element;
+  }
+
+  /** The mixer channel of a strip: the Audio strip is whichever deck plays the current page. */
+  channel(kind: StripKind): ChannelKey {
+    return kind === 'audio' ? `deck${this.deck}` : kind;
+  }
+
+  levels(kind: StripKind): [number, number] {
+    return this.mixer.levels(this.channel(kind));
+  }
+
+  /** Where playback hands over to the next page (page time), or null for none. */
+  setOverlap(time: number | null): void {
+    this.overlapAt = time;
+  }
+
+  private setSource(deck: Deck, blob: Blob | null): void {
+    deck.element.pause();
+    if (deck.url) URL.revokeObjectURL(deck.url);
+    deck.url = blob ? URL.createObjectURL(blob) : null;
+    deck.blob = blob;
+    if (deck.url) deck.element.src = deck.url;
+    else {
+      deck.element.removeAttribute('src');
+      deck.element.load();
+    }
+  }
+
+  /** Loads the next page's audio onto the free deck, cued at `time` in its clip, so an overlap starts it at once. */
+  async preload(blob: Blob, time: number): Promise<void> {
+    if (this.tail) {
+      this.pendingPreload = { blob, time };
+      return;
+    }
+    const idle = this.decks[1 - this.deck];
+    if (idle.blob !== blob) this.setSource(idle, blob);
+    try {
+      await waitForMetadata(idle.element);
+      if (idle.blob === blob && idle !== this.decks[this.deck]) idle.element.currentTime = time;
+    } catch {
+      if (idle.blob === blob) this.setSource(idle, null);
+    }
+  }
+
+  /**
+   * At the overlap mark: stops the page clock but lets its audio ring out up to
+   * `end` (page time), and moves the page over to the other deck.
+   */
+  handOff(end: number): void {
+    if (!this._playing) return;
+    const time = this.now();
+    this._playing = false;
+    this.clock.stop(time);
+    // Only one page can ring out; the deck it uses is about to take the next page.
+    this.stopTail(false);
+    if (this.hasAudio && !this.audio.paused) this.tail = { deck: this.deck, end: end - this.audioOffset };
+    else this.audio.pause();
+    this.deck = this.deck === 0 ? 1 : 0;
+    this.hasAudio = false;
+    this.emit('playstate');
+  }
+
+  /** Ends the ringing out: with a short fade, or at once when its deck is needed right away. */
+  private stopTail(fade: boolean): void {
+    const tail = this.tail;
+    if (!tail) return;
+    this.tail = null;
+    const deck = this.decks[tail.deck];
+    const finish = () => {
+      if (deck !== this.decks[this.deck]) deck.element.pause();
+      const pending = this.pendingPreload;
+      this.pendingPreload = null;
+      if (pending) void this.preload(pending.blob, pending.time);
+    };
+    if (!fade) return finish();
+    this.mixer.fadeOut(`deck${tail.deck}`);
+    setTimeout(finish, 80);
+  }
+
+  /** Pauses and also silences a page still ringing out. */
+  stop(): void {
+    this.pause();
+    this.stopTail(true);
   }
 
   get duration(): number {
@@ -96,11 +198,11 @@ export class Transport {
 
   async load(audio: Blob | null, video: Blob | null, audioOffset: number, videoOffset: number): Promise<void> {
     this.pause();
-    this.unload();
-    if (audio) {
-      this.audioUrl = URL.createObjectURL(audio);
-      this.audio.src = this.audioUrl;
-    }
+    // A preloaded deck keeps its audio, ready and cued.
+    const deck = this.decks[this.deck];
+    const preloaded = audio !== null && deck.blob === audio;
+    this.unload(preloaded);
+    if (audio && !preloaded) this.setSource(deck, audio);
     if (video) {
       this._videoUrl = URL.createObjectURL(video);
       this.monitor.src = this._videoUrl;
@@ -116,14 +218,12 @@ export class Transport {
     }
   }
 
-  private unload(): void {
-    for (const element of [this.audio, this.monitor]) {
-      element.removeAttribute('src');
-      element.load();
-    }
-    if (this.audioUrl) URL.revokeObjectURL(this.audioUrl);
+  private unload(keepAudio: boolean): void {
+    if (!keepAudio) this.setSource(this.decks[this.deck], null);
+    this.monitor.removeAttribute('src');
+    this.monitor.load();
     if (this._videoUrl) URL.revokeObjectURL(this._videoUrl);
-    this.audioUrl = this._videoUrl = null;
+    this._videoUrl = null;
     this.hasAudio = this.hasVideo = false;
     this._duration = 0;
   }
@@ -183,7 +283,7 @@ export class Transport {
   }
 
   toggle(): void {
-    if (this._playing) this.pause();
+    if (this._playing) this.stop();
     else this.play();
   }
 
@@ -221,7 +321,17 @@ export class Transport {
 
   /** Call every animation frame: follows the clips and returns the current time. */
   tick(): number {
+    if (this.tail) {
+      const element = this.decks[this.tail.deck].element;
+      if (element.paused || element.currentTime >= this.tail.end) this.stopTail(true);
+    }
     const time = this.now();
+    const overlap = this.overlapAt;
+    if (this._playing && !this.loop && overlap !== null && this.lastTime < overlap && time >= overlap) {
+      this.lastTime = time;
+      this.emit('overlap');
+      return this.now();
+    }
     const { start, end } = this.range;
     // Playback started past the out point runs on to the end of the page.
     const ended = time >= this._duration || (this.lastTime < end && time >= end);

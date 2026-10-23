@@ -15,7 +15,7 @@ export function pageDuration(
 
 /**
  * Places a clip on the page timeline (never before zero).
- * Markers and the in / out points belong to the music, so they move with the audio clip.
+ * Markers, the in / out points and the overlap mark belong to the music, so they move with the audio clip.
  */
 export function moveClip(page: Page, kind: 'audio' | 'video', offset: number, durations: MediaDurations): Page {
   const clamped = Math.max(0, offset);
@@ -30,5 +30,6 @@ export function moveClip(page: Page, kind: 'audio' | 'video', offset: number, du
     markers: page.markers.map((m) => ({ ...m, time: shift(m.time) })),
     rangeStart: page.rangeStart === null ? null : shift(page.rangeStart),
     rangeEnd: page.rangeEnd === null ? null : shift(page.rangeEnd),
+    overlapAt: page.overlapAt === null ? null : shift(page.overlapAt),
   };
 }

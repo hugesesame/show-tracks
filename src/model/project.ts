@@ -32,6 +32,7 @@ export function createPage(name: string, id: string = randomId()): Page {
     videoPan: 0,
     rangeStart: null,
     rangeEnd: null,
+    overlapAt: null,
     mtcOffset: 0,
     endAction: 'stop',
     markers: [],
@@ -54,6 +55,7 @@ export function normalizeProject(project: Project): Project {
       endAction: p.endAction ?? 'stop',
       rangeStart: p.rangeStart ?? null,
       rangeEnd: p.rangeEnd ?? null,
+      overlapAt: p.overlapAt ?? null,
       markers: orderMarkers(p.markers),
     })),
   };

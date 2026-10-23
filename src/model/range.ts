@@ -40,3 +40,15 @@ export function setRangeEnd(page: Page, time: number | null, duration: number): 
   const rangeStart = page.rangeStart !== null && page.rangeStart >= end ? null : page.rangeStart;
   return { ...page, rangeStart, rangeEnd: end };
 }
+
+/** Places the overlap mark (null clears it). */
+export function setOverlap(page: Page, time: number | null, duration: number): Page {
+  return { ...page, overlapAt: time === null ? null : Math.min(Math.max(time, 0), duration) };
+}
+
+/** The overlap mark if it works: only inside the range, before the out point. */
+export function activeOverlap(page: Page, duration: number): number | null {
+  if (page.overlapAt === null) return null;
+  const { start, end } = playRange(page, duration);
+  return page.overlapAt > start && page.overlapAt < end ? page.overlapAt : null;
+}

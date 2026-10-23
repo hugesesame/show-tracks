@@ -152,6 +152,7 @@ describe('project', () => {
       videoPan: 0,
       rangeStart: null,
       rangeEnd: null,
+      overlapAt: null,
       mtcOffset: 0,
       endAction: 'stop',
       markers: [],

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { moveClip } from '../src/model/clips';
 import { createPage } from '../src/model/project';
-import { cueMarkers, inRange, playRange, setRangeEnd, setRangeStart } from '../src/model/range';
+import { activeOverlap, cueMarkers, inRange, playRange, setOverlap, setRangeEnd, setRangeStart } from '../src/model/range';
 import type { Page } from '../src/model/types';
 
 const page = (rangeStart: number | null, rangeEnd: number | null): Page => ({
@@ -71,5 +71,22 @@ describe('moveClip', () => {
       rangeStart: null,
       rangeEnd: null,
     });
+  });
+});
+
+describe('overlap mark', () => {
+  it('works only inside the range, before the out point', () => {
+    const at = (overlapAt: number) => ({ ...page(10, 60), overlapAt });
+    expect(activeOverlap(at(50), 100)).toBe(50);
+    expect(activeOverlap(at(5), 100)).toBeNull();
+    expect(activeOverlap(at(60), 100)).toBeNull();
+    expect(activeOverlap(page(null, null), 100)).toBeNull();
+  });
+
+  it('is placed within the page and moves with the audio clip', () => {
+    expect(setOverlap(page(null, null), 120, 100).overlapAt).toBe(100);
+    expect(setOverlap({ ...page(null, null), overlapAt: 40 }, null, 100).overlapAt).toBeNull();
+    const moved = moveClip({ ...page(null, null), overlapAt: 40 }, 'audio', 5, { audio: 100, video: null });
+    expect(moved.overlapAt).toBe(45);
   });
 });

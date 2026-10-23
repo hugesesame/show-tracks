@@ -38,6 +38,8 @@ export function installKeyboard(app: App, zoom: ZoomControls, files: FileMenu): 
       // I / O set the in / out point at the playhead; with Option they clear it.
       KeyI: () => (e.altKey ? app.setRangePoint('start', null) : app.setRangePointAtPlayhead('start')),
       KeyO: () => (e.altKey ? app.setRangePoint('end', null) : app.setRangePointAtPlayhead('end')),
+      // X places the overlap mark, where the next page starts while this one rings out.
+      KeyX: () => (e.altKey ? app.setRangePoint('overlap', null) : app.setRangePointAtPlayhead('overlap')),
       // Arrows jump between markers; with Option they rewind / fast forward.
       ArrowLeft: () => (e.altKey ? app.rewind() : app.previousMarker()),
       ArrowRight: () => (e.altKey ? app.fastForward() : app.nextMarker()),
@@ -53,7 +55,7 @@ export function installKeyboard(app: App, zoom: ZoomControls, files: FileMenu): 
     const action = actions[e.code];
     if (!action) return;
     // GO and marker shortcuts must not fire repeatedly while a key is held.
-    if (e.repeat && ['KeyG', 'KeyM', 'KeyF', 'KeyI', 'KeyO', 'Space'].includes(e.code)) return;
+    if (e.repeat && ['KeyG', 'KeyM', 'KeyF', 'KeyI', 'KeyO', 'KeyX', 'Space'].includes(e.code)) return;
     e.preventDefault();
     // A focused button would otherwise also react to Space.
     if (document.activeElement instanceof HTMLButtonElement) document.activeElement.blur();
