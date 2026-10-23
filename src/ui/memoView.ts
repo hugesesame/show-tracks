@@ -9,6 +9,8 @@ const POSITIONS: { position: MemoPosition; label: string }[] = [
   { position: 'bottom', label: 'Bottom' },
 ];
 
+const CONTROLS_KEY = 'cue-player-memo-controls';
+
 /** The memo of the last cue passed, as the performers see it, with its look controls. */
 export function createMemoView(app: App) {
   const stage = createMemoStage();
@@ -71,18 +73,46 @@ export function createMemoView(app: App) {
     class: 'small',
     onclick: () => app.setMemoLook({ memoOutput: !app.project.settings.memoOutput }),
   }, 'Output');
+  const controls = h(
+    'div',
+    { class: 'memo-controls' },
+    // One slider per line behind labels of one width, so the sliders line up.
+    sliderRow('Aa', size, color),
+    sliderRow('Edge', outline, outlineColor, outlineOn),
+    sliderRow('Fade', fade, fadeValue, fadeOn),
+    h('div', { class: 'memo-group' }, h('div', { class: 'memo-group memo-positions' }, ...positions), output),
+  );
+  // The settings fold away, leaving the room to the screen.
+  let controlsShown = true;
+  try {
+    controlsShown = localStorage.getItem(CONTROLS_KEY) !== 'hidden';
+  } catch {
+    // Starting with the settings shown is fine.
+  }
+  const controlsToggle = h('button', {
+    type: 'button',
+    class: 'small memo-controls-toggle',
+    onclick: () => {
+      controlsShown = !controlsShown;
+      try {
+        localStorage.setItem(CONTROLS_KEY, controlsShown ? 'shown' : 'hidden');
+      } catch {
+        // Not remembering it is fine.
+      }
+      showControls();
+    },
+  }, '⚙');
+  function showControls(): void {
+    controls.hidden = !controlsShown;
+    controlsToggle.classList.toggle('active', controlsShown);
+    controlsToggle.title = controlsShown ? 'Hide the memo settings' : 'Show the memo settings';
+  }
+  showControls();
   const element = h(
     'div',
     { class: 'memo-view' },
-    h(
-      'div',
-      { class: 'memo-controls' },
-      // One slider per line behind labels of one width, so the sliders line up.
-      sliderRow('Aa', size, color),
-      sliderRow('Edge', outline, outlineColor, outlineOn),
-      sliderRow('Fade', fade, fadeValue, fadeOn),
-      h('div', { class: 'memo-group' }, h('div', { class: 'memo-group memo-positions' }, ...positions), output),
-    ),
+    controlsToggle,
+    controls,
     // Framed like the video output, so the text sits and scales as it does there.
     h('div', { class: 'memo-screen-area' }, h('div', { class: 'screen' }, stage.element)),
   );

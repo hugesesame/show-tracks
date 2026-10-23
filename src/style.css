@@ -811,9 +811,15 @@ button.active {
   background: var(--panel);
 }
 
+/* In the view tabs' line, at the left. */
+.memo-controls-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
 /* Below the view tabs: a line per slider, then placement and output. */
 .memo-controls {
-  margin-top: 40px;
   padding: 0 8px 8px;
   display: flex;
   flex-direction: column;
@@ -822,6 +828,14 @@ button.active {
 }
 
 /* The rest of the view, where the output's screen is framed. */
+.memo-view {
+  padding-top: 40px;
+}
+
+.memo-controls[hidden] {
+  display: none;
+}
+
 .memo-screen-area {
   position: relative;
   flex: 1;
