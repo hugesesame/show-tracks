@@ -32,6 +32,11 @@ export function createMemoView(app: App) {
     oninput: () => app.setMemoLook({ memoFade: Number(fade.value) }),
   });
   const fadeValue = h('span', { class: 'memo-fade-value' });
+  const fadeOn = h('button', {
+    type: 'button',
+    class: 'small',
+    onclick: () => app.setMemoLook({ memoFadeOn: !app.project.settings.memoFadeOn }),
+  }, 'Fade');
   const color = h('input', {
     class: 'memo-color',
     type: 'color',
@@ -49,20 +54,17 @@ export function createMemoView(app: App) {
   const element = h(
     'div',
     { class: 'memo-view' },
-    // Framed like the video output, so the text sits and scales as it does there.
-    h('div', { class: 'screen' }, stage.element),
     h(
       'div',
       { class: 'memo-controls' },
-      h('span', { class: 'memo-label' }, 'Aa'),
-      h('div', { class: 'volume-wrap memo-size' }, size),
-      color,
-      h('span', { class: 'memo-label' }, 'Fade'),
-      h('div', { class: 'volume-wrap memo-size' }, fade),
-      fadeValue,
-      h('div', { class: 'memo-positions' }, ...positions),
+      // Each group stays on one line; the groups wrap when the monitor is narrow.
+      h('div', { class: 'memo-group' }, h('span', { class: 'memo-label' }, 'Aa'), h('div', { class: 'volume-wrap memo-size' }, size), color),
+      h('div', { class: 'memo-group' }, fadeOn, h('div', { class: 'volume-wrap memo-size' }, fade), fadeValue),
+      h('div', { class: 'memo-group memo-positions' }, ...positions),
       output,
     ),
+    // Framed like the video output, so the text sits and scales as it does there.
+    h('div', { class: 'memo-screen-area' }, h('div', { class: 'screen' }, stage.element)),
   );
 
   function update(): void {
@@ -73,6 +75,10 @@ export function createMemoView(app: App) {
     fade.value = String(s.memoFade);
     fade.style.setProperty('--fill', String(s.memoFade / Number(fade.max)));
     fadeValue.textContent = `${s.memoFade.toFixed(1)}s`;
+    fadeOn.classList.toggle('active', s.memoFadeOn);
+    fadeOn.title = s.memoFadeOn ? 'Dissolve on: click to cut straight to the next memo' : 'Dissolve off: click to turn it on';
+    fade.disabled = !s.memoFadeOn;
+    fadeValue.classList.toggle('off', !s.memoFadeOn);
     for (const b of positions) b.classList.toggle('active', b.dataset.position === s.memoPosition);
     output.classList.toggle('active', s.memoOutput);
     output.title = s.memoOutput ? 'Shown on the video output: click to hide' : 'Hidden on the video output: click to show';

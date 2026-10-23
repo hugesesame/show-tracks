@@ -154,6 +154,7 @@ describe('project', () => {
       memoColor: '#ffffff',
       memoPosition: 'bottom',
       memoFade: 0.5,
+      memoFadeOn: true,
       memoOutput: true,
     });
   });

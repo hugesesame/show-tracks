@@ -801,19 +801,27 @@ button.active {
 .memo-view {
   position: absolute;
   inset: 0;
+  display: flex;
+  flex-direction: column;
   background: var(--panel);
 }
 
-/* Left of the view tabs; wraps when the monitor is narrow. */
+/* Below the view tabs, full width; the groups wrap when the monitor is narrow. */
 .memo-controls {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 150px;
+  margin-top: 40px;
+  padding: 0 8px 8px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+}
+
+/* The rest of the view, where the output's screen is framed. */
+.memo-screen-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  container-type: size;
 }
 
 .memo-label {
@@ -838,9 +846,18 @@ button.active {
   cursor: pointer;
 }
 
-.memo-positions {
+.memo-group {
   display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.memo-positions {
   gap: 2px;
+}
+
+.memo-fade-value.off {
+  opacity: 0.4;
 }
 
 /* ---- mixer ---- */

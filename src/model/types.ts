@@ -19,6 +19,8 @@ export type Settings = {
   memoPosition: MemoPosition;
   /** Seconds one memo dissolves into the next; 0 switches at once. */
   memoFade: number;
+  /** Off cuts straight to the next memo, keeping the fade length for later. */
+  memoFadeOn: boolean;
   /** Also shows the memos on the video output, over the video. */
   memoOutput: boolean;
 };

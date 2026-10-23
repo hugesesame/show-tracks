@@ -380,7 +380,7 @@ export class App {
     return this.loadedPageId === this.page.id ? memoAt(this.page, time) : '';
   }
 
-  setMemoLook(patch: Partial<Pick<Settings, 'memoSize' | 'memoColor' | 'memoPosition' | 'memoFade' | 'memoOutput'>>): void {
+  setMemoLook(patch: Partial<Pick<Settings, 'memoSize' | 'memoColor' | 'memoPosition' | 'memoFade' | 'memoFadeOn' | 'memoOutput'>>): void {
     this.commit(updateSettings(this._project, patch));
   }
 

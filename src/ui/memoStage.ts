@@ -1,6 +1,6 @@
 import type { Settings } from '../model/types';
 
-export type MemoLook = Pick<Settings, 'memoSize' | 'memoColor' | 'memoPosition' | 'memoFade'>;
+export type MemoLook = Pick<Settings, 'memoSize' | 'memoColor' | 'memoPosition' | 'memoFade' | 'memoFadeOn'>;
 
 /**
  * Shared by the main window and the video output, which is a separate document:
@@ -73,13 +73,14 @@ export function createMemoStage(doc: Document = document) {
 
   /** Cheap to call every frame: the page only changes when the memo or its look does. */
   function render(memo: string, look: MemoLook): void {
-    const key = `${look.memoSize}|${look.memoColor}|${look.memoPosition}|${look.memoFade}`;
+    const fade = look.memoFadeOn ? look.memoFade : 0;
+    const key = `${look.memoSize}|${look.memoColor}|${look.memoPosition}|${fade}`;
     if (key !== shownLook) {
       shownLook = key;
       element.dataset.position = look.memoPosition;
       element.style.setProperty('--memo-size', String(look.memoSize));
       element.style.setProperty('--memo-color', look.memoColor);
-      element.style.setProperty('--memo-fade', `${look.memoFade}s`);
+      element.style.setProperty('--memo-fade', `${fade}s`);
     }
     if (memo === shown) return;
     shown = memo;

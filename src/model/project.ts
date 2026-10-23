@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS: Settings = {
   memoColor: '#ffffff',
   memoPosition: 'bottom',
   memoFade: 0.5,
+  memoFadeOn: true,
   memoOutput: true,
 };
 
