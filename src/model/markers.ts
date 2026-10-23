@@ -25,9 +25,9 @@ export function addMarker(
   duration: number,
   nextId: IdGenerator = randomId,
 ): { page: Page; marker: Marker } {
-  const added = withMarkers(page, [...page.markers, { id: nextId(), name: 'Cue 0', time: clamp(time, duration) }]);
-  const marker = added.markers.find((m) => !page.markers.some((old) => old.id === m.id))!;
-  return { page: added, marker };
+  const marker: Marker = { id: nextId(), name: 'Cue 0', time: clamp(time, duration), midiOn: false, note: null };
+  const added = withMarkers(page, [...page.markers, marker]);
+  return { page: added, marker: added.markers.find((m) => m.id === marker.id)! };
 }
 
 export function removeMarker(page: Page, markerId: string): Page {
@@ -45,6 +45,10 @@ function updateMarker(page: Page, markerId: string, update: (m: Marker) => Marke
 
 export function renameMarker(page: Page, markerId: string, name: string): Page {
   return updateMarker(page, markerId, (m) => ({ ...m, name }));
+}
+
+export function setMarkerMidi(page: Page, markerId: string, patch: Partial<Pick<Marker, 'midiOn' | 'note'>>): Page {
+  return updateMarker(page, markerId, (m) => ({ ...m, ...patch }));
 }
 
 export function setMarkerTime(page: Page, markerId: string, time: number, duration: number): Page {

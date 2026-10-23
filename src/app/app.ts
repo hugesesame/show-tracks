@@ -4,7 +4,8 @@ import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
 import { importMediaFile } from '../media/importMedia';
 import { moveClip } from '../model/clips';
-import { addMarker, removeMarker, renameMarker, setMarkerTime } from '../model/markers';
+import { addMarker, removeMarker, renameMarker, setMarkerMidi, setMarkerTime } from '../model/markers';
+import { cuesReached, noteFor } from '../model/notes';
 import { activeOverlap, setOverlap, setRangeEnd, setRangeStart, type PlayRange } from '../model/range';
 import {
   addPage,
@@ -51,6 +52,8 @@ export class App {
   private loadedPageId: string | null = null;
   private loading: Promise<void> = Promise.resolve();
   private readonly autosaver: Autosaver;
+  /** The page time cue notes were last checked at while playing; null after a start or jump. */
+  private noteTime: number | null = null;
   private readonly events = new EventTarget();
 
   constructor(
@@ -67,7 +70,11 @@ export class App {
       (p) => saveProject(db, p),
       () => this.error('Saving failed. Storage may be full.'),
     );
-    this.transport.on('locate', () => this.mtc.locate(this.transport.now()));
+    this.transport.on('locate', () => {
+      this.mtc.locate(this.transport.now());
+      this.noteTime = null;
+    });
+    this.mtc.onTick(() => this.sendDueNotes());
     this.transport.on('playstate', () => {
       if (!this.transport.playing) this.mtc.locate(this.transport.now());
       this.emit('change');
@@ -311,6 +318,19 @@ export class App {
     this.selectCue(marker.id);
   }
 
+  /** Sends the MIDI Notes of the cues playback reached since the last check. */
+  private sendDueNotes(): void {
+    if (!this.transport.playing || this.loadedPageId !== this.page.id) {
+      this.noteTime = null;
+      return;
+    }
+    const time = this.transport.now();
+    for (const marker of cuesReached(this.page, this.noteTime, time)) {
+      this.mtc.sendNote(noteFor(marker, this._project.settings));
+    }
+    this.noteTime = time;
+  }
+
   // ---- markers ----
 
   addMarkerAtPlayhead(): void {
@@ -340,6 +360,19 @@ export class App {
 
   setMarkerTime(markerId: string, time: number): void {
     this.updateCurrentPage((page, duration) => setMarkerTime(page, markerId, time, duration));
+  }
+
+  setMarkerMidi(markerId: string, patch: { midiOn?: boolean; note?: number | null }): void {
+    this.updateCurrentPage((page) => setMarkerMidi(page, markerId, patch));
+  }
+
+  /** Turns the cues' MIDI Notes on this page on or off as a whole. */
+  toggleMidiNotes(): void {
+    this.commit(updatePage(this._project, this.page.id, { midiNotes: !this.page.midiNotes }));
+  }
+
+  setNoteDefaults(patch: Partial<Pick<Settings, 'noteChannel' | 'noteNumber' | 'noteVelocity'>>): void {
+    this.commit(updateSettings(this._project, patch));
   }
 
   removeMarker(markerId: string): void {

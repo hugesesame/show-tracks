@@ -45,7 +45,7 @@ describe('markers', () => {
 
   it('returns the new marker', () => {
     const { marker } = addMarker(createPage('P', 'p'), 5, 100, () => 'm');
-    expect(marker).toEqual({ id: 'm', name: 'Cue 1', time: 5 });
+    expect(marker).toEqual({ id: 'm', name: 'Cue 1', time: 5, midiOn: false, note: null });
   });
 
   it('closes the gap in the numbers when a marker is removed', () => {
@@ -78,8 +78,8 @@ describe('markers', () => {
     let project = createProject(createPage('A', 'a'));
     project = updatePage(project, 'a', {
       markers: [
-        { id: 'x', name: 'Cue 12', time: 9 },
-        { id: 'y', name: 'Cue 10', time: 3 },
+        { id: 'x', name: 'Cue 12', time: 9, midiOn: false, note: null },
+        { id: 'y', name: 'Cue 10', time: 3, midiOn: false, note: null },
       ],
     });
     expect(normalizeProject(project).pages[0].markers.map((m) => m.name)).toEqual(['Cue 1', 'Cue 2']);
@@ -133,6 +133,9 @@ describe('project', () => {
       masterVolume: 1,
       masterMuted: false,
       masterPan: 0,
+      noteChannel: 1,
+      noteNumber: 60,
+      noteVelocity: 127,
     });
   });
 
@@ -156,6 +159,7 @@ describe('project', () => {
       mtcOffset: 0,
       endAction: 'stop',
       markers: [],
+      midiNotes: true,
     });
   });
 

@@ -39,6 +39,33 @@ export function createSettings(app: App, files: FileMenu) {
       ...FPS_OPTIONS.map((fps) => h('option', { value: fps, selected: fps === settings.mtcFps }, FPS_LABELS[fps])),
     );
 
+    /** A whole number field for the note defaults; out-of-range input is refused. */
+    const numberField = (value: number, min: number, max: number, set: (n: number) => void) => {
+      const input = h('input', {
+        class: 'number',
+        type: 'number',
+        min,
+        max,
+        value: String(value),
+        onchange: () => {
+          const n = Number(input.value);
+          if (Number.isInteger(n) && n >= min && n <= max) set(n);
+          else {
+            app.error(`Enter a number from ${min} to ${max}.`);
+            render();
+          }
+        },
+      });
+      return input;
+    };
+    const channelSelect = h(
+      'select',
+      { onchange: () => app.setNoteDefaults({ noteChannel: Number(channelSelect.value) }) },
+      ...Array.from({ length: 16 }, (_, i) =>
+        h('option', { value: String(i + 1), selected: i + 1 === settings.noteChannel }, String(i + 1)),
+      ),
+    );
+
     const pageName = h('input', {
       value: page.name,
       onchange: () => pageName.value.trim() && app.renamePage(pageName.value.trim()),
@@ -71,6 +98,11 @@ export function createSettings(app: App, files: FileMenu) {
         row('MIDI output', midiSelect),
         midiHint ? h('div', { class: 'hint' }, midiHint) : null,
         row('Frame rate', fpsSelect),
+        h('h3', {}, 'MIDI Note'),
+        row('Channel', channelSelect),
+        row('Note', numberField(settings.noteNumber, 0, 127, (n) => app.setNoteDefaults({ noteNumber: n }))),
+        row('Velocity', numberField(settings.noteVelocity, 1, 127, (n) => app.setNoteDefaults({ noteVelocity: n }))),
+        h('div', { class: 'hint' }, 'Sent to the MIDI output above when playback reaches a cue with MIDI on. Cues can have their own note in the Cue List.'),
         h('h3', {}, `This page (${page.name})`),
         row('Page name', pageName),
         row('MTC offset', offset),

@@ -596,7 +596,7 @@ button.active {
 
 .cue-row {
   display: grid;
-  grid-template-columns: 24px 36px 1fr 110px 28px;
+  grid-template-columns: 24px 36px 1fr 110px 40px 40px 28px;
   align-items: center;
   gap: 8px;
   padding: 4px 12px;
@@ -606,6 +606,35 @@ button.active {
 
 .cue-row:hover {
   background: var(--panel-2);
+}
+
+.midi-toggle {
+  min-width: 36px;
+  color: var(--muted);
+}
+
+.midi-toggle.on {
+  border-color: var(--overlap);
+  color: var(--overlap);
+}
+
+/* With the page's MIDI Notes off, the cues' own switches do nothing. */
+.cue-list.midi-off .cue-row .midi-toggle {
+  opacity: 0.4;
+}
+
+.cue-row .cell.note {
+  font-family: var(--mono);
+  text-align: right;
+}
+
+.cue-row .cell.note.default {
+  color: var(--muted);
+}
+
+.cue-row input.note {
+  width: 100%;
+  text-align: right;
 }
 
 .cue-row.outside {

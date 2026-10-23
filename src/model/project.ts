@@ -14,6 +14,9 @@ const DEFAULT_SETTINGS: Settings = {
   masterVolume: MASTER_VOLUME,
   masterMuted: false,
   masterPan: 0,
+  noteChannel: 1,
+  noteNumber: 60,
+  noteVelocity: 127,
 };
 
 export function createPage(name: string, id: string = randomId()): Page {
@@ -36,6 +39,7 @@ export function createPage(name: string, id: string = randomId()): Page {
     mtcOffset: 0,
     endAction: 'stop',
     markers: [],
+    midiNotes: true,
   };
 }
 
@@ -56,7 +60,8 @@ export function normalizeProject(project: Project): Project {
       rangeStart: p.rangeStart ?? null,
       rangeEnd: p.rangeEnd ?? null,
       overlapAt: p.overlapAt ?? null,
-      markers: orderMarkers(p.markers),
+      midiNotes: p.midiNotes ?? true,
+      markers: orderMarkers(p.markers.map((m) => ({ ...m, midiOn: m.midiOn ?? false, note: m.note ?? null }))),
     })),
   };
 }

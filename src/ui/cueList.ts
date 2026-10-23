@@ -46,8 +46,16 @@ function startEditing(cell: HTMLElement, value: string, commit: (text: string) =
 
 export function createCueList(app: App) {
   const list = h('div', { class: 'cue-list' });
-  const element = h('section', { class: 'panel' }, h('div', { class: 'panel-title' }, 'CUE LIST'), list);
+  const pageMidi = h('button', { class: 'small midi-toggle', onclick: () => app.toggleMidiNotes() }, 'MIDI');
+  const element = h(
+    'section',
+    { class: 'panel' },
+    h('div', { class: 'panel-title' }, 'CUE LIST', h('div', { class: 'panel-actions' }, pageMidi)),
+    list,
+  );
   let renderedMarkers: Marker[] | null = null;
+  /** The default note the rows were drawn with; cues without their own note show it. */
+  let renderedNote = -1;
   let dirty = false;
 
   function row(marker: Marker, index: number): HTMLElement {
@@ -67,6 +75,31 @@ export function createCueList(app: App) {
       },
       render,
     );
+    const midi = h(
+      'button',
+      {
+        class: `small midi-toggle${marker.midiOn ? ' on' : ''}`,
+        title: marker.midiOn ? 'MIDI Note on: click to turn off' : 'MIDI Note off: click to turn on',
+        onclick: (e: Event) => {
+          e.stopPropagation();
+          app.setMarkerMidi(marker.id, { midiOn: !marker.midiOn });
+        },
+      },
+      marker.midiOn ? 'On' : 'Off',
+    );
+    const note = editableCell(
+      `note${marker.note === null ? ' default' : ''}`,
+      String(marker.note ?? app.project.settings.noteNumber),
+      (text) => {
+        // Empty goes back to the default note.
+        if (text.trim() === '') return app.setMarkerMidi(marker.id, { note: null });
+        const value = Number(text);
+        if (Number.isInteger(value) && value >= 0 && value <= 127) app.setMarkerMidi(marker.id, { note: value });
+        else app.error('Enter a note number from 0 to 127.');
+      },
+      render,
+    );
+    note.title = 'MIDI Note number (double-click to edit, clear it for the default)';
     const element = h(
       'div',
       { class: 'cue-row', onclick: () => app.selectCue(marker.id) },
@@ -74,6 +107,8 @@ export function createCueList(app: App) {
       h('span', { class: 'num' }, String(index + 1)),
       name,
       time,
+      midi,
+      note,
       h(
         'button',
         {
@@ -115,6 +150,7 @@ export function createCueList(app: App) {
     dirty = false;
     const { markers } = app.page;
     renderedMarkers = markers;
+    renderedNote = app.project.settings.noteNumber;
     if (markers.length === 0) {
       list.replaceChildren(h('div', { class: 'cue-empty' }, 'No markers. Press M to add one at the playhead.'));
       return;
@@ -129,7 +165,11 @@ export function createCueList(app: App) {
       dirty = true;
       return;
     }
-    if (app.page.markers === renderedMarkers) updateStandby();
+    const { midiNotes } = app.page;
+    pageMidi.classList.toggle('on', midiNotes);
+    pageMidi.title = midiNotes ? "This page's MIDI Notes are on: click to turn them off" : "This page's MIDI Notes are off: click to turn them on";
+    list.classList.toggle('midi-off', !midiNotes);
+    if (app.page.markers === renderedMarkers && app.project.settings.noteNumber === renderedNote) updateStandby();
     else render();
   }
 

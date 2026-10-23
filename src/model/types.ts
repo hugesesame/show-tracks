@@ -9,6 +9,10 @@ export type Settings = {
   masterVolume: number;
   masterMuted: boolean;
   masterPan: number;
+  /** MIDI Notes sent at cues: channel 1..16, the note a cue uses unless it has its own, velocity 1..127. */
+  noteChannel: number;
+  noteNumber: number;
+  noteVelocity: number;
 };
 
 export type Project = {
@@ -47,6 +51,8 @@ export type Page = {
   mtcOffset: number;
   /** Always sorted by time. */
   markers: Marker[];
+  /** Turns the cues' MIDI Notes on this page on or off as a whole. */
+  midiNotes: boolean;
 };
 
 export type Marker = {
@@ -54,6 +60,10 @@ export type Marker = {
   name: string;
   /** Seconds from the start of the page. */
   time: number;
+  /** Sends a MIDI Note when playback reaches the cue. */
+  midiOn: boolean;
+  /** The cue's own note number; null uses the project's default note. */
+  note: number | null;
 };
 
 export type MediaRecord = {

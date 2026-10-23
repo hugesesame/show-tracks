@@ -32,7 +32,7 @@ describe('inRange / cueMarkers', () => {
   it('lists only the markers inside the range', () => {
     const p = {
       ...page(10, 20),
-      markers: [5, 10, 15, 20].map((time, i) => ({ id: `m${i}`, name: `Cue ${i + 1}`, time })),
+      markers: [5, 10, 15, 20].map((time, i) => ({ id: `m${i}`, name: `Cue ${i + 1}`, time, midiOn: false, note: null })),
     };
     expect(cueMarkers(p).map((m) => m.id)).toEqual(['m1', 'm2']);
   });
