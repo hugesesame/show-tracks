@@ -1,6 +1,9 @@
 import type { Settings } from '../model/types';
 
-export type MemoLook = Pick<Settings, 'memoSize' | 'memoColor' | 'memoPosition' | 'memoFade' | 'memoFadeOn'>;
+export type MemoLook = Pick<
+  Settings,
+  'memoSize' | 'memoColor' | 'memoOutline' | 'memoOutlineColor' | 'memoPosition' | 'memoFade' | 'memoFadeOn'
+>;
 
 /**
  * Shared by the main window and the video output, which is a separate document:
@@ -38,8 +41,8 @@ const STYLE = `
   text-align: center;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  /* A dark outline keeps the text readable over the video. */
-  -webkit-text-stroke: calc(var(--memo-size) * 0.08cqh) rgba(0, 0, 0, 0.85);
+  /* An outline keeps the text readable over the video; drawn under the fill. */
+  -webkit-text-stroke: calc(var(--memo-size) * var(--memo-outline) * 1cqh) var(--memo-outline-color);
   paint-order: stroke fill;
 }
 `;
@@ -74,12 +77,14 @@ export function createMemoStage(doc: Document = document) {
   /** Cheap to call every frame: the page only changes when the memo or its look does. */
   function render(memo: string, look: MemoLook): void {
     const fade = look.memoFadeOn ? look.memoFade : 0;
-    const key = `${look.memoSize}|${look.memoColor}|${look.memoPosition}|${fade}`;
+    const key = [look.memoSize, look.memoColor, look.memoOutline, look.memoOutlineColor, look.memoPosition, fade].join('|');
     if (key !== shownLook) {
       shownLook = key;
       element.dataset.position = look.memoPosition;
       element.style.setProperty('--memo-size', String(look.memoSize));
       element.style.setProperty('--memo-color', look.memoColor);
+      element.style.setProperty('--memo-outline', String(look.memoOutline));
+      element.style.setProperty('--memo-outline-color', look.memoOutlineColor);
       element.style.setProperty('--memo-fade', `${fade}s`);
     }
     if (memo === shown) return;

@@ -22,6 +22,21 @@ export function createMemoView(app: App) {
     title: 'Text size',
     oninput: () => app.setMemoLook({ memoSize: Number(size.value) }),
   });
+  const outline = h('input', {
+    class: 'volume',
+    type: 'range',
+    min: 0,
+    max: 0.25,
+    step: 0.01,
+    title: 'Outline width',
+    oninput: () => app.setMemoLook({ memoOutline: Number(outline.value) }),
+  });
+  const outlineColor = h('input', {
+    class: 'memo-color',
+    type: 'color',
+    title: 'Outline colour',
+    oninput: () => app.setMemoLook({ memoOutlineColor: outlineColor.value }),
+  });
   const fade = h('input', {
     class: 'volume',
     type: 'range',
@@ -59,6 +74,13 @@ export function createMemoView(app: App) {
       { class: 'memo-controls' },
       // Each group stays on one line; the groups wrap when the monitor is narrow.
       h('div', { class: 'memo-group' }, h('span', { class: 'memo-label' }, 'Aa'), h('div', { class: 'volume-wrap memo-size' }, size), color),
+      h(
+        'div',
+        { class: 'memo-group' },
+        h('span', { class: 'memo-label' }, 'Edge'),
+        h('div', { class: 'volume-wrap memo-size' }, outline),
+        outlineColor,
+      ),
       h('div', { class: 'memo-group' }, fadeOn, h('div', { class: 'volume-wrap memo-size' }, fade), fadeValue),
       h('div', { class: 'memo-group memo-positions' }, ...positions),
       output,
@@ -72,6 +94,9 @@ export function createMemoView(app: App) {
     size.value = String(s.memoSize);
     size.style.setProperty('--fill', String((s.memoSize - Number(size.min)) / (Number(size.max) - Number(size.min))));
     color.value = s.memoColor;
+    outline.value = String(s.memoOutline);
+    outline.style.setProperty('--fill', String(s.memoOutline / Number(outline.max)));
+    outlineColor.value = s.memoOutlineColor;
     fade.value = String(s.memoFade);
     fade.style.setProperty('--fill', String(s.memoFade / Number(fade.max)));
     fadeValue.textContent = `${s.memoFade.toFixed(1)}s`;

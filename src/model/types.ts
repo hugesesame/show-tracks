@@ -16,6 +16,9 @@ export type Settings = {
   /** How cue memos (lyrics, prompts) look on the Memo view and the video output. */
   memoSize: number;
   memoColor: string;
+  /** The text outline: its width as a share of the text size (0 for none), and its colour. */
+  memoOutline: number;
+  memoOutlineColor: string;
   memoPosition: MemoPosition;
   /** Seconds one memo dissolves into the next; 0 switches at once. */
   memoFade: number;

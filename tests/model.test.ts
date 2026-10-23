@@ -152,6 +152,8 @@ describe('project', () => {
       noteVelocity: 127,
       memoSize: 8,
       memoColor: '#ffffff',
+      memoOutline: 0.08,
+      memoOutlineColor: '#000000',
       memoPosition: 'bottom',
       memoFade: 0.5,
       memoFadeOn: true,

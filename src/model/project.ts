@@ -20,6 +20,8 @@ const DEFAULT_SETTINGS: Settings = {
   // Percent of the screen height, so the Memo view and the video output scale alike.
   memoSize: 8,
   memoColor: '#ffffff',
+  memoOutline: 0.08,
+  memoOutlineColor: '#000000',
   memoPosition: 'bottom',
   memoFade: 0.5,
   memoFadeOn: true,
