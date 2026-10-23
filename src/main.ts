@@ -49,10 +49,10 @@ async function main(): Promise<void> {
   const settings = createSettings(app, files);
   const mediaBar = createMediaBar(app, settings.open, track);
   const mixer = createMixer(app);
-  const monitor = createMonitor(monitorVideo, monitorEmpty, mixer.element);
+  const monitor = createMonitor(monitorVideo, monitorEmpty, mixer.element, () => splitters.apply());
 
   const main = h('main', { class: 'main' });
-  const splitters = createSplitters(main);
+  const splitters = createSplitters(main, monitor.minWidth);
   main.append(
     h('section', { class: 'track-area' }, mediaBar.element, track.element),
     splitters.trackSplitter,
@@ -99,7 +99,7 @@ async function main(): Promise<void> {
 const MONITOR_VIEW_KEY = 'cue-player-monitor-view';
 
 /** The video monitor, or the mixer in its place; the choice is remembered in this browser. */
-function createMonitor(video: HTMLVideoElement, empty: HTMLElement, mixer: HTMLElement) {
+function createMonitor(video: HTMLVideoElement, empty: HTMLElement, mixer: HTMLElement, onSwitch: () => void) {
   let view = 'video';
   try {
     view = localStorage.getItem(MONITOR_VIEW_KEY) ?? 'video';
@@ -107,12 +107,12 @@ function createMonitor(video: HTMLVideoElement, empty: HTMLElement, mixer: HTMLE
     // Starting on the video is fine.
   }
   const tab = (name: string, label: string) =>
-    h('button', { type: 'button', class: 'small', 'data-view': name, onclick: () => show(name) }, label);
+    h('button', { type: 'button', class: 'small', 'data-view': name, onclick: () => show(name, true) }, label);
   const tabs = h('div', { class: 'monitor-tabs' }, tab('video', 'Video'), tab('mixer', 'Mixer'));
   // The video element keeps playing under the mixer: it is also the Video track's sound.
   const element = h('section', { class: 'monitor' }, video, empty, mixer, tabs);
 
-  function show(name: string): void {
+  function show(name: string, switched = false): void {
     view = name;
     try {
       localStorage.setItem(MONITOR_VIEW_KEY, name);
@@ -121,10 +121,22 @@ function createMonitor(video: HTMLVideoElement, empty: HTMLElement, mixer: HTMLE
     }
     mixer.hidden = name !== 'mixer';
     for (const b of tabs.querySelectorAll<HTMLElement>('button')) b.classList.toggle('active', b.dataset.view === name);
+    // The mixer may need a wider monitor.
+    if (switched) onSwitch();
   }
   show(view);
 
-  return { element, showsMixer: () => view === 'mixer' };
+  /** The narrowest the monitor may get: the mixer's strips side by side, or 0 for the video. */
+  function minWidth(): number {
+    if (view !== 'mixer') return 0;
+    const style = getComputedStyle(mixer);
+    const children = [...mixer.children] as HTMLElement[];
+    const content = children.reduce((sum, child) => sum + child.offsetWidth, 0);
+    const gaps = parseFloat(style.columnGap) * Math.max(0, children.length - 1);
+    return Math.ceil(content + gaps + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight));
+  }
+
+  return { element, minWidth, showsMixer: () => view === 'mixer' };
 }
 
 main().catch((error) => {

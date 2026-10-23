@@ -25,7 +25,7 @@ function save(sizes: Sizes): void {
  * Draggable borders between the track and the lower panels, and between the
  * lower panels. Sizes are remembered in this browser only.
  */
-export function createSplitters(main: HTMLElement) {
+export function createSplitters(main: HTMLElement, monitorMin: () => number = () => MIN.monitor) {
   const sizes = load();
 
   function apply(): void {
@@ -33,8 +33,10 @@ export function createSplitters(main: HTMLElement) {
     const { width, height } = main.getBoundingClientRect();
     if (width > 0 && height > 0) {
       sizes.trackHeight = clamp(sizes.trackHeight, MIN.track, height - MIN.lower);
-      sizes.pagesWidth = clamp(sizes.pagesWidth, MIN.pages, width - MIN.cues - MIN.monitor);
-      sizes.monitorWidth = clamp(sizes.monitorWidth, MIN.monitor, width - sizes.pagesWidth - MIN.cues);
+      // The monitor's minimum depends on what it shows: the mixer needs room for all its strips.
+      const minMonitor = Math.max(MIN.monitor, monitorMin());
+      sizes.pagesWidth = clamp(sizes.pagesWidth, MIN.pages, width - MIN.cues - minMonitor);
+      sizes.monitorWidth = clamp(sizes.monitorWidth, minMonitor, width - sizes.pagesWidth - MIN.cues);
     }
     main.style.setProperty('--track-h', `${sizes.trackHeight}px`);
     main.style.setProperty('--pages-w', `${sizes.pagesWidth}px`);

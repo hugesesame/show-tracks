@@ -761,6 +761,7 @@ button.active {
 }
 
 .strip {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -919,6 +920,7 @@ button.active {
 
 /* The big meter at the right of the Master strip, with a dB scale. */
 .master-meter {
+  flex-shrink: 0;
   display: flex;
   gap: 4px;
   padding: 8px 6px;
