@@ -1,4 +1,4 @@
-<h1><img src="icon.svg" width="40" height="40" align="top" alt=""> Show Tracks</h1>
+<h1><img src="icon.svg" width="40" height="40" align="top" alt="">&nbsp;Show Tracks</h1>
 
 [English](README.md) | **日本語**
 
