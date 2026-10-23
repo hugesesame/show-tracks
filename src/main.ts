@@ -140,9 +140,24 @@ function createMonitor(
   }
   show(view);
 
-  /** The narrowest the monitor may get: the mixer's strips side by side, or 0 for the video. */
+  /** The narrowest the monitor may get: the mixer's strips side by side (also for the memo), or 0 for the video. */
   function minWidth(): number {
-    if (view !== 'mixer') return 0;
+    if (view === 'video') return 0;
+    // Under the memo the mixer is hidden; lay it out unseen just to measure it.
+    const measuring = mixer.hidden;
+    if (measuring) {
+      mixer.style.visibility = 'hidden';
+      mixer.hidden = false;
+    }
+    const width = mixerWidth();
+    if (measuring) {
+      mixer.hidden = true;
+      mixer.style.visibility = '';
+    }
+    return width;
+  }
+
+  function mixerWidth(): number {
     const style = getComputedStyle(mixer);
     const children = [...mixer.children] as HTMLElement[];
     const content = children.reduce((sum, child) => sum + child.offsetWidth, 0);
