@@ -85,6 +85,15 @@ describe('markers', () => {
     expect(normalizeProject(project).pages[0].markers.map((m) => m.name)).toEqual(['Cue 1', 'Cue 2']);
   });
 
+  it('fills in pan, Master and in / out points missing from older saves', () => {
+    const old = JSON.parse(JSON.stringify(createProject(createPage('A', 'a'))));
+    for (const key of ['masterVolume', 'masterMuted', 'masterPan']) delete old.settings[key];
+    for (const key of ['audioPan', 'videoPan', 'rangeStart', 'rangeEnd']) delete old.pages[0][key];
+    const project = normalizeProject(old);
+    expect(project.settings).toMatchObject({ masterVolume: 1, masterMuted: false, masterPan: 0 });
+    expect(project.pages[0]).toMatchObject({ audioPan: 0, videoPan: 0, rangeStart: null, rangeEnd: null });
+  });
+
   it('clamps times to the media length', () => {
     let page = pageWith(10);
     page = nudgeMarker(page, 'id1', -60, 100);
@@ -117,7 +126,14 @@ describe('project', () => {
   it('starts with one page selected and default settings', () => {
     const project = createProject(createPage('A', 'a'));
     expect(project.currentPageId).toBe('a');
-    expect(project.settings).toEqual({ mtcFps: '30', midiOutputId: null, loopPages: false });
+    expect(project.settings).toEqual({
+      mtcFps: '30',
+      midiOutputId: null,
+      loopPages: false,
+      masterVolume: 1,
+      masterMuted: false,
+      masterPan: 0,
+    });
   });
 
   it('creates pages with defaults', () => {
@@ -132,6 +148,8 @@ describe('project', () => {
       audioMuted: false,
       videoAudioEnabled: false,
       videoAudioVolume: 0.75,
+      audioPan: 0,
+      videoPan: 0,
       rangeStart: null,
       rangeEnd: null,
       mtcOffset: 0,

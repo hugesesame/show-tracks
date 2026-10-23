@@ -698,6 +698,180 @@ button.active {
   color: var(--muted);
 }
 
+.monitor-tabs {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+/* ---- mixer ---- */
+
+.mixer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 44px 12px 12px;
+  background: var(--panel);
+}
+
+.strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 76px;
+  min-height: 0;
+  padding: 8px 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.strip.master {
+  border-color: var(--marker);
+}
+
+.strip-name {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.strip.master .strip-name {
+  color: var(--marker);
+}
+
+.pan {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pan:focus {
+  outline: none;
+}
+
+.pan::-webkit-slider-runnable-track {
+  height: 2px;
+  background: linear-gradient(to right, var(--line) calc(50% - 1px), var(--muted) calc(50% - 1px) calc(50% + 1px), var(--line) calc(50% + 1px));
+}
+
+.pan::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.pan:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.pan-value,
+.fader-value {
+  font: 11px var(--mono);
+  color: var(--muted);
+}
+
+.strip-body {
+  flex: 1;
+  min-height: 60px;
+  display: flex;
+  gap: 8px;
+}
+
+/* The thumb's centre travels between THUMB_PX / 2 from either end (see mixer.ts). */
+.fader {
+  position: relative;
+  width: 24px;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.fader.disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.fader-slot {
+  position: absolute;
+  left: 50%;
+  top: 11px;
+  bottom: 11px;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to top,
+    var(--go) calc(100% * var(--fill, 0)),
+    var(--line) calc(100% * var(--fill, 0))
+  );
+}
+
+.fader .tick {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  height: 1px;
+  bottom: calc(11px + (100% - 22px) * var(--at));
+  background: var(--muted);
+  opacity: 0.6;
+}
+
+.fader-thumb {
+  position: absolute;
+  left: 0;
+  width: 24px;
+  height: 22px;
+  bottom: calc((100% - 22px) * var(--fill, 0));
+  border-radius: 4px;
+  background: var(--text);
+  border: 2px solid var(--go);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.fader-thumb::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: #111;
+}
+
+.strip-meter {
+  display: flex;
+  gap: 2px;
+}
+
+.strip-meter .meter-bar {
+  width: 4px;
+  height: 100%;
+  /* -60..0 dBFS from the bottom: green, yellow from -12 dB, red from -3 dB */
+  background: linear-gradient(to top, #2ecc71 0%, #2ecc71 80%, #f1c40f 80%, #f1c40f 95%, #e74c3c 95%);
+}
+
+.strip-meter .meter-mask {
+  left: 0;
+  bottom: auto;
+  width: 100%;
+  height: 100%;
+}
+
 /* ---- footer ---- */
 
 .footer {

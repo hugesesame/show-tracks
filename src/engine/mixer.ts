@@ -1,4 +1,6 @@
 export type TrackKind = 'audio' | 'video';
+/** A track or the Master strip. */
+export type StripKind = TrackKind | 'master';
 
 const METER_FLOOR_DB = -60;
 
@@ -10,40 +12,47 @@ export function meterLevel(peak: number): number {
 }
 
 type Channel = {
+  /** The strip's input. */
   gain: GainNode;
+  panner: StereoPannerNode;
   analysers: [AnalyserNode, AnalyserNode];
-  volume: number;
-  muted: boolean;
 };
 
 /**
- * Routes each media element through volume → stereo meter → speakers.
- * The meter reads after the volume, like a DAW channel.
+ * Routes each media element through volume → pan → stereo meter, then both
+ * tracks through the Master strip to the speakers. Meters read after the
+ * volume and pan, like a DAW channel.
  */
 export class Mixer {
   private readonly context = new AudioContext();
-  private readonly channels: Record<TrackKind, Channel>;
+  private readonly channels: Record<StripKind, Channel>;
   private readonly buffer = new Float32Array(1024);
 
   constructor(elements: Record<TrackKind, HTMLMediaElement>) {
-    const make = (element: HTMLMediaElement): Channel => {
-      // Levels are set on the gain node, so the element itself stays at full volume.
-      element.volume = 1;
-      element.muted = false;
-      const source = this.context.createMediaElementSource(element);
+    const strip = (output: AudioNode): Channel => {
       // Upmix mono files so both meter bars move.
       const gain = new GainNode(this.context, { channelCount: 2, channelCountMode: 'explicit' });
+      const panner = new StereoPannerNode(this.context);
       const splitter = this.context.createChannelSplitter(2);
       const analysers = [0, 1].map(() => new AnalyserNode(this.context, { fftSize: 1024 })) as [
         AnalyserNode,
         AnalyserNode,
       ];
-      source.connect(gain).connect(this.context.destination);
-      gain.connect(splitter);
+      gain.connect(panner).connect(output);
+      panner.connect(splitter);
       analysers.forEach((analyser, i) => splitter.connect(analyser, i));
-      return { gain, analysers, volume: 1, muted: false };
+      return { gain, panner, analysers };
     };
-    this.channels = { audio: make(elements.audio), video: make(elements.video) };
+    const master = strip(this.context.destination);
+    const track = (element: HTMLMediaElement): Channel => {
+      // Levels are set on the gain nodes, so the element itself stays at full volume.
+      element.volume = 1;
+      element.muted = false;
+      const channel = strip(master.gain);
+      this.context.createMediaElementSource(element).connect(channel.gain);
+      return channel;
+    };
+    this.channels = { audio: track(elements.audio), video: track(elements.video), master };
 
     // Browsers keep audio suspended until the user interacts with the page.
     const resume = () => void this.resume();
@@ -54,15 +63,16 @@ export class Mixer {
     return this.context.state === 'suspended' ? this.context.resume() : Promise.resolve();
   }
 
-  setLevel(kind: TrackKind, volume: number, muted: boolean): void {
+  /** Volume 0..1, pan -1 (left) .. 1 (right); changes glide so they never click. */
+  setLevel(kind: StripKind, volume: number, muted: boolean, pan: number): void {
     const channel = this.channels[kind];
-    channel.volume = Math.min(1, Math.max(0, volume));
-    channel.muted = muted;
-    channel.gain.gain.setTargetAtTime(muted ? 0 : channel.volume, this.context.currentTime, 0.01);
+    const now = this.context.currentTime;
+    channel.gain.gain.setTargetAtTime(muted ? 0 : Math.min(1, Math.max(0, volume)), now, 0.01);
+    channel.panner.pan.setTargetAtTime(Math.min(1, Math.max(-1, pan)), now, 0.01);
   }
 
   /** Current peak of each channel, as meter positions (0..1). */
-  levels(kind: TrackKind): [number, number] {
+  levels(kind: StripKind): [number, number] {
     return this.channels[kind].analysers.map((analyser) => {
       analyser.getFloatTimeDomainData(this.buffer);
       let peak = 0;

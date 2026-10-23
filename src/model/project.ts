@@ -4,6 +4,18 @@ import { orderMarkers } from './markers';
 /** Initial track volume for new pages: leaves headroom to turn a track up. */
 export const DEFAULT_VOLUME = 0.75;
 
+/** The Master strip starts at full level: the tracks already leave headroom. */
+export const MASTER_VOLUME = 1;
+
+const DEFAULT_SETTINGS: Settings = {
+  mtcFps: '30',
+  midiOutputId: null,
+  loopPages: false,
+  masterVolume: MASTER_VOLUME,
+  masterMuted: false,
+  masterPan: 0,
+};
+
 export function createPage(name: string, id: string = randomId()): Page {
   return {
     id,
@@ -16,6 +28,8 @@ export function createPage(name: string, id: string = randomId()): Page {
     audioMuted: false,
     videoAudioEnabled: false,
     videoAudioVolume: DEFAULT_VOLUME,
+    audioPan: 0,
+    videoPan: 0,
     rangeStart: null,
     rangeEnd: null,
     mtcOffset: 0,
@@ -28,13 +42,15 @@ export function createPage(name: string, id: string = randomId()): Page {
 export function normalizeProject(project: Project): Project {
   return {
     ...project,
-    settings: { ...project.settings, loopPages: project.settings.loopPages ?? false },
+    settings: { ...DEFAULT_SETTINGS, ...project.settings },
     pages: project.pages.map((p) => ({
       ...p,
       audioOffset: p.audioOffset ?? 0,
       videoOffset: p.videoOffset ?? 0,
       audioVolume: p.audioVolume ?? 1,
       audioMuted: p.audioMuted ?? false,
+      audioPan: p.audioPan ?? 0,
+      videoPan: p.videoPan ?? 0,
       endAction: p.endAction ?? 'stop',
       rangeStart: p.rangeStart ?? null,
       rangeEnd: p.rangeEnd ?? null,
@@ -47,7 +63,7 @@ export function createProject(firstPage: Page = createPage('Page 1')): Project {
   return {
     pages: [firstPage],
     currentPageId: firstPage.id,
-    settings: { mtcFps: '30', midiOutputId: null, loopPages: false },
+    settings: { ...DEFAULT_SETTINGS },
   };
 }
 

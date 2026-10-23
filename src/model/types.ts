@@ -5,6 +5,10 @@ export type Settings = {
   midiOutputId: string | null;
   /** After the last page comes the first one again. */
   loopPages: boolean;
+  /** The Master strip, after both tracks. Pan is -1 (left) .. 1 (right). */
+  masterVolume: number;
+  masterMuted: boolean;
+  masterPan: number;
 };
 
 export type Project = {
@@ -30,6 +34,9 @@ export type Page = {
   /** The video's own sound; disabled means the Video track is muted. */
   videoAudioEnabled: boolean;
   videoAudioVolume: number;
+  /** -1 (left) .. 1 (right). */
+  audioPan: number;
+  videoPan: number;
   endAction: EndAction;
   /** In / out points on the page timeline in seconds; null is the page's start / end. */
   rangeStart: number | null;

@@ -10,6 +10,7 @@ import { createHeader } from './ui/header';
 import { installKeyboard } from './ui/keyboard';
 import { createSplitters } from './ui/layout';
 import { createMediaBar } from './ui/mediaBar';
+import { createMixer } from './ui/mixer';
 import { createPageList } from './ui/pageList';
 import { createSettings } from './ui/settings';
 import { createTrack } from './ui/track';
@@ -47,6 +48,8 @@ async function main(): Promise<void> {
   const footer = createFooter(app, files);
   const settings = createSettings(app, files);
   const mediaBar = createMediaBar(app, settings.open, track);
+  const mixer = createMixer(app);
+  const monitor = createMonitor(monitorVideo, monitorEmpty, mixer.element);
 
   const main = h('main', { class: 'main' });
   const splitters = createSplitters(main);
@@ -57,7 +60,7 @@ async function main(): Promise<void> {
     splitters.pagesSplitter,
     cueList.element,
     splitters.monitorSplitter,
-    h('section', { class: 'monitor' }, monitorVideo, monitorEmpty),
+    monitor.element,
   );
   root.replaceChildren(header.element, main, footer.element, settings.element, files.confirmDialog);
   splitters.apply();
@@ -69,6 +72,7 @@ async function main(): Promise<void> {
     cueList.update();
     pageList.update();
     footer.update();
+    mixer.update();
     monitorEmpty.hidden = app.page.videoMediaId !== null;
   };
   app.onChange(update);
@@ -81,6 +85,7 @@ async function main(): Promise<void> {
     const time = app.transport.tick();
     header.tick(time);
     track.draw(time);
+    if (monitor.showsMixer()) mixer.tick();
     app.output.check();
     requestAnimationFrame(frame);
   };
@@ -89,6 +94,37 @@ async function main(): Promise<void> {
   await files.load();
   await app.start();
   update();
+}
+
+const MONITOR_VIEW_KEY = 'cue-player-monitor-view';
+
+/** The video monitor, or the mixer in its place; the choice is remembered in this browser. */
+function createMonitor(video: HTMLVideoElement, empty: HTMLElement, mixer: HTMLElement) {
+  let view = 'video';
+  try {
+    view = localStorage.getItem(MONITOR_VIEW_KEY) ?? 'video';
+  } catch {
+    // Starting on the video is fine.
+  }
+  const tab = (name: string, label: string) =>
+    h('button', { type: 'button', class: 'small', 'data-view': name, onclick: () => show(name) }, label);
+  const tabs = h('div', { class: 'monitor-tabs' }, tab('video', 'Video'), tab('mixer', 'Mixer'));
+  // The video element keeps playing under the mixer: it is also the Video track's sound.
+  const element = h('section', { class: 'monitor' }, video, empty, mixer, tabs);
+
+  function show(name: string): void {
+    view = name;
+    try {
+      localStorage.setItem(MONITOR_VIEW_KEY, name);
+    } catch {
+      // Not remembering the view is fine.
+    }
+    mixer.hidden = name !== 'mixer';
+    for (const b of tabs.querySelectorAll<HTMLElement>('button')) b.classList.toggle('active', b.dataset.view === name);
+  }
+  show(view);
+
+  return { element, showsMixer: () => view === 'mixer' };
 }
 
 main().catch((error) => {

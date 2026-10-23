@@ -20,7 +20,7 @@ import {
   updatePage,
   updateSettings,
 } from '../model/project';
-import type { EndAction, MediaRecord, Page, Project } from '../model/types';
+import type { EndAction, MediaRecord, Page, Project, Settings } from '../model/types';
 import { OutputWindow } from '../output/outputWindow';
 import {
   createAutosaver,
@@ -157,8 +157,11 @@ export class App {
     const page = this.page;
     this.transport.setRange(page.rangeStart, page.rangeEnd);
     if (this.loadedPageId === page.id) this.transport.setOffsets(page.audioOffset, page.videoOffset);
-    this.transport.mixer.setLevel('audio', page.audioVolume, page.audioMuted);
-    this.transport.mixer.setLevel('video', page.videoAudioVolume, !page.videoAudioEnabled);
+    const { mixer } = this.transport;
+    const { masterVolume, masterMuted, masterPan } = this._project.settings;
+    mixer.setLevel('audio', page.audioVolume, page.audioMuted, page.audioPan);
+    mixer.setLevel('video', page.videoAudioVolume, !page.videoAudioEnabled, page.videoPan);
+    mixer.setLevel('master', masterVolume, masterMuted, masterPan);
     this.mtc.configure(this._project.settings.mtcFps, page.mtcOffset);
   }
 
@@ -446,6 +449,14 @@ export class App {
         ? { audioVolume: volume, audioMuted: muted }
         : { videoAudioVolume: volume, videoAudioEnabled: !muted };
     this.commit(updatePage(this._project, this.page.id, patch));
+  }
+
+  setTrackPan(kind: MediaRecord['kind'], pan: number): void {
+    this.commit(updatePage(this._project, this.page.id, kind === 'audio' ? { audioPan: pan } : { videoPan: pan }));
+  }
+
+  setMaster(patch: Partial<Pick<Settings, 'masterVolume' | 'masterMuted' | 'masterPan'>>): void {
+    this.commit(updateSettings(this._project, patch));
   }
 
   // ---- import / export ----
