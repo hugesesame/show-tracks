@@ -1,13 +1,16 @@
 import type { App } from '../app/app';
-import type { StripKind } from '../engine/mixer';
+import { meterLevel, type StripKind } from '../engine/mixer';
 import { DEFAULT_VOLUME, MASTER_VOLUME } from '../model/project';
 import { h } from './dom';
 
 /** Must match the fader thumb height in style.css. */
-const THUMB_PX = 22;
+const THUMB_PX = 40;
 const FADER_TICKS = [0, 0.25, 0.5, 0.75, 1];
 /** How fast the meters fall back, in meter heights per second. */
 const METER_FALL_PER_SECOND = 1.5;
+const SCALE_DB = [0, -3, -6, -12, -20, -30, -40, -60];
+/** How long the big meter's peak line stays before it falls. */
+const PEAK_HOLD_MS = 1500;
 
 type Level = { volume: number; muted: boolean; pan: number; enabled: boolean };
 
@@ -51,7 +54,45 @@ export function createMixer(app: App) {
   };
 
   const strips = STRIPS.map(({ kind, name, reset }) => strip(kind, name, reset));
-  const element = h('div', { class: 'mixer' }, ...strips.map((s) => s.element));
+  const big = masterMeter();
+  const element = h('div', { class: 'mixer' }, ...strips.map((s) => s.element), big.element);
+
+  /** A larger stereo meter for the Master, with a dB scale and a peak hold line. */
+  function masterMeter() {
+    const bars = [0, 1].map(() => {
+      const mask = h('div', { class: 'meter-mask' });
+      const hold = h('div', { class: 'peak-hold' });
+      return { element: h('div', { class: 'meter-bar' }, mask, hold), mask, hold, shown: 0, peak: 0, peakAt: 0 };
+    });
+    const scale = h(
+      'div',
+      { class: 'meter-scale' },
+      ...SCALE_DB.map((db) => h('span', { style: `--at: ${meterLevel(10 ** (db / 20))}` }, String(db))),
+    );
+    const element = h('div', { class: 'master-meter', title: 'Master level (dBFS)' }, ...bars.map((b) => b.element), scale);
+    let lastTick = performance.now();
+
+    function tick(): void {
+      const now = performance.now();
+      const fall = ((now - lastTick) / 1000) * METER_FALL_PER_SECOND;
+      lastTick = now;
+      app.transport.mixer.levels('master').forEach((level, i) => {
+        const bar = bars[i];
+        bar.shown = Math.max(level, bar.shown - fall);
+        if (level >= bar.peak) {
+          bar.peak = level;
+          bar.peakAt = now;
+        } else if (now - bar.peakAt > PEAK_HOLD_MS) {
+          bar.peak = Math.max(level, bar.peak - fall);
+        }
+        bar.mask.style.height = `${(1 - bar.shown) * 100}%`;
+        bar.hold.style.setProperty('--at', String(bar.peak));
+        bar.hold.hidden = bar.peak <= 0;
+      });
+    }
+
+    return { element, tick };
+  }
 
   function strip(kind: StripKind, name: string, reset: number) {
     const pan = h('input', {
@@ -148,6 +189,9 @@ export function createMixer(app: App) {
   return {
     element,
     update: () => strips.forEach((s) => s.update()),
-    tick: () => strips.forEach((s) => s.tick()),
+    tick: () => {
+      strips.forEach((s) => s.tick());
+      big.tick();
+    },
   };
 }

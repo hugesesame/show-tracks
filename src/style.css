@@ -795,7 +795,7 @@ button.active {
 /* The thumb's centre travels between THUMB_PX / 2 from either end (see mixer.ts). */
 .fader {
   position: relative;
-  width: 24px;
+  width: 30px;
   cursor: ns-resize;
   touch-action: none;
 }
@@ -808,49 +808,51 @@ button.active {
 .fader-slot {
   position: absolute;
   left: 50%;
-  top: 11px;
-  bottom: 11px;
+  top: 20px;
+  bottom: 20px;
   width: 4px;
   margin-left: -2px;
   border-radius: 2px;
-  background: linear-gradient(
-    to top,
-    var(--go) calc(100% * var(--fill, 0)),
-    var(--line) calc(100% * var(--fill, 0))
-  );
+  background: #0b0c0d;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .fader .tick {
   position: absolute;
-  left: 2px;
-  right: 2px;
+  left: 3px;
+  right: 3px;
   height: 1px;
-  bottom: calc(11px + (100% - 22px) * var(--at));
+  bottom: calc(20px + (100% - 40px) * var(--at));
   background: var(--muted);
   opacity: 0.6;
 }
 
+/* A mixing-desk fader cap: dark, ridged, with a white line across the middle. */
 .fader-thumb {
   position: absolute;
   left: 0;
-  width: 24px;
-  height: 22px;
-  bottom: calc((100% - 22px) * var(--fill, 0));
-  border-radius: 4px;
-  background: var(--text);
-  border: 2px solid var(--go);
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  width: 30px;
+  height: 40px;
+  bottom: calc((100% - 40px) * var(--fill, 0));
+  border: 1px solid #0b0c0d;
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 3px, rgba(0, 0, 0, 0.35) 3px 4px),
+    linear-gradient(to bottom, #6b7078 0%, #43474d 40%, #2b2e32 50%, #43474d 60%, #5b6067 100%);
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .fader-thumb::after {
   content: '';
   position: absolute;
-  left: 3px;
-  right: 3px;
+  left: 2px;
+  right: 2px;
   top: 50%;
   height: 2px;
   margin-top: -1px;
-  background: #111;
+  background: #fff;
 }
 
 .strip-meter {
@@ -865,11 +867,54 @@ button.active {
   background: linear-gradient(to top, #2ecc71 0%, #2ecc71 80%, #f1c40f 80%, #f1c40f 95%, #e74c3c 95%);
 }
 
-.strip-meter .meter-mask {
+.strip-meter .meter-mask,
+.master-meter .meter-mask {
   left: 0;
   bottom: auto;
   width: 100%;
   height: 100%;
+}
+
+/* The big meter at the right of the Master strip, with a dB scale. */
+.master-meter {
+  display: flex;
+  gap: 4px;
+  padding: 8px 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.master-meter .meter-bar {
+  position: relative;
+  width: 10px;
+  height: 100%;
+  border-radius: 2px;
+  overflow: hidden;
+  background: linear-gradient(to top, #2ecc71 0%, #2ecc71 80%, #f1c40f 80%, #f1c40f 95%, #e74c3c 95%);
+}
+
+.peak-hold {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  bottom: calc(100% * var(--at, 0) - 2px);
+  background: #fff;
+}
+
+.meter-scale {
+  position: relative;
+  width: 24px;
+  font: 10px var(--mono);
+  color: var(--muted);
+}
+
+.meter-scale span {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% * var(--at));
+  transform: translateY(50%);
 }
 
 /* ---- footer ---- */
