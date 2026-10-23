@@ -801,7 +801,6 @@ button.active {
 
 .memo-size {
   width: 90px;
-  accent-color: var(--go);
 }
 
 .memo-color {

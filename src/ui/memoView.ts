@@ -13,7 +13,8 @@ const POSITIONS: { position: MemoPosition; label: string }[] = [
 export function createMemoView(app: App) {
   const stage = createMemoStage();
   const size = h('input', {
-    class: 'memo-size',
+    // Styled like the track volume sliders.
+    class: 'volume',
     type: 'range',
     min: 3,
     max: 25,
@@ -43,7 +44,7 @@ export function createMemoView(app: App) {
       'div',
       { class: 'memo-controls' },
       h('span', { class: 'memo-label' }, 'Aa'),
-      size,
+      h('div', { class: 'volume-wrap memo-size' }, size),
       color,
       h('div', { class: 'memo-positions' }, ...positions),
       output,
@@ -53,6 +54,7 @@ export function createMemoView(app: App) {
   function update(): void {
     const s = app.project.settings;
     size.value = String(s.memoSize);
+    size.style.setProperty('--fill', String((s.memoSize - Number(size.min)) / (Number(size.max) - Number(size.min))));
     color.value = s.memoColor;
     for (const b of positions) b.classList.toggle('active', b.dataset.position === s.memoPosition);
     output.classList.toggle('active', s.memoOutput);
