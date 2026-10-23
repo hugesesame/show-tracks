@@ -98,6 +98,12 @@ export function createCueList(app: App) {
   const autoScroll = autoScrollButton('cue-player-cue-autoscroll');
   /** The row of the cue playing, marked as playback reaches it. */
   let currentId: string | null = null;
+  /** The cue last brought to the top; cleared to bring it there again. */
+  let scrolledTo: string | null = null;
+  // A hidden or unfocused window may not have finished scrolling: line up again on return.
+  const rescroll = () => (scrolledTo = null);
+  document.addEventListener('visibilitychange', rescroll);
+  window.addEventListener('focus', rescroll);
   const pageMidi = h('button', { class: 'small midi-toggle', onclick: () => app.toggleMidiNotes() }, 'MIDI');
   // Like PAGES: add at the playhead, delete the cue on standby.
   const removeButton = deleteButton('Delete the selected cue', () => {
@@ -196,7 +202,8 @@ export function createCueList(app: App) {
       el.classList.toggle('standby', isStandby);
       showArrow(el);
     }
-    if (autoScroll.isOn()) list.querySelector('.standby')?.scrollIntoView({ block: 'nearest' });
+    // While playing, only tick() scrolls: a second scroll would cut its smooth scroll short.
+    if (autoScroll.isOn() && !app.transport.playing) list.querySelector('.standby')?.scrollIntoView({ block: 'nearest' });
   }
 
   /** Only a field being typed in holds back a rebuild; a focused button does not. */
@@ -252,14 +259,17 @@ export function createCueList(app: App) {
     row.querySelector('.arrow')!.textContent = marked ? '▶' : '';
   }
 
-  /** Call every frame: marks the cue playing, and keeps it in view with Auto on. */
+  /** Call every frame: marks the cue playing, and keeps it at the top with Auto on. */
   function tick(time: number): void {
     const id = app.cueAt(time);
-    if (id === currentId) return;
-    currentId = id;
-    markCurrent();
+    if (id !== currentId) {
+      currentId = id;
+      markCurrent();
+    }
     // The cue playing goes to the top, with the ones to come below it.
-    if (autoScroll.isOn()) list.querySelector('.current')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    if (!autoScroll.isOn() || !app.transport.playing || scrolledTo === currentId) return;
+    scrolledTo = currentId;
+    list.querySelector('.current')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
 
   showColumn(column);
