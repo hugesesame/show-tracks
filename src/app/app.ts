@@ -1,4 +1,4 @@
-import { go, initialCueState, reconcile, select, type CueState } from '../cue/cueController';
+import { go, initialCueState, passed, reconcile, select, type CueState } from '../cue/cueController';
 import { MtcOutput } from '../engine/mtc';
 import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
@@ -6,6 +6,8 @@ import { importMediaFile } from '../media/importMedia';
 import { moveClip } from '../model/clips';
 import {
   addMarker,
+  cueAt,
+  cuesPassed,
   memoAt,
   removeMarker,
   renameMarker,
@@ -82,7 +84,7 @@ export class App {
       this.mtc.locate(this.transport.now());
       this.noteTime = null;
     });
-    this.mtc.onTick(() => this.sendDueNotes());
+    this.mtc.onTick(() => this.followPlayback());
     this.transport.on('playstate', () => {
       if (!this.transport.playing) this.mtc.locate(this.transport.now());
       this.emit('change');
@@ -326,8 +328,11 @@ export class App {
     this.selectCue(marker.id);
   }
 
-  /** Sends the MIDI Notes of the cues playback reached since the last check. */
-  private sendDueNotes(): void {
+  /**
+   * Every 10 ms while playing: sends the MIDI Notes of the cues reached since the
+   * last check, and moves the standby past a cue playback ran through.
+   */
+  private followPlayback(): void {
     if (!this.transport.playing || this.loadedPageId !== this.page.id) {
       this.noteTime = null;
       return;
@@ -336,7 +341,18 @@ export class App {
     for (const marker of cuesReached(this.page, this.noteTime, time)) {
       this.mtc.sendNote(noteFor(marker, this._project.settings));
     }
+    // Not right after a start or jump: GO has already moved the standby on.
+    const ranThrough = this.noteTime === null ? [] : cuesPassed(this.page, this.noteTime, time);
+    if (ranThrough.length > 0) {
+      this._cue = passed(this._project, this._cue, ranThrough[ranThrough.length - 1].id);
+      this.emit('change');
+    }
     this.noteTime = time;
+  }
+
+  /** The cue playing: the last one at or before `time`. */
+  cueAt(time: number): string | null {
+    return this.loadedPageId === this.page.id ? (cueAt(this.page, time)?.id ?? null) : null;
   }
 
   // ---- markers ----

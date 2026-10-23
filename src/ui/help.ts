@@ -71,12 +71,14 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'Cue List',
         rows: [
+          ['Blue row', 'The cue playing. As playback passes a cue, the standby moves on to the next one'],
           ['Green row', 'The cue on standby for GO; click a row to choose another'],
           ['Double-click', 'Edit the name, memo, time or note number'],
           ['Title / Memo', 'Show cue names or memos. In a memo, Shift+Enter starts a new line'],
           ['On / Off', 'Send a MIDI Note when playback reaches the cue'],
           ['MIDI', 'Turn the page’s MIDI Notes on or off as a whole'],
           ['+ / 🗑', 'Add a cue at the playhead / delete the cue on standby'],
+          ['Auto', 'Scroll to follow playback (also in PAGES)'],
         ],
       },
       {
@@ -174,12 +176,14 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'Cue List',
         rows: [
+          ['青い行', '再生中の Cue。再生が Cue を通過すると、待機は次の Cue に進む'],
           ['緑の行', 'GO で再生する待機中の Cue。行をクリックで選び直せる'],
           ['ダブルクリック', '名前、メモ、時間、Note 番号の編集'],
           ['Title / Memo', '名前とメモの表示を切り替え。メモは Shift+Enter で改行'],
           ['On / Off', '再生がその Cue に来たら MIDI Note を送る'],
           ['MIDI', 'このページの MIDI Note をまとめて On / Off'],
           ['+ / 🗑', '再生位置に Cue を追加 / 待機中の Cue を削除'],
+          ['Auto', '再生に合わせて自動でスクロール（PAGES にもあります）'],
         ],
       },
       {

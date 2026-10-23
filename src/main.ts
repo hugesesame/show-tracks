@@ -92,6 +92,7 @@ async function main(): Promise<void> {
     const time = app.transport.tick();
     header.tick(time);
     track.draw(time);
+    cueList.tick(time);
     if (monitor.view() === 'mixer') mixer.tick();
     const memo = app.memoAt(time);
     const { settings } = app.project;

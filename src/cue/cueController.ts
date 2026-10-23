@@ -92,3 +92,11 @@ export function reconcile(project: Project, state: CueState, previousMarkers: Ma
   const survivor = previousMarkers.slice(removedIndex + 1).find((m) => cues.some((c) => c.id === m.id));
   return { ...state, standby: survivor ? { kind: 'cue', markerId: survivor.id } : afterLast(project, page.id) };
 }
+
+/** Playback passed a cue: stand by on the one after it, so GO carries on from there. */
+export function passed(project: Project, state: CueState, markerId: string): CueState {
+  const page = findPage(project, state.pageId);
+  const index = page ? page.markers.findIndex((m) => m.id === markerId) : -1;
+  if (!page || index < 0) return state;
+  return { ...state, standby: standbyAfterIndex(project, page, index) };
+}

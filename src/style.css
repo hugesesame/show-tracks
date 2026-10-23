@@ -682,6 +682,12 @@ button.active {
   opacity: 0.4;
 }
 
+/* The cue playing; the standby (next) row's green wins where they meet. */
+.cue-row.current {
+  background: rgba(0, 97, 183, 0.22);
+  box-shadow: inset 3px 0 0 var(--marker);
+}
+
 .cue-row.standby {
   background: rgba(46, 204, 113, 0.15);
   box-shadow: inset 3px 0 0 var(--selected);

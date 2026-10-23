@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { go, initialCueState, reconcile, select, type CueState } from '../src/cue/cueController';
+import { go, initialCueState, passed, reconcile, select, type CueState } from '../src/cue/cueController';
 import { addMarker, removeMarker } from '../src/model/markers';
 import { addPage, createPage, createProject, replacePage } from '../src/model/project';
 import type { Page, Project } from '../src/model/types';
@@ -181,5 +181,14 @@ describe('in / out points', () => {
       state: { pageId: 'a', standby: { kind: 'cue', markerId: 'a2' } },
       action: { kind: 'seekAndPlay', time: 5 },
     });
+  });
+});
+
+describe('passed', () => {
+  it('stands by on the cue after the one playback ran through', () => {
+    const pr = project(page('a', 10, 20, 30), page('b'));
+    const state = select(initialCueState(pr, 'a'), 'a3');
+    expect(passed(pr, state, 'a1').standby).toEqual({ kind: 'cue', markerId: 'a2' });
+    expect(passed(pr, state, 'a3').standby).toEqual({ kind: 'nextPage' });
   });
 });

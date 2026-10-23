@@ -60,3 +60,31 @@ export function deleteButton(title: string, onDelete: () => void): HTMLButtonEle
   });
   return button;
 }
+
+/** An "Auto" scroll switch, on unless turned off; remembered in this browser under `key`. */
+export function autoScrollButton(key: string) {
+  let on = true;
+  try {
+    on = localStorage.getItem(key) !== 'off';
+  } catch {
+    // Starting with it on is fine.
+  }
+  const button = h('button', {
+    class: 'small auto-scroll',
+    onclick: () => {
+      on = !on;
+      try {
+        localStorage.setItem(key, on ? 'on' : 'off');
+      } catch {
+        // Not remembering it is fine.
+      }
+      show();
+    },
+  }, 'Auto');
+  function show(): void {
+    button.classList.toggle('active', on);
+    button.title = on ? 'Auto scroll: on (follows playback)' : 'Auto scroll: off';
+  }
+  show();
+  return { button, isOn: () => on };
+}

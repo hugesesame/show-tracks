@@ -61,8 +61,17 @@ export function nudgeMarker(page: Page, markerId: string, delta: number, duratio
   return updateMarker(page, markerId, (m) => ({ ...m, time: clamp(m.time + delta, duration) }));
 }
 
+/** The last cue at or before `time`: the one playing. */
+export function cueAt(page: Page, time: number): Marker | null {
+  return [...page.markers].reverse().find((m) => m.time <= time + 1e-3) ?? null;
+}
+
 /** The memo of the last cue at or before `time`: what the Memo view shows. */
 export function memoAt(page: Page, time: number): string {
-  const marker = [...page.markers].reverse().find((m) => m.time <= time + 1e-3);
-  return marker?.memo ?? '';
+  return cueAt(page, time)?.memo ?? '';
+}
+
+/** The cues playback moved past, going from `from` to `to`. */
+export function cuesPassed(page: Page, from: number, to: number): Marker[] {
+  return page.markers.filter((m) => m.time > from && m.time <= to);
 }

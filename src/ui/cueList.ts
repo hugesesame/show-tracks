@@ -1,7 +1,7 @@
 import type { App } from '../app/app';
 import { inRange } from '../model/range';
 import type { Marker } from '../model/types';
-import { deleteButton, h } from './dom';
+import { autoScrollButton, deleteButton, h } from './dom';
 import { formatClock, parseClock } from './format';
 
 /**
@@ -95,6 +95,9 @@ export function createCueList(app: App) {
     }
     render();
   }
+  const autoScroll = autoScrollButton('cue-player-cue-autoscroll');
+  /** The row of the cue playing, marked as playback reaches it. */
+  let currentId: string | null = null;
   const pageMidi = h('button', { class: 'small midi-toggle', onclick: () => app.toggleMidiNotes() }, 'MIDI');
   // Like PAGES: add at the playhead, delete the cue on standby.
   const removeButton = deleteButton('Delete the selected cue', () => {
@@ -111,6 +114,7 @@ export function createCueList(app: App) {
       h(
         'div',
         { class: 'panel-actions cue-actions' },
+        autoScroll.button,
         pageMidi,
         h('button', { class: 'small', title: 'Add a cue at the playhead (M)', onclick: () => app.addMarkerAtPlayhead() }, '+'),
         removeButton,
@@ -192,7 +196,7 @@ export function createCueList(app: App) {
       el.classList.toggle('standby', isStandby);
       el.querySelector('.arrow')!.textContent = isStandby ? '▶' : '';
     }
-    list.querySelector('.standby')?.scrollIntoView({ block: 'nearest' });
+    if (autoScroll.isOn()) list.querySelector('.standby')?.scrollIntoView({ block: 'nearest' });
   }
 
   /** Only a field being typed in holds back a rebuild; a focused button does not. */
@@ -210,6 +214,7 @@ export function createCueList(app: App) {
       return;
     }
     list.replaceChildren(...markers.map(row));
+    markCurrent();
     updateStandby();
   }
 
@@ -234,7 +239,22 @@ export function createCueList(app: App) {
     });
   });
 
+  function markCurrent(): void {
+    for (const el of list.querySelectorAll<HTMLElement>('.cue-row')) {
+      el.classList.toggle('current', el.dataset.markerId === currentId);
+    }
+  }
+
+  /** Call every frame: marks the cue playing, and keeps it in view with Auto on. */
+  function tick(time: number): void {
+    const id = app.cueAt(time);
+    if (id === currentId) return;
+    currentId = id;
+    markCurrent();
+    if (autoScroll.isOn()) list.querySelector('.current')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
   showColumn(column);
 
-  return { element, update };
+  return { element, update, tick };
 }

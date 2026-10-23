@@ -1,7 +1,7 @@
 import type { App } from '../app/app';
 import type { EndAction, Page } from '../model/types';
 import { editableCell } from './cueList';
-import { deleteButton, h } from './dom';
+import { autoScrollButton, deleteButton, h } from './dom';
 
 const END_ACTIONS: { action: EndAction; label: string; title: string }[] = [
   { action: 'stop', label: 'Stop', title: 'At the end: stop' },
@@ -18,6 +18,7 @@ export function createPageList(app: App, openHelp: () => void) {
   const loopButton = h('button', { class: 'small loop-pages', onclick: () => app.toggleLoopPages() }, '🔁');
 
   const removeButton = deleteButton('Delete page', () => app.removeCurrentPage());
+  const autoScroll = autoScrollButton('cue-player-page-autoscroll');
 
   const element = h(
     'section',
@@ -29,6 +30,7 @@ export function createPageList(app: App, openHelp: () => void) {
       h(
         'div',
         { class: 'panel-actions' },
+        autoScroll.button,
         loopButton,
         h('button', { class: 'small', title: 'Add page', onclick: () => app.addPage() }, '+'),
         removeButton,
@@ -65,7 +67,7 @@ export function createPageList(app: App, openHelp: () => void) {
   function updateCurrent(): void {
     const pages = app.project.pages;
     list.querySelectorAll('.page-row').forEach((el, i) => el.classList.toggle('current', pages[i].id === app.page.id));
-    list.querySelector('.current')?.scrollIntoView({ block: 'nearest' });
+    if (autoScroll.isOn()) list.querySelector('.current')?.scrollIntoView({ block: 'nearest' });
     removeButton.disabled = pages.length === 1;
     const looping = app.project.settings.loopPages;
     loopButton.classList.toggle('active', looping);
