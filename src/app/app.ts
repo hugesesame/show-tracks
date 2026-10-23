@@ -4,7 +4,15 @@ import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
 import { importMediaFile } from '../media/importMedia';
 import { moveClip } from '../model/clips';
-import { addMarker, removeMarker, renameMarker, setMarkerMidi, setMarkerTime } from '../model/markers';
+import {
+  addMarker,
+  memoAt,
+  removeMarker,
+  renameMarker,
+  setMarkerFields,
+  setMarkerTime,
+  type MarkerFields,
+} from '../model/markers';
 import { cuesReached, noteFor } from '../model/notes';
 import { activeOverlap, setOverlap, setRangeEnd, setRangeStart, type PlayRange } from '../model/range';
 import {
@@ -362,8 +370,18 @@ export class App {
     this.updateCurrentPage((page, duration) => setMarkerTime(page, markerId, time, duration));
   }
 
-  setMarkerMidi(markerId: string, patch: { midiOn?: boolean; note?: number | null }): void {
-    this.updateCurrentPage((page) => setMarkerMidi(page, markerId, patch));
+  /** MIDI switch, note or memo of a cue. */
+  setMarkerFields(markerId: string, patch: MarkerFields): void {
+    this.updateCurrentPage((page) => setMarkerFields(page, markerId, patch));
+  }
+
+  /** The memo of the last cue the playhead passed. */
+  memoAt(time: number): string {
+    return this.loadedPageId === this.page.id ? memoAt(this.page, time) : '';
+  }
+
+  setMemoLook(patch: Partial<Pick<Settings, 'memoSize' | 'memoColor' | 'memoPosition' | 'memoOutput'>>): void {
+    this.commit(updateSettings(this._project, patch));
   }
 
   /** Turns the cues' MIDI Notes on this page on or off as a whole. */

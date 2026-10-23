@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   addMarker,
+  memoAt,
   nudgeMarker,
   removeMarker,
   renameMarker,
+  setMarkerFields,
   setMarkerTime,
 } from '../src/model/markers';
 import {
@@ -45,7 +47,7 @@ describe('markers', () => {
 
   it('returns the new marker', () => {
     const { marker } = addMarker(createPage('P', 'p'), 5, 100, () => 'm');
-    expect(marker).toEqual({ id: 'm', name: 'Cue 1', time: 5, midiOn: false, note: null });
+    expect(marker).toEqual({ id: 'm', name: 'Cue 1', time: 5, midiOn: false, note: null, memo: '' });
   });
 
   it('closes the gap in the numbers when a marker is removed', () => {
@@ -78,8 +80,8 @@ describe('markers', () => {
     let project = createProject(createPage('A', 'a'));
     project = updatePage(project, 'a', {
       markers: [
-        { id: 'x', name: 'Cue 12', time: 9, midiOn: false, note: null },
-        { id: 'y', name: 'Cue 10', time: 3, midiOn: false, note: null },
+        { id: 'x', name: 'Cue 12', time: 9, midiOn: false, note: null, memo: '' },
+        { id: 'y', name: 'Cue 10', time: 3, midiOn: false, note: null, memo: '' },
       ],
     });
     expect(normalizeProject(project).pages[0].markers.map((m) => m.name)).toEqual(['Cue 1', 'Cue 2']);
@@ -92,6 +94,18 @@ describe('markers', () => {
     const project = normalizeProject(old);
     expect(project.settings).toMatchObject({ masterVolume: 1, masterMuted: false, masterPan: 0 });
     expect(project.pages[0]).toMatchObject({ audioPan: 0, videoPan: 0, rangeStart: null, rangeEnd: null });
+  });
+
+  it('shows the memo of the last cue passed', () => {
+    let page = createPage('P', 'p');
+    page = addMarker(page, 5, 100, () => 'a').page;
+    page = addMarker(page, 10, 100, () => 'b').page;
+    page = setMarkerFields(page, 'a', { memo: 'first line\nsecond line' });
+    expect(memoAt(page, 4)).toBe('');
+    expect(memoAt(page, 5)).toBe('first line\nsecond line');
+    expect(memoAt(page, 9.9)).toBe('first line\nsecond line');
+    // An empty memo clears the screen.
+    expect(memoAt(page, 10)).toBe('');
   });
 
   it('clamps times to the media length', () => {
@@ -136,6 +150,10 @@ describe('project', () => {
       noteChannel: 1,
       noteNumber: 60,
       noteVelocity: 127,
+      memoSize: 8,
+      memoColor: '#ffffff',
+      memoPosition: 'bottom',
+      memoOutput: true,
     });
   });
 

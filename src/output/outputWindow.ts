@@ -1,15 +1,17 @@
 import type { Transport } from '../engine/transport';
 import { toggleFullscreen } from '../ui/fullscreen';
+import { createMemoStage, type MemoLook } from '../ui/memoStage';
 
 const WINDOW_NAME = 'cue-player-output';
 
 /**
- * A second window showing only the video, for a secondary display.
+ * A second window showing the video, and the cue memos over it, for a secondary display.
  * It is same-origin, so its video element is driven directly from here.
  */
 export class OutputWindow {
   private win: Window | null = null;
   private video: HTMLVideoElement | null = null;
+  private memo: ReturnType<typeof createMemoStage> | null = null;
   private readonly events = new EventTarget();
 
   constructor(private readonly transport: Transport) {
@@ -39,13 +41,15 @@ export class OutputWindow {
     const style = doc.createElement('style');
     style.textContent = `
       html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
+      body { position: relative; }
       video { width: 100%; height: 100%; object-fit: contain; display: block; }
     `;
     doc.head.replaceChildren(style);
     const video = doc.createElement('video');
     video.muted = true;
     video.playsInline = true;
-    doc.body.append(video);
+    this.memo = createMemoStage(doc);
+    doc.body.append(video, this.memo.element);
     this.video = video;
     this.updateSource();
     this.transport.videoSync.add(video);
@@ -60,6 +64,13 @@ export class OutputWindow {
     return true;
   }
 
+  /** Shows a memo over the video; null hides the memos. Cheap to call every frame. */
+  renderMemo(memo: string | null, look: MemoLook): void {
+    if (!this.memo) return;
+    this.memo.element.hidden = memo === null;
+    this.memo.render(memo ?? '', look);
+  }
+
   /** Detects a window closed by the user; call regularly. */
   check(): void {
     if (this.win && this.win.closed) this.handleClosed();
@@ -68,6 +79,7 @@ export class OutputWindow {
   private handleClosed(): void {
     if (this.video) this.transport.videoSync.remove(this.video);
     this.video = null;
+    this.memo = null;
     this.win = null;
     this.events.dispatchEvent(new Event('change'));
   }

@@ -13,7 +13,16 @@ export type Settings = {
   noteChannel: number;
   noteNumber: number;
   noteVelocity: number;
+  /** How cue memos (lyrics, prompts) look on the Memo view and the video output. */
+  memoSize: number;
+  memoColor: string;
+  memoPosition: MemoPosition;
+  /** Also shows the memos on the video output, over the video. */
+  memoOutput: boolean;
 };
+
+/** Where the memo text sits on the screen. */
+export type MemoPosition = 'top' | 'middle' | 'bottom';
 
 export type Project = {
   pages: Page[];
@@ -64,6 +73,8 @@ export type Marker = {
   midiOn: boolean;
   /** The cue's own note number; null uses the project's default note. */
   note: number | null;
+  /** Shown from this cue on (lyrics, prompts); may hold line breaks. Empty clears the screen. */
+  memo: string;
 };
 
 export type MediaRecord = {

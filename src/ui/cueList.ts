@@ -7,27 +7,47 @@ import { formatClock, parseClock } from './format';
 /**
  * Text that turns into an input on double click.
  * Commits on Enter or blur, reverts on Escape; `done` runs either way.
+ * A multiline cell edits in a text area where Shift+Enter starts a new line,
+ * and shows its line breaks as ↵ while not editing.
  */
 export function editableCell(
   className: string,
   value: string,
   commit: (text: string) => void,
   done: () => void,
+  multiline = false,
 ): HTMLElement {
-  const cell = h('span', { class: `cell ${className}`, title: 'Double-click to edit' }, value);
+  const shown = multiline ? value.replace(/\n/g, ' ↵ ') : value;
+  const cell = h('span', { class: `cell ${className}`, title: 'Double-click to edit' }, shown);
   cell.addEventListener('dblclick', (e) => {
     e.stopPropagation();
-    startEditing(cell, value, commit, done);
+    startEditing(cell, value, commit, done, multiline);
   });
   return cell;
 }
 
-function startEditing(cell: HTMLElement, value: string, commit: (text: string) => void, done: () => void): void {
-  if (cell.querySelector('input')) return;
-  const input = h('input', { class: cell.className.replace('cell', '').trim(), value, spellcheck: false });
+function startEditing(
+  cell: HTMLElement,
+  value: string,
+  commit: (text: string) => void,
+  done: () => void,
+  multiline: boolean,
+): void {
+  if (cell.querySelector('input, textarea')) return;
+  const props = { class: cell.className.replace('cell', '').trim(), value, spellcheck: false };
+  const input: HTMLInputElement | HTMLTextAreaElement = multiline ? h('textarea', props) : h('input', props);
+  if (input instanceof HTMLTextAreaElement) {
+    // Grows with its lines while typing.
+    const fit = () => (input.rows = Math.max(1, input.value.split('\n').length));
+    input.addEventListener('input', fit);
+    fit();
+  }
   let cancelled = false;
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') input.blur();
+  (input as HTMLElement).addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !(multiline && e.shiftKey)) {
+      e.preventDefault();
+      input.blur();
+    }
     if (e.key === 'Escape') {
       cancelled = true;
       input.blur();
@@ -44,8 +64,37 @@ function startEditing(cell: HTMLElement, value: string, commit: (text: string) =
   input.select();
 }
 
+const COLUMN_KEY = 'cue-player-cue-column';
+
+type Column = 'title' | 'memo';
+
+function loadColumn(): Column {
+  try {
+    return localStorage.getItem(COLUMN_KEY) === 'memo' ? 'memo' : 'title';
+  } catch {
+    return 'title';
+  }
+}
+
 export function createCueList(app: App) {
   const list = h('div', { class: 'cue-list' });
+  // The wide column shows either the cue names or their memos, so each gets the full width.
+  let column = loadColumn();
+  const columnTab = (value: Column, label: string) =>
+    h('button', { type: 'button', class: 'small', 'data-column': value, onclick: () => showColumn(value) }, label);
+  const columnTabs = h('div', { class: 'column-tabs' }, columnTab('title', 'Title'), columnTab('memo', 'Memo'));
+  function showColumn(value: Column): void {
+    column = value;
+    try {
+      localStorage.setItem(COLUMN_KEY, value);
+    } catch {
+      // Not remembering the column is fine.
+    }
+    for (const b of columnTabs.querySelectorAll<HTMLElement>('button')) {
+      b.classList.toggle('active', b.dataset.column === value);
+    }
+    render();
+  }
   const pageMidi = h('button', { class: 'small midi-toggle', onclick: () => app.toggleMidiNotes() }, 'MIDI');
   // Like PAGES: add at the playhead, delete the cue on standby.
   const removeButton = deleteButton('Delete the selected cue', () => {
@@ -58,7 +107,7 @@ export function createCueList(app: App) {
     h(
       'div',
       { class: 'panel-title' },
-      h('span', {}, 'CUE LIST'),
+      h('div', { class: 'panel-heading' }, h('span', {}, 'CUE LIST'), columnTabs),
       h(
         'div',
         { class: 'panel-actions cue-actions' },
@@ -75,12 +124,11 @@ export function createCueList(app: App) {
   let dirty = false;
 
   function row(marker: Marker, index: number): HTMLElement {
-    const name = editableCell(
-      'name',
-      marker.name,
-      (text) => text.trim() && app.renameMarker(marker.id, text.trim()),
-      render,
-    );
+    const name =
+      column === 'memo'
+        ? editableCell('name memo', marker.memo, (text) => app.setMarkerFields(marker.id, { memo: text }), render, true)
+        : editableCell('name', marker.name, (text) => text.trim() && app.renameMarker(marker.id, text.trim()), render);
+    if (column === 'memo') name.title = 'Double-click to edit; Shift+Enter starts a new line';
     const time = editableCell(
       'time',
       formatClock(marker.time),
@@ -98,7 +146,7 @@ export function createCueList(app: App) {
         title: marker.midiOn ? 'MIDI Note on: click to turn off' : 'MIDI Note off: click to turn on',
         onclick: (e: Event) => {
           e.stopPropagation();
-          app.setMarkerMidi(marker.id, { midiOn: !marker.midiOn });
+          app.setMarkerFields(marker.id, { midiOn: !marker.midiOn });
         },
       },
       marker.midiOn ? 'On' : 'Off',
@@ -108,9 +156,9 @@ export function createCueList(app: App) {
       String(marker.note ?? app.project.settings.noteNumber),
       (text) => {
         // Empty goes back to the default note.
-        if (text.trim() === '') return app.setMarkerMidi(marker.id, { note: null });
+        if (text.trim() === '') return app.setMarkerFields(marker.id, { note: null });
         const value = Number(text);
-        if (Number.isInteger(value) && value >= 0 && value <= 127) app.setMarkerMidi(marker.id, { note: value });
+        if (Number.isInteger(value) && value >= 0 && value <= 127) app.setMarkerFields(marker.id, { note: value });
         else app.error('Enter a note number from 0 to 127.');
       },
       render,
@@ -148,7 +196,9 @@ export function createCueList(app: App) {
   }
 
   /** Only a field being typed in holds back a rebuild; a focused button does not. */
-  const isTyping = () => document.activeElement instanceof HTMLInputElement && list.contains(document.activeElement);
+  const isTyping = () =>
+    (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) &&
+    list.contains(document.activeElement);
 
   function render(): void {
     dirty = false;
@@ -183,6 +233,8 @@ export function createCueList(app: App) {
       if (dirty && !isTyping()) render();
     });
   });
+
+  showColumn(column);
 
   return { element, update };
 }

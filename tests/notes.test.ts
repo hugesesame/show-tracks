@@ -9,6 +9,7 @@ const cue = (id: string, time: number, midiOn = true, note: number | null = null
   time,
   midiOn,
   note,
+  memo: '',
 });
 
 const page = (markers: Marker[], patch: Partial<Page> = {}): Page => ({ ...createPage('p', 'p'), markers, ...patch });

@@ -10,6 +10,7 @@ import { createHeader } from './ui/header';
 import { installKeyboard } from './ui/keyboard';
 import { createSplitters } from './ui/layout';
 import { createMediaBar } from './ui/mediaBar';
+import { createMemoView } from './ui/memoView';
 import { createMixer } from './ui/mixer';
 import { createPageList } from './ui/pageList';
 import { createSettings } from './ui/settings';
@@ -49,7 +50,8 @@ async function main(): Promise<void> {
   const settings = createSettings(app, files);
   const mediaBar = createMediaBar(app, settings.open, track);
   const mixer = createMixer(app);
-  const monitor = createMonitor(monitorVideo, monitorEmpty, mixer.element, () => splitters.apply());
+  const memoView = createMemoView(app);
+  const monitor = createMonitor(monitorVideo, monitorEmpty, mixer.element, memoView.element, () => splitters.apply());
 
   const main = h('main', { class: 'main' });
   const splitters = createSplitters(main, monitor.minWidth);
@@ -73,6 +75,7 @@ async function main(): Promise<void> {
     pageList.update();
     footer.update();
     mixer.update();
+    memoView.update();
     monitorEmpty.hidden = app.page.videoMediaId !== null;
   };
   app.onChange(update);
@@ -85,7 +88,11 @@ async function main(): Promise<void> {
     const time = app.transport.tick();
     header.tick(time);
     track.draw(time);
-    if (monitor.showsMixer()) mixer.tick();
+    if (monitor.view() === 'mixer') mixer.tick();
+    const memo = app.memoAt(time);
+    if (monitor.view() === 'memo') memoView.render(memo);
+    const { settings } = app.project;
+    app.output.renderMemo(settings.memoOutput ? memo : null, settings);
     app.output.check();
     requestAnimationFrame(frame);
   };
@@ -98,8 +105,14 @@ async function main(): Promise<void> {
 
 const MONITOR_VIEW_KEY = 'cue-player-monitor-view';
 
-/** The video monitor, or the mixer in its place; the choice is remembered in this browser. */
-function createMonitor(video: HTMLVideoElement, empty: HTMLElement, mixer: HTMLElement, onSwitch: () => void) {
+/** The video monitor, or the mixer or the memo in its place; the choice is remembered in this browser. */
+function createMonitor(
+  video: HTMLVideoElement,
+  empty: HTMLElement,
+  mixer: HTMLElement,
+  memo: HTMLElement,
+  onSwitch: () => void,
+) {
   let view = 'video';
   try {
     view = localStorage.getItem(MONITOR_VIEW_KEY) ?? 'video';
@@ -108,9 +121,9 @@ function createMonitor(video: HTMLVideoElement, empty: HTMLElement, mixer: HTMLE
   }
   const tab = (name: string, label: string) =>
     h('button', { type: 'button', class: 'small', 'data-view': name, onclick: () => show(name, true) }, label);
-  const tabs = h('div', { class: 'monitor-tabs' }, tab('video', 'Video'), tab('mixer', 'Mixer'));
-  // The video element keeps playing under the mixer: it is also the Video track's sound.
-  const element = h('section', { class: 'monitor' }, video, empty, mixer, tabs);
+  const tabs = h('div', { class: 'monitor-tabs' }, tab('video', 'Video'), tab('mixer', 'Mixer'), tab('memo', 'Memo'));
+  // The video element keeps playing under the others: it is also the Video track's sound.
+  const element = h('section', { class: 'monitor' }, video, empty, mixer, memo, tabs);
 
   function show(name: string, switched = false): void {
     view = name;
@@ -120,6 +133,7 @@ function createMonitor(video: HTMLVideoElement, empty: HTMLElement, mixer: HTMLE
       // Not remembering the view is fine.
     }
     mixer.hidden = name !== 'mixer';
+    memo.hidden = name !== 'memo';
     for (const b of tabs.querySelectorAll<HTMLElement>('button')) b.classList.toggle('active', b.dataset.view === name);
     // The mixer may need a wider monitor.
     if (switched) onSwitch();
@@ -136,7 +150,7 @@ function createMonitor(video: HTMLVideoElement, empty: HTMLElement, mixer: HTMLE
     return Math.ceil(content + gaps + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight));
   }
 
-  return { element, minWidth, showsMixer: () => view === 'mixer' };
+  return { element, minWidth, view: () => view };
 }
 
 main().catch((error) => {

@@ -488,6 +488,21 @@ button.active {
   border-bottom: 1px solid var(--line);
 }
 
+.panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.column-tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.column-tabs button {
+  letter-spacing: 0;
+}
+
 .panel-actions {
   display: flex;
   gap: 4px;
@@ -691,15 +706,29 @@ button.active {
   text-align: right;
 }
 
-.cue-row .cell:has(input) {
+.cue-row .cell:has(input, textarea) {
   padding: 0;
   border: none;
 }
 
-.cue-row input {
+.cue-row input,
+.cue-row textarea {
   width: 100%;
   border-color: var(--accent);
   user-select: text;
+}
+
+/* Memos may hold line breaks: the field grows a line at a time. */
+.cue-row textarea {
+  display: block;
+  resize: none;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font: inherit;
+  color: inherit;
+  line-height: 1.4;
 }
 
 .cue-row input.time {
@@ -743,6 +772,48 @@ button.active {
   right: 8px;
   display: flex;
   gap: 4px;
+}
+
+/* ---- memo view ---- */
+
+.memo-view {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+/* Left of the view tabs; wraps when the monitor is narrow. */
+.memo-controls {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 150px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.memo-label {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.memo-size {
+  width: 90px;
+  accent-color: var(--go);
+}
+
+.memo-color {
+  width: 28px;
+  height: 24px;
+  padding: 1px;
+  cursor: pointer;
+}
+
+.memo-positions {
+  display: flex;
+  gap: 2px;
 }
 
 /* ---- mixer ---- */

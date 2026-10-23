@@ -17,6 +17,11 @@ const DEFAULT_SETTINGS: Settings = {
   noteChannel: 1,
   noteNumber: 60,
   noteVelocity: 127,
+  // Percent of the screen height, so the Memo view and the video output scale alike.
+  memoSize: 8,
+  memoColor: '#ffffff',
+  memoPosition: 'bottom',
+  memoOutput: true,
 };
 
 export function createPage(name: string, id: string = randomId()): Page {
@@ -61,7 +66,7 @@ export function normalizeProject(project: Project): Project {
       rangeEnd: p.rangeEnd ?? null,
       overlapAt: p.overlapAt ?? null,
       midiNotes: p.midiNotes ?? true,
-      markers: orderMarkers(p.markers.map((m) => ({ ...m, midiOn: m.midiOn ?? false, note: m.note ?? null }))),
+      markers: orderMarkers(p.markers.map((m) => ({ ...m, midiOn: m.midiOn ?? false, note: m.note ?? null, memo: m.memo ?? '' }))),
     })),
   };
 }
