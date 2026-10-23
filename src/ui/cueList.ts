@@ -119,7 +119,7 @@ export function createCueList(app: App) {
             app.removeMarker(marker.id);
           },
         },
-        '×',
+        '🗑',
       ),
     );
     element.dataset.markerId = marker.id;

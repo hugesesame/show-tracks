@@ -704,11 +704,13 @@ button.active {
   height: 24px;
   border: none;
   background: transparent;
-  color: var(--muted);
+  font-size: 13px;
+  /* The trash icon is an emoji, so it fades in on hover instead of changing colour. */
+  opacity: 0.45;
 }
 
 .cue-row .delete:hover {
-  color: var(--danger);
+  opacity: 1;
 }
 
 .cue-empty {
