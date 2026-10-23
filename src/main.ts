@@ -140,9 +140,12 @@ function createMonitor(
   }
   show(view);
 
-  /** The narrowest the monitor may get: the mixer's strips side by side (also for the memo), or 0 for the video. */
+  /**
+   * The narrowest the monitor may get: the mixer's strips side by side (also for
+   * the memo), or for the video just the view buttons with their 8px margins.
+   */
   function minWidth(): number {
-    if (view === 'video') return 0;
+    if (view === 'video') return tabs.offsetWidth + 16;
     // Under the memo the mixer is hidden; lay it out unseen just to measure it.
     const measuring = mixer.hidden;
     if (measuring) {
