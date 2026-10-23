@@ -748,6 +748,22 @@ button.active {
   position: relative;
   background: #000;
   min-height: 0;
+  container-type: size;
+}
+
+/*
+ * The video output's screen, in its proportions (--screen-aspect, set from
+ * the output window), so the video and the memo sit as they do out there.
+ */
+.screen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: min(100cqw, 100cqh * var(--screen-aspect, 1.7778));
+  aspect-ratio: var(--screen-aspect, 1.7778);
+  background: #000;
+  outline: 1px solid var(--line);
 }
 
 .monitor video {
@@ -785,7 +801,7 @@ button.active {
 .memo-view {
   position: absolute;
   inset: 0;
-  background: #000;
+  background: var(--panel);
 }
 
 /* Left of the view tabs; wraps when the monitor is narrow. */

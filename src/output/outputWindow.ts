@@ -64,6 +64,12 @@ export class OutputWindow {
     return true;
   }
 
+  /** The output window's width / height while it is open. */
+  get aspect(): number | null {
+    if (!this.isOpen || this.win!.innerHeight === 0) return null;
+    return this.win!.innerWidth / this.win!.innerHeight;
+  }
+
   /** Shows a memo over the video; null hides the memos. Cheap to call every frame. */
   renderMemo(memo: string | null, look: MemoLook): void {
     if (!this.memo) return;

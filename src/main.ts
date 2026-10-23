@@ -95,6 +95,7 @@ async function main(): Promise<void> {
     if (monitor.view() === 'memo') memoView.render(memo);
     if (monitor.view() === 'video' && monitor.memoOnVideo()) monitor.videoMemo.render(memo, settings);
     app.output.renderMemo(settings.memoOutput ? memo : null, settings);
+    monitor.setAspect(app.output.aspect ?? 16 / 9);
     app.output.check();
     requestAnimationFrame(frame);
   };
@@ -152,7 +153,8 @@ function createMonitor(
     },
     '+ Memo',
   );
-  const element = h('section', { class: 'monitor' }, video, empty, videoMemo.element, mixer, memo, memoToggle, tabs);
+  const screen = h('div', { class: 'screen' }, video, empty, videoMemo.element);
+  const element = h('section', { class: 'monitor' }, screen, mixer, memo, memoToggle, tabs);
 
   function show(name: string, switched = false): void {
     view = name;
@@ -200,7 +202,15 @@ function createMonitor(
     return Math.ceil(content + gaps + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight));
   }
 
-  return { element, minWidth, view: () => view, videoMemo, memoOnVideo: () => memoOnVideo };
+  let aspect = 0;
+  /** The video output's width / height, so the monitor frames the picture the same way. */
+  function setAspect(value: number): void {
+    if (Math.abs(value - aspect) < 1e-3) return;
+    aspect = value;
+    element.style.setProperty('--screen-aspect', String(value));
+  }
+
+  return { element, minWidth, setAspect, view: () => view, videoMemo, memoOnVideo: () => memoOnVideo };
 }
 
 main().catch((error) => {

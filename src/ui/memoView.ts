@@ -39,7 +39,8 @@ export function createMemoView(app: App) {
   const element = h(
     'div',
     { class: 'memo-view' },
-    stage.element,
+    // Framed like the video output, so the text sits and scales as it does there.
+    h('div', { class: 'screen' }, stage.element),
     h(
       'div',
       { class: 'memo-controls' },
