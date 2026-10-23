@@ -10,6 +10,7 @@ import { createHeader } from './ui/header';
 import { installKeyboard } from './ui/keyboard';
 import { createSplitters } from './ui/layout';
 import { createMediaBar } from './ui/mediaBar';
+import { createMemoStage } from './ui/memoStage';
 import { createMemoView } from './ui/memoView';
 import { createMixer } from './ui/mixer';
 import { createPageList } from './ui/pageList';
@@ -90,8 +91,9 @@ async function main(): Promise<void> {
     track.draw(time);
     if (monitor.view() === 'mixer') mixer.tick();
     const memo = app.memoAt(time);
-    if (monitor.view() === 'memo') memoView.render(memo);
     const { settings } = app.project;
+    if (monitor.view() === 'memo') memoView.render(memo);
+    if (monitor.view() === 'video' && monitor.memoOnVideo()) monitor.videoMemo.render(memo, settings);
     app.output.renderMemo(settings.memoOutput ? memo : null, settings);
     app.output.check();
     requestAnimationFrame(frame);
@@ -104,6 +106,7 @@ async function main(): Promise<void> {
 }
 
 const MONITOR_VIEW_KEY = 'cue-player-monitor-view';
+const VIDEO_MEMO_KEY = 'cue-player-video-memo';
 
 /** The video monitor, or the mixer or the memo in its place; the choice is remembered in this browser. */
 function createMonitor(
@@ -123,7 +126,33 @@ function createMonitor(
     h('button', { type: 'button', class: 'small', 'data-view': name, onclick: () => show(name, true) }, label);
   const tabs = h('div', { class: 'monitor-tabs' }, tab('video', 'Video'), tab('mixer', 'Mixer'), tab('memo', 'Memo'));
   // The video element keeps playing under the others: it is also the Video track's sound.
-  const element = h('section', { class: 'monitor' }, video, empty, mixer, memo, tabs);
+  // "+ Memo" lays the memos over the video, as on the video output.
+  const videoMemo = createMemoStage();
+  let memoOnVideo = false;
+  try {
+    memoOnVideo = localStorage.getItem(VIDEO_MEMO_KEY) === 'on';
+  } catch {
+    // Starting without the memo is fine.
+  }
+  const memoToggle = h(
+    'button',
+    {
+      type: 'button',
+      class: 'small video-memo-toggle',
+      title: 'Show the memos over the video',
+      onclick: () => {
+        memoOnVideo = !memoOnVideo;
+        try {
+          localStorage.setItem(VIDEO_MEMO_KEY, memoOnVideo ? 'on' : 'off');
+        } catch {
+          // Not remembering it is fine.
+        }
+        show(view);
+      },
+    },
+    '+ Memo',
+  );
+  const element = h('section', { class: 'monitor' }, video, empty, videoMemo.element, mixer, memo, memoToggle, tabs);
 
   function show(name: string, switched = false): void {
     view = name;
@@ -134,6 +163,9 @@ function createMonitor(
     }
     mixer.hidden = name !== 'mixer';
     memo.hidden = name !== 'memo';
+    memoToggle.hidden = name !== 'video';
+    memoToggle.classList.toggle('active', memoOnVideo);
+    videoMemo.element.hidden = name !== 'video' || !memoOnVideo;
     for (const b of tabs.querySelectorAll<HTMLElement>('button')) b.classList.toggle('active', b.dataset.view === name);
     // The mixer may need a wider monitor.
     if (switched) onSwitch();
@@ -142,10 +174,10 @@ function createMonitor(
 
   /**
    * The narrowest the monitor may get: the mixer's strips side by side (also for
-   * the memo), or for the video just the view buttons with their 8px margins.
+   * the memo), or for the video just "+ Memo" and the view buttons with 8px margins.
    */
   function minWidth(): number {
-    if (view === 'video') return tabs.offsetWidth + 16;
+    if (view === 'video') return memoToggle.offsetWidth + tabs.offsetWidth + 24;
     // Under the memo the mixer is hidden; lay it out unseen just to measure it.
     const measuring = mixer.hidden;
     if (measuring) {
@@ -168,7 +200,7 @@ function createMonitor(
     return Math.ceil(content + gaps + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight));
   }
 
-  return { element, minWidth, view: () => view };
+  return { element, minWidth, view: () => view, videoMemo, memoOnVideo: () => memoOnVideo };
 }
 
 main().catch((error) => {
