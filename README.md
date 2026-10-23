@@ -2,9 +2,12 @@
 
 **English** | [日本語](README.ja.md)
 
-A playback-only web app for live shows. Put one song on each page, mark cues on it, and play the show in order. At each cue it can show lyrics or prompts on screen and send a MIDI Note, and it sends MTC as it plays.
-
-There is no editing. You can only set where each song starts and ends, so there is little to get wrong during a show.
+- Show Tracks is a playback-only web app made for live shows. Each page holds one audio file and one video file. There is no editing: you can only set where a track starts and ends.
+- At the markers on the track it can show text: lyrics in time with the music, or text over the video for a karaoke-style video.
+- In the same way, it can send a MIDI Note at each marker, to control external gear.
+- Pages set the running order. When a song ends, the next page can play on by itself, or start over the end of the song with the overlap mark.
+- It sends MTC from the playback time.
+- Chrome only. Media and the project are kept in this browser.
 
 > [!IMPORTANT]
 > **Desktop Chrome only.** Show Tracks does not work on smartphones or tablets. It relies on a keyboard, a separate output window, and Chrome features such as Web MIDI and the File System Access API.
