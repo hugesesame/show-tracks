@@ -497,7 +497,7 @@ function laneHeader(app: App, kind: Kind) {
     step: 0.01,
     oninput: () => app.setTrackLevel(kind, Number(volume.value), level().muted),
   });
-  resetOnThumbClick(volume, () => app.setTrackLevel(kind, DEFAULT_VOLUME, level().muted));
+  resetOnThumbDoubleClick(volume, () => app.setTrackLevel(kind, DEFAULT_VOLUME, level().muted));
   const volumeWrap = h(
     'div',
     { class: 'volume-wrap' },
@@ -541,19 +541,12 @@ function laneHeader(app: App, kind: Kind) {
   return { element, update, tick };
 }
 
-/** A click on the thumb that does not drag it resets the slider. */
-function resetOnThumbClick(slider: HTMLInputElement, reset: () => void): void {
-  let pressedOnThumb = false;
-  let startValue = '';
-  slider.addEventListener('pointerdown', (e) => {
+/** A double click on the thumb resets the slider. */
+function resetOnThumbDoubleClick(slider: HTMLInputElement, reset: () => void): void {
+  slider.addEventListener('dblclick', (e) => {
     const rect = slider.getBoundingClientRect();
     const value = (Number(slider.value) - Number(slider.min)) / (Number(slider.max) - Number(slider.min));
     const thumbX = rect.left + VOLUME_THUMB_PX / 2 + value * (rect.width - VOLUME_THUMB_PX);
-    pressedOnThumb = Math.abs(e.clientX - thumbX) <= VOLUME_THUMB_PX / 2 + 2;
-    startValue = slider.value;
-  });
-  slider.addEventListener('pointerup', () => {
-    if (pressedOnThumb && slider.value === startValue) reset();
-    pressedOnThumb = false;
+    if (Math.abs(e.clientX - thumbX) <= VOLUME_THUMB_PX / 2 + 2) reset();
   });
 }
