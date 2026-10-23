@@ -2,7 +2,7 @@ import type { Settings } from '../model/types';
 
 export type MemoLook = Pick<
   Settings,
-  'memoSize' | 'memoColor' | 'memoOutline' | 'memoOutlineColor' | 'memoPosition' | 'memoFade' | 'memoFadeOn'
+  'memoSize' | 'memoColor' | 'memoOutline' | 'memoOutlineColor' | 'memoOutlineOn' | 'memoPosition' | 'memoFade' | 'memoFadeOn'
 >;
 
 /**
@@ -77,13 +77,14 @@ export function createMemoStage(doc: Document = document) {
   /** Cheap to call every frame: the page only changes when the memo or its look does. */
   function render(memo: string, look: MemoLook): void {
     const fade = look.memoFadeOn ? look.memoFade : 0;
-    const key = [look.memoSize, look.memoColor, look.memoOutline, look.memoOutlineColor, look.memoPosition, fade].join('|');
+    const outline = look.memoOutlineOn ? look.memoOutline : 0;
+    const key = [look.memoSize, look.memoColor, outline, look.memoOutlineColor, look.memoPosition, fade].join('|');
     if (key !== shownLook) {
       shownLook = key;
       element.dataset.position = look.memoPosition;
       element.style.setProperty('--memo-size', String(look.memoSize));
       element.style.setProperty('--memo-color', look.memoColor);
-      element.style.setProperty('--memo-outline', String(look.memoOutline));
+      element.style.setProperty('--memo-outline', String(outline));
       element.style.setProperty('--memo-outline-color', look.memoOutlineColor);
       element.style.setProperty('--memo-fade', `${fade}s`);
     }

@@ -37,6 +37,11 @@ export function createMemoView(app: App) {
     title: 'Outline colour',
     oninput: () => app.setMemoLook({ memoOutlineColor: outlineColor.value }),
   });
+  const outlineOn = h('button', {
+    type: 'button',
+    class: 'small memo-switch',
+    onclick: () => app.setMemoLook({ memoOutlineOn: !app.project.settings.memoOutlineOn }),
+  });
   const fade = h('input', {
     class: 'volume',
     type: 'range',
@@ -74,7 +79,7 @@ export function createMemoView(app: App) {
       { class: 'memo-controls' },
       // One slider per line behind labels of one width, so the sliders line up.
       sliderRow('Aa', size, color),
-      sliderRow('Edge', outline, outlineColor),
+      sliderRow('Edge', outline, outlineColor, outlineOn),
       sliderRow('Fade', fade, fadeValue, fadeOn),
       h('div', { class: 'memo-group' }, h('div', { class: 'memo-group memo-positions' }, ...positions), output),
     ),
@@ -90,12 +95,12 @@ export function createMemoView(app: App) {
     outline.value = String(s.memoOutline);
     outline.style.setProperty('--fill', String(s.memoOutline / Number(outline.max)));
     outlineColor.value = s.memoOutlineColor;
+    switchButton(outlineOn, s.memoOutlineOn, 'Outline');
+    outline.disabled = outlineColor.disabled = !s.memoOutlineOn;
     fade.value = String(s.memoFade);
     fade.style.setProperty('--fill', String(s.memoFade / Number(fade.max)));
     fadeValue.textContent = `${s.memoFade.toFixed(1)}s`;
-    fadeOn.textContent = s.memoFadeOn ? 'On' : 'Off';
-    fadeOn.classList.toggle('active', s.memoFadeOn);
-    fadeOn.title = s.memoFadeOn ? 'Dissolve on: click to cut straight to the next memo' : 'Dissolve off: click to turn it on';
+    switchButton(fadeOn, s.memoFadeOn, 'Dissolve');
     fade.disabled = !s.memoFadeOn;
     fadeValue.classList.toggle('off', !s.memoFadeOn);
     for (const b of positions) b.classList.toggle('active', b.dataset.position === s.memoPosition);
@@ -119,4 +124,11 @@ function sliderRow(label: string, slider: HTMLInputElement, ...after: HTMLElemen
     h('div', { class: 'volume-wrap memo-size' }, slider),
     ...after,
   );
+}
+
+/** An On / Off button; off keeps the row's values for when it is turned back on. */
+function switchButton(button: HTMLButtonElement, on: boolean, what: string): void {
+  button.textContent = on ? 'On' : 'Off';
+  button.classList.toggle('active', on);
+  button.title = `${what} ${on ? 'on' : 'off'}: click to turn it ${on ? 'off' : 'on'}`;
 }

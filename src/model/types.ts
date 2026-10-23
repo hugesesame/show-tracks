@@ -19,6 +19,8 @@ export type Settings = {
   /** The text outline: its width as a share of the text size (0 for none), and its colour. */
   memoOutline: number;
   memoOutlineColor: string;
+  /** Off drops the outline, keeping its width and colour for later. */
+  memoOutlineOn: boolean;
   memoPosition: MemoPosition;
   /** Seconds one memo dissolves into the next; 0 switches at once. */
   memoFade: number;

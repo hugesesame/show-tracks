@@ -850,6 +850,11 @@ button.active {
   color: var(--muted);
 }
 
+.memo-color:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .memo-color {
   width: 28px;
   height: 24px;
