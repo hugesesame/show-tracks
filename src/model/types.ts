@@ -17,6 +17,8 @@ export type Settings = {
   memoSize: number;
   memoColor: string;
   memoPosition: MemoPosition;
+  /** Seconds one memo dissolves into the next; 0 switches at once. */
+  memoFade: number;
   /** Also shows the memos on the video output, over the video. */
   memoOutput: boolean;
 };

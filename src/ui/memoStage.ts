@@ -1,24 +1,32 @@
 import type { Settings } from '../model/types';
 
-export type MemoLook = Pick<Settings, 'memoSize' | 'memoColor' | 'memoPosition'>;
+export type MemoLook = Pick<Settings, 'memoSize' | 'memoColor' | 'memoPosition' | 'memoFade'>;
 
 /**
  * Shared by the main window and the video output, which is a separate document:
  * the text size is a share of the stage height, so both screens look alike.
+ * Two layers take turns, so one memo can dissolve into the next.
  */
 const STYLE = `
 .memo-stage {
   position: absolute;
   inset: 0;
   container-type: size;
-  display: flex;
-  justify-content: center;
   pointer-events: none;
 }
 .memo-stage[hidden] { display: none; }
-.memo-stage[data-position='top'] { align-items: flex-start; }
-.memo-stage[data-position='middle'] { align-items: center; }
-.memo-stage[data-position='bottom'] { align-items: flex-end; }
+.memo-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--memo-fade, 0s) linear;
+}
+.memo-layer.shown { opacity: 1; }
+.memo-stage[data-position='top'] .memo-layer { align-items: flex-start; }
+.memo-stage[data-position='middle'] .memo-layer { align-items: center; }
+.memo-stage[data-position='bottom'] .memo-layer { align-items: flex-end; }
 .memo-text {
   /* In the text, not the stage: container units refer to the stage from inside it. */
   margin: 5cqh 5cqw;
@@ -48,24 +56,38 @@ function installStyle(doc: Document): void {
 /** A full-size layer showing one memo in the chosen size, colour and position. */
 export function createMemoStage(doc: Document = document) {
   installStyle(doc);
-  const text = doc.createElement('div');
-  text.className = 'memo-text';
+  const layers = [0, 1].map(() => {
+    const text = doc.createElement('div');
+    text.className = 'memo-text';
+    const layer = doc.createElement('div');
+    layer.className = 'memo-layer';
+    layer.append(text);
+    return { layer, text };
+  });
   const element = doc.createElement('div');
   element.className = 'memo-stage';
-  element.append(text);
+  element.append(...layers.map((l) => l.layer));
+  let front = 0;
   let shown = '';
   let shownLook = '';
 
   /** Cheap to call every frame: the page only changes when the memo or its look does. */
   function render(memo: string, look: MemoLook): void {
-    const key = `${look.memoSize}|${look.memoColor}|${look.memoPosition}`;
-    if (memo === shown && key === shownLook) return;
+    const key = `${look.memoSize}|${look.memoColor}|${look.memoPosition}|${look.memoFade}`;
+    if (key !== shownLook) {
+      shownLook = key;
+      element.dataset.position = look.memoPosition;
+      element.style.setProperty('--memo-size', String(look.memoSize));
+      element.style.setProperty('--memo-color', look.memoColor);
+      element.style.setProperty('--memo-fade', `${look.memoFade}s`);
+    }
+    if (memo === shown) return;
     shown = memo;
-    shownLook = key;
-    text.textContent = memo;
-    element.dataset.position = look.memoPosition;
-    element.style.setProperty('--memo-size', String(look.memoSize));
-    element.style.setProperty('--memo-color', look.memoColor);
+    // The new memo fades in on the other layer while the old one fades out.
+    layers[front].layer.classList.remove('shown');
+    front = 1 - front;
+    layers[front].text.textContent = memo;
+    layers[front].layer.classList.toggle('shown', memo !== '');
   }
 
   return { element, render };

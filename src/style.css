@@ -825,6 +825,12 @@ button.active {
   width: 90px;
 }
 
+.memo-fade-value {
+  min-width: 30px;
+  font: 11px var(--mono);
+  color: var(--muted);
+}
+
 .memo-color {
   width: 28px;
   height: 24px;

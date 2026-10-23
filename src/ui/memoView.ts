@@ -22,6 +22,16 @@ export function createMemoView(app: App) {
     title: 'Text size',
     oninput: () => app.setMemoLook({ memoSize: Number(size.value) }),
   });
+  const fade = h('input', {
+    class: 'volume',
+    type: 'range',
+    min: 0,
+    max: 3,
+    step: 0.1,
+    title: 'Dissolve between memos',
+    oninput: () => app.setMemoLook({ memoFade: Number(fade.value) }),
+  });
+  const fadeValue = h('span', { class: 'memo-fade-value' });
   const color = h('input', {
     class: 'memo-color',
     type: 'color',
@@ -47,6 +57,9 @@ export function createMemoView(app: App) {
       h('span', { class: 'memo-label' }, 'Aa'),
       h('div', { class: 'volume-wrap memo-size' }, size),
       color,
+      h('span', { class: 'memo-label' }, 'Fade'),
+      h('div', { class: 'volume-wrap memo-size' }, fade),
+      fadeValue,
       h('div', { class: 'memo-positions' }, ...positions),
       output,
     ),
@@ -57,6 +70,9 @@ export function createMemoView(app: App) {
     size.value = String(s.memoSize);
     size.style.setProperty('--fill', String((s.memoSize - Number(size.min)) / (Number(size.max) - Number(size.min))));
     color.value = s.memoColor;
+    fade.value = String(s.memoFade);
+    fade.style.setProperty('--fill', String(s.memoFade / Number(fade.max)));
+    fadeValue.textContent = `${s.memoFade.toFixed(1)}s`;
     for (const b of positions) b.classList.toggle('active', b.dataset.position === s.memoPosition);
     output.classList.toggle('active', s.memoOutput);
     output.title = s.memoOutput ? 'Shown on the video output: click to hide' : 'Hidden on the video output: click to show';
