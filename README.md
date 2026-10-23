@@ -11,7 +11,7 @@ There is no editing. You can only set where each song starts and ends, so there 
 
 **Open the app: https://hugesesame.github.io/show-tracks/**
 
-> **This is a beta.** Show Tracks is still being tested and has not been used in a real show yet. MTC and MIDI Notes have been checked with real equipment; long files (around 45 minutes) and a fullscreen output on a second display have not. Try it with your own equipment before using it in a show.
+> **This is a beta.** Show Tracks is still being tested and has not been used in a real show yet. MTC and MIDI Notes have been checked with real equipment. Try it with your own equipment before using it in a show.
 
 ![Show Tracks: the track with cues, the pages, the Cue List and the video with lyrics over it](screenshots/main.png)
 
