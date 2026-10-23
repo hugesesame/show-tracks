@@ -596,7 +596,7 @@ button.active {
 
 .cue-row {
   display: grid;
-  grid-template-columns: 24px 36px 1fr 110px 40px 40px 28px;
+  grid-template-columns: 24px 36px 1fr 110px 60px 40px 28px;
   align-items: center;
   gap: 8px;
   padding: 4px 12px;
@@ -608,9 +608,21 @@ button.active {
   background: var(--panel-2);
 }
 
+/* One width for the page's MIDI button and the cues' switches, so they line up. */
 .midi-toggle {
-  min-width: 36px;
+  width: 48px;
+  padding: 2px 0;
   color: var(--muted);
+}
+
+/* A little room after the time column. */
+.cue-row .midi-toggle {
+  justify-self: end;
+}
+
+/* Over the cues' switches: the row's note and delete columns, gaps and padding, less the title's padding. */
+.panel-title .midi-toggle {
+  margin-right: calc(40px + 28px + 8px * 2 + 12px - 8px);
 }
 
 .midi-toggle.on {
