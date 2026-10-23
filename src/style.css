@@ -494,6 +494,11 @@ button.active {
   gap: 10px;
 }
 
+/* The Title / Memo switch starts where the rows' name text does: arrow and number columns, gaps, cell padding and border. */
+.cue-heading-label {
+  width: calc(24px + 8px + 36px + 8px + 6px + 1px - 10px);
+}
+
 .column-tabs {
   display: flex;
   gap: 2px;
@@ -806,13 +811,13 @@ button.active {
   background: var(--panel);
 }
 
-/* Below the view tabs, full width; the groups wrap when the monitor is narrow. */
+/* Below the view tabs: a line per slider, then placement and output. */
 .memo-controls {
   margin-top: 40px;
   padding: 0 8px 8px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
 }
 
@@ -825,6 +830,7 @@ button.active {
 }
 
 .memo-label {
+  width: 36px;
   font-weight: 700;
   color: var(--muted);
 }
@@ -833,8 +839,13 @@ button.active {
   width: 90px;
 }
 
+.memo-switch {
+  width: 40px;
+  padding: 2px 0;
+}
+
 .memo-fade-value {
-  min-width: 30px;
+  min-width: 28px;
   font: 11px var(--mono);
   color: var(--muted);
 }
@@ -848,6 +859,7 @@ button.active {
 
 .memo-group {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
 }

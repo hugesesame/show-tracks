@@ -107,7 +107,7 @@ export function createCueList(app: App) {
     h(
       'div',
       { class: 'panel-title' },
-      h('div', { class: 'panel-heading' }, h('span', {}, 'CUE LIST'), columnTabs),
+      h('div', { class: 'panel-heading' }, h('span', { class: 'cue-heading-label' }, 'CUE LIST'), columnTabs),
       h(
         'div',
         { class: 'panel-actions cue-actions' },
