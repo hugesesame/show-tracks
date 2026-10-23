@@ -12,7 +12,7 @@ const END_ACTIONS: { action: EndAction; label: string; title: string }[] = [
 const DRAG_START_PX = 4;
 
 /** All pages: click to open one, double-click its name to rename. */
-export function createPageList(app: App) {
+export function createPageList(app: App, openHelp: () => void) {
   const list = h('div', { class: 'page-list' });
   const dropLine = h('div', { class: 'drop-line', hidden: true });
   const loopButton = h('button', { class: 'small loop-pages', onclick: () => app.toggleLoopPages() }, '🔁');
@@ -35,6 +35,8 @@ export function createPageList(app: App) {
       ),
     ),
     list,
+    // Help sits at the bottom of the pages, out of the way of the show.
+    h('div', { class: 'panel-footer' }, h('button', { class: 'small', title: 'Help (?)', onclick: openHelp }, '? Help')),
   );
   let renderedPages: Page[] | null = null;
   let justDragged = false;

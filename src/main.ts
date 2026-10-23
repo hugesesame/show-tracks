@@ -9,6 +9,7 @@ import { createFooter } from './ui/footer';
 import { createHeader } from './ui/header';
 import { installKeyboard } from './ui/keyboard';
 import { createSplitters } from './ui/layout';
+import { createHelp } from './ui/help';
 import { createMediaBar } from './ui/mediaBar';
 import { createMemoStage } from './ui/memoStage';
 import { createMemoView } from './ui/memoView';
@@ -45,7 +46,8 @@ async function main(): Promise<void> {
   const header = createHeader(app);
   const track = createTrack(app);
   const cueList = createCueList(app);
-  const pageList = createPageList(app);
+  const help = createHelp();
+  const pageList = createPageList(app, help.open);
   const files = createFileMenu(app, db);
   const footer = createFooter(app, files);
   const settings = createSettings(app, files);
@@ -65,7 +67,7 @@ async function main(): Promise<void> {
     splitters.monitorSplitter,
     monitor.element,
   );
-  root.replaceChildren(header.element, main, footer.element, settings.element, files.confirmDialog);
+  root.replaceChildren(header.element, main, footer.element, settings.element, help.element, files.confirmDialog);
   splitters.apply();
 
   const update = () => {
@@ -82,7 +84,7 @@ async function main(): Promise<void> {
   app.onChange(update);
   app.mtc.onChange(update);
   files.onChange(update);
-  installKeyboard(app, track, files, settings.open);
+  installKeyboard(app, track, files, settings.open, help.open);
   update();
 
   const frame = () => {

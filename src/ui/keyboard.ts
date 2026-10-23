@@ -5,7 +5,13 @@ import { toggleFullscreen } from './fullscreen';
 
 export type ZoomControls = { zoomIn(): void; zoomOut(): void };
 
-export function installKeyboard(app: App, zoom: ZoomControls, files: FileMenu, openSettings: () => void): void {
+export function installKeyboard(
+  app: App,
+  zoom: ZoomControls,
+  files: FileMenu,
+  openSettings: () => void,
+  openHelp: () => void,
+): void {
   window.addEventListener('keydown', (e) => {
     // ⌘S saves, ⇧⌘S saves to a new file; they work while typing too.
     if ((e.metaKey || e.ctrlKey) && e.code === 'KeyS') {
@@ -26,6 +32,12 @@ export function installKeyboard(app: App, zoom: ZoomControls, files: FileMenu, o
 
     // = / + zoom in, - zooms out. e.key first so a JIS keyboard's Shift+- ("=") zooms in;
     // e.code covers an active IME, where e.key is "Process".
+    if (e.key === '?') {
+      e.preventDefault();
+      openHelp();
+      return;
+    }
+
     const zoomKey =
       e.key === '=' || e.key === '+' ? 'in' : e.key === '-' ? 'out'
       : e.code === 'Equal' ? 'in' : e.code === 'Minus' ? 'out' : null;

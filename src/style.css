@@ -1264,6 +1264,55 @@ dialog::backdrop {
   margin-top: 18px;
 }
 
+.panel-footer {
+  margin-top: auto;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---- help ---- */
+
+dialog.help {
+  width: min(640px, 92vw);
+  max-height: 86vh;
+}
+
+.help-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.help-head h2 {
+  margin: 0;
+}
+
+.help-rows {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.help-rows dt {
+  font-family: var(--mono);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.help-rows dd {
+  margin: 0;
+}
+
+.help-points {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* ---- toasts ---- */
 
 .toasts {
