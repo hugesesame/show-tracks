@@ -85,7 +85,7 @@ export function createMemoView(app: App) {
       'div',
       { class: 'memo-group' },
       h('span', { class: 'memo-label' }, 'Video'),
-      h('span', { class: 'memo-row-text' }, 'Memo on video output'),
+      h('span', { class: 'memo-row-text' }, 'Memo on Video Output'),
       onVideo,
     ),
     h('div', { class: 'memo-group memo-positions' }, ...positions),
@@ -145,7 +145,7 @@ export function createMemoView(app: App) {
     fade.disabled = show || !s.memoFadeOn;
     fadeValue.classList.toggle('off', !s.memoFadeOn);
     for (const b of positions) b.classList.toggle('active', b.dataset.position === s.memoPosition);
-    switchButton(onVideo, s.memoOutput, 'Memo on video output');
+    switchButton(onVideo, s.memoOutput, 'Memo on Video Output');
     onVideo.title = s.memoOutput
       ? 'The memos show over the video on the video output: click to hide them there (the prompter always shows them)'
       : 'The video output shows the video alone: click to show the memos over it (the prompter always shows them)';

@@ -46,7 +46,7 @@
 2. On the first page, press **Choose** next to Audio (and Video, if there is one) and pick a file. Any format Chrome can play works, such as WAV, MP3, M4A and MP4.
 3. Play it with `Space`, and press `M` where you want a cue. Add more pages with **+** in PAGES.
 4. For lyrics or prompts, switch the Cue List to **Memo** and double-click a cue to type. `Shift+Enter` starts a new line.
-5. Press **Open video output** and move the window to the second display. Double-click it or press `F` for fullscreen.
+5. Press **Open Video Output** and move the window to the second display. Double-click it or press `F` for fullscreen.
 6. For MTC and MIDI Notes, open **Settings** (`⌘,`) and choose the MIDI output.
 
 Press `?` or **Help** at the bottom of PAGES for all the controls and keyboard shortcuts.
@@ -58,7 +58,7 @@ The browser asks for permission the first time. Choose **Allow**. If you blocked
 | When | What the browser asks | Why |
 |---|---|---|
 | The app opens | To control MIDI devices | To send MTC and MIDI Notes, and to listen to the MIDI remote and MTC from a DAW |
-| You press **Open video output** | To allow pop-ups (only if the window was blocked) | To open the output window |
+| You press **Open Video Output** | To allow pop-ups (only if the window was blocked) | To open the output window |
 | You press **Save** the first time | Where to save the file | To write the project file |
 | You press **Show names** next to Audio output | To use the microphone | Chrome names output devices only then. Nothing is recorded |
 | You press **Backup**, **Restore** or **Find media** | Which folder, and to let the site see (or edit) its files | To write or read the backup and the media |

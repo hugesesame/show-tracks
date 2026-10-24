@@ -118,10 +118,10 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
     audio.update();
     video.update();
     const open = app.output.isOpen;
-    outputButton.textContent = open ? 'Output open' : 'Open video output';
+    outputButton.textContent = open ? 'Output open' : 'Open Video Output';
     outputButton.classList.toggle('active', open);
     const prompting = app.prompter.isOpen;
-    prompterButton.textContent = prompting ? 'Prompter open' : 'Open prompter';
+    prompterButton.textContent = prompting ? 'Prompter open' : 'Open Prompter';
     prompterButton.classList.toggle('active', prompting);
     const show = app.showMode;
     showButton.textContent = show && exitArmed ? 'Exit?' : 'SHOW';

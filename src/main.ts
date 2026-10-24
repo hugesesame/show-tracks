@@ -160,7 +160,7 @@ function createMonitor(
     h('button', { type: 'button', class: 'small', 'data-view': name, onclick: () => show(name, true) }, label);
   const tabs = h('div', { class: 'monitor-tabs' }, tab('video', 'Video'), tab('memo', 'Memo'), tab('mixer', 'Mixer'));
   // The video element keeps playing under the others: it is also the Video track's sound.
-  // The Video view shows what the video output shows: the memos too while "Memo on video output" is on.
+  // The Video view shows what the video output shows: the memos too while "Memo on Video Output" is on.
   const videoMemo = createMemoStage();
   const screen = h('div', { class: 'screen' }, video, empty, videoMemo.element);
   const element = h('section', { class: 'monitor' }, screen, mixer, memo, tabs);
