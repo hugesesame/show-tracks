@@ -28,6 +28,15 @@ const HELP: Record<Lang, Text> = {
         ],
       },
       {
+        title: 'Show mode',
+        points: [
+          'Press SHOW (top right) for the show. Editing is locked and a red frame goes round the app.',
+          'Still working: GO, play and stop, choosing the cue on standby and the page, the mixer, the monitor views, the output window and Save.',
+          'Locked: adding, moving or deleting cues, editing names, memos and MIDI, in / out and overlap marks, media, pages, settings, New and Import, and clicking the track to move the playhead.',
+          'To edit again, press SHOW twice (it asks “Exit?” first). Show mode stays on after a reload.',
+        ],
+      },
+      {
         title: 'Keyboard',
         rows: [
           ['Space', 'Play / stop'],
@@ -132,6 +141,15 @@ const HELP: Record<Lang, Text> = {
           'ページ管理で曲順を決めます。曲が終わったら次のページを自動で再生したり、オーバーラップ機能で曲の終わりに重ねて次の曲を始めたりできます。',
           '再生時間で MTC を出力します。',
           'Chrome 専用です。メディアとプロジェクトは、このブラウザの中に保存されます。',
+        ],
+      },
+      {
+        title: 'ショーモード',
+        points: [
+          '本番では右上の SHOW を押します。編集がロックされ、アプリの外枠が赤くなります。',
+          '使えるもの: GO、再生と停止、待機中の Cue とページの選択、ミキサー、モニターの切り替え、出力ウィンドウ、Save。',
+          'ロックされるもの: Cue の追加・移動・削除、名前・メモ・MIDI の編集、イン / アウト点とオーバーラップ、メディア、ページ、設定、New と Import、トラックのクリックでの再生位置の移動。',
+          '編集に戻るには SHOW を 2 回押します（1 回目は「Exit?」と表示）。再読み込みしてもショーモードのままです。',
         ],
       },
       {

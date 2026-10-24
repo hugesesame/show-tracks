@@ -113,6 +113,17 @@ export function createSettings(app: App, files: FileMenu) {
         h('div', { class: 'actions' }, h('button', { value: 'close' }, 'Close')),
       ),
     );
+    lockForShow();
+  }
+
+  /** Show mode locks the settings: only the file buttons for saving stay. */
+  function lockForShow(): void {
+    if (!app.showMode) return;
+    dialog.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select').forEach((c) => (c.disabled = true));
+    dialog.querySelectorAll<HTMLButtonElement>('.file-buttons button').forEach((b) => {
+      if (b.textContent === 'New' || b.textContent === 'Import') b.disabled = true;
+    });
+    dialog.querySelector('h2')?.after(h('div', { class: 'hint' }, 'Show mode: settings are locked. Press SHOW twice to edit.'));
   }
 
   function open(): void {

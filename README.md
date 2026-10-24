@@ -29,6 +29,7 @@
 - **MTC** follows the playback time, with an offset per page.
 - **Video output window** for a second display, with the text over the video. The main screen frames the picture the same way, so what you see is what the audience sees.
 - **Mixer** with Audio, Video and Master faders, pan and mute.
+- **Show mode** locks editing for the performance, so a stray click cannot move a cue or the playhead.
 - **Help** in English and Japanese inside the app: press `?`.
 
 ![The Cue List showing memos (lyrics), and the Memo view](screenshots/memo.png)

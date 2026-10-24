@@ -420,6 +420,8 @@ export function createTrack(app: App) {
 
   element.addEventListener('pointerdown', (e) => {
     if (app.duration <= 0 || e.button !== 0) return;
+    // In show mode a stray click must not move the playhead mid-song.
+    if (app.editLocked()) return;
     const rect = element.getBoundingClientRect();
     const xOf = (ev: PointerEvent) => ev.clientX - rect.left;
     const startX = xOf(e);

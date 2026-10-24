@@ -1346,6 +1346,29 @@ dialog.help {
   line-height: 1.5;
 }
 
+/* ---- show mode ---- */
+
+.show-toggle {
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.show-toggle.on {
+  background: var(--playhead);
+  border-color: var(--playhead);
+  color: #fff;
+}
+
+/* A red frame around the whole app, so show mode is never mistaken for editing. */
+body.show-mode::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  border: 2px solid var(--playhead);
+  pointer-events: none;
+  z-index: 100;
+}
+
 /* ---- toasts ---- */
 
 .toasts {

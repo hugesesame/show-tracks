@@ -26,6 +26,13 @@ export function editableCell(
   return cell;
 }
 
+/** Asked before a cell opens for editing; show mode refuses. */
+let mayEdit: () => boolean = () => true;
+
+export function setEditGuard(guard: () => boolean): void {
+  mayEdit = guard;
+}
+
 function startEditing(
   cell: HTMLElement,
   value: string,
@@ -33,7 +40,7 @@ function startEditing(
   done: () => void,
   multiline: boolean,
 ): void {
-  if (cell.querySelector('input, textarea')) return;
+  if (cell.querySelector('input, textarea') || !mayEdit()) return;
   const props = { class: cell.className.replace('cell', '').trim(), value, spellcheck: false };
   const input: HTMLInputElement | HTMLTextAreaElement = multiline ? h('textarea', props) : h('input', props);
   if (input instanceof HTMLTextAreaElement) {
@@ -104,6 +111,7 @@ export function createCueList(app: App) {
   const rescroll = () => (scrolledTo = null);
   document.addEventListener('visibilitychange', rescroll);
   window.addEventListener('focus', rescroll);
+  const addButton = h('button', { class: 'small', title: 'Add a cue at the playhead (M)', onclick: () => app.addMarkerAtPlayhead() }, '+');
   const pageMidi = h('button', { class: 'small midi-toggle', onclick: () => app.toggleMidiNotes() }, 'MIDI');
   // Like PAGES: add at the playhead, delete the cue on standby.
   const removeButton = deleteButton('Delete the selected cue', () => {
@@ -122,7 +130,7 @@ export function createCueList(app: App) {
         { class: 'panel-actions cue-actions' },
         autoScroll.button,
         pageMidi,
-        h('button', { class: 'small', title: 'Add a cue at the playhead (M)', onclick: () => app.addMarkerAtPlayhead() }, '+'),
+        addButton,
         removeButton,
       ),
     ),
@@ -201,6 +209,7 @@ export function createCueList(app: App) {
       const isStandby = standby.kind === 'cue' && standby.markerId === el.dataset.markerId;
       el.classList.toggle('standby', isStandby);
       showArrow(el);
+      el.querySelector<HTMLButtonElement>('.midi-toggle')!.disabled = app.showMode;
     }
     // While playing, only tick() scrolls: a second scroll would cut its smooth scroll short.
     if (autoScroll.isOn() && !app.transport.playing) list.querySelector('.standby')?.scrollIntoView({ block: 'nearest' });
@@ -231,7 +240,10 @@ export function createCueList(app: App) {
       dirty = true;
       return;
     }
-    removeButton.disabled = app.cue.standby.kind !== 'cue';
+    // Show mode locks editing; its buttons are shown as unavailable.
+    const show = app.showMode;
+    addButton.disabled = pageMidi.disabled = show;
+    removeButton.disabled = show || app.cue.standby.kind !== 'cue';
     const { midiNotes } = app.page;
     pageMidi.classList.toggle('on', midiNotes);
     pageMidi.title = midiNotes ? "This page's MIDI Notes are on: click to turn them off" : "This page's MIDI Notes are off: click to turn them on";

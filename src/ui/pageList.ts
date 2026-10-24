@@ -19,6 +19,7 @@ export function createPageList(app: App, openHelp: () => void) {
 
   const removeButton = deleteButton('Delete page', () => app.removeCurrentPage());
   const autoScroll = autoScrollButton('cue-player-page-autoscroll');
+  const addButton = h('button', { class: 'small', title: 'Add page', onclick: () => app.addPage() }, '+');
   /** The page last brought to the top, so the list is only scrolled when the page changes. */
   let scrolledTo: string | null = null;
 
@@ -34,7 +35,7 @@ export function createPageList(app: App, openHelp: () => void) {
         { class: 'panel-actions' },
         autoScroll.button,
         loopButton,
-        h('button', { class: 'small', title: 'Add page', onclick: () => app.addPage() }, '+'),
+        addButton,
         removeButton,
       ),
     ),
@@ -74,7 +75,11 @@ export function createPageList(app: App, openHelp: () => void) {
       scrolledTo = app.page.id;
       list.querySelector('.current')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
     }
-    removeButton.disabled = pages.length === 1;
+    // Show mode locks editing; its buttons are shown as unavailable.
+    const show = app.showMode;
+    addButton.disabled = loopButton.disabled = show;
+    removeButton.disabled = show || pages.length === 1;
+    list.querySelectorAll<HTMLButtonElement>('.end-action').forEach((b) => (b.disabled = show));
     const looping = app.project.settings.loopPages;
     loopButton.classList.toggle('active', looping);
     loopButton.title = looping ? 'Loop all pages: on (after the last page comes the first)' : 'Loop all pages: off';
@@ -121,7 +126,7 @@ export function createPageList(app: App, openHelp: () => void) {
   function makeDraggable(el: HTMLElement, pageId: string): void {
     el.dataset.pageId = pageId;
     el.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0 || (e.target as HTMLElement).closest('input')) return;
+      if (e.button !== 0 || (e.target as HTMLElement).closest('input') || app.showMode) return;
       const startY = e.clientY;
       let dragging = false;
       const move = (ev: PointerEvent) => {

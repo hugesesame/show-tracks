@@ -32,6 +32,9 @@ function repeatButton(label: string, title: string, action: () => void): HTMLBut
 
 export function createFooter(app: App, files: FileMenu) {
   const fileName = h('span', { class: 'file-name' });
+  // New and Import replace the show, so show mode locks them; Export and Save stay.
+  const fileButtonList = fileButtons(files);
+  const replacing = fileButtonList.filter((b) => b.textContent === 'New' || b.textContent === 'Import');
   const clock = h('div', { class: 'wall-clock', title: 'Current time' });
   const offline = h(
     'div',
@@ -43,7 +46,7 @@ export function createFooter(app: App, files: FileMenu) {
   const element = h(
     'footer',
     { class: 'footer' },
-    h('div', { class: 'file-buttons' }, ...fileButtons(files), fileName),
+    h('div', { class: 'file-buttons' }, ...fileButtonList, fileName),
     h(
       'div',
       { class: 'transport' },
@@ -75,6 +78,7 @@ export function createFooter(app: App, files: FileMenu) {
     fileName.textContent = `${files.fileName ?? 'Untitled'}${unsaved ? ' ●' : ''}`;
     fileName.title = unsaved ? 'Not saved to a file' : 'Saved';
     fileName.classList.toggle('unsaved', unsaved);
+    for (const b of replacing) b.disabled = app.showMode;
   }
 
   return { element, update, showOfflineReady: () => (offline.hidden = false) };

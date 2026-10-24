@@ -3,7 +3,7 @@ import { App } from './app/app';
 import { createProject } from './model/project';
 import { enableOffline } from './offline';
 import { loadProject, openDb, requestPersistentStorage, saveProject, takeStashed } from './storage/db';
-import { createCueList } from './ui/cueList';
+import { createCueList, setEditGuard } from './ui/cueList';
 import { byId, h } from './ui/dom';
 import { createFileMenu } from './ui/fileMenu';
 import { createFooter } from './ui/footer';
@@ -85,6 +85,7 @@ async function main(): Promise<void> {
   app.onChange(update);
   app.mtc.onChange(update);
   files.onChange(update);
+  setEditGuard(() => !app.editLocked());
   installKeyboard(app, track, files, settings.open, help.open);
   update();
 

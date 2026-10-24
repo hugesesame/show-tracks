@@ -126,12 +126,15 @@ export function createMemoView(app: App) {
     outline.style.setProperty('--fill', String(s.memoOutline / Number(outline.max)));
     outlineColor.value = s.memoOutlineColor;
     switchButton(outlineOn, s.memoOutlineOn, 'Outline');
-    outline.disabled = outlineColor.disabled = !s.memoOutlineOn;
+    // Show mode locks the look; off switches lock their own row.
+    const show = app.showMode;
+    for (const control of [size, color, outlineOn, fadeOn, output, ...positions]) control.disabled = show;
+    outline.disabled = outlineColor.disabled = show || !s.memoOutlineOn;
     fade.value = String(s.memoFade);
     fade.style.setProperty('--fill', String(s.memoFade / Number(fade.max)));
     fadeValue.textContent = `${s.memoFade.toFixed(1)}s`;
     switchButton(fadeOn, s.memoFadeOn, 'Dissolve');
-    fade.disabled = !s.memoFadeOn;
+    fade.disabled = show || !s.memoFadeOn;
     fadeValue.classList.toggle('off', !s.memoFadeOn);
     for (const b of positions) b.classList.toggle('active', b.dataset.position === s.memoPosition);
     output.classList.toggle('active', s.memoOutput);

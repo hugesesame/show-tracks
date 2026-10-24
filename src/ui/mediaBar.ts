@@ -15,13 +15,14 @@ function mediaSlot(app: App, kind: MediaRecord['kind'], label: string) {
     },
   });
   const name = h('span', { class: 'name' });
+  const choose = h('button', { class: 'small', onclick: () => input.click() }, 'Choose');
   const clear = h('button', { class: 'small', title: `Remove ${label.toLowerCase()}`, onclick: () => void app.clearMedia(kind) }, '×');
   const element = h(
     'div',
     { class: 'media-slot' },
     h('span', {}, label),
     name,
-    h('button', { class: 'small', onclick: () => input.click() }, 'Choose'),
+    choose,
     clear,
     input,
   );
@@ -36,6 +37,7 @@ function mediaSlot(app: App, kind: MediaRecord['kind'], label: string) {
     else name.textContent = id ? 'Loading…' : 'None';
     name.title = name.textContent;
     clear.hidden = id === null;
+    choose.disabled = clear.disabled = app.showMode;
   }
 
   return { element, update };
@@ -49,6 +51,28 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
   const outputButton = h('button', { class: 'small' });
   outputButton.addEventListener('click', () => {
     if (!app.output.open()) app.error('Could not open the output window. Please allow pop-ups.');
+  });
+
+  // Entering show mode takes one click; leaving takes two, so it is never left by accident.
+  const SHOW_EXIT_MS = 3000;
+  let exitArmed: ReturnType<typeof setTimeout> | undefined;
+  const showButton = h('button', { class: 'small show-toggle' });
+  const disarm = () => {
+    clearTimeout(exitArmed);
+    exitArmed = undefined;
+  };
+  showButton.addEventListener('click', () => {
+    if (!app.showMode) app.setShowMode(true);
+    else if (exitArmed) {
+      disarm();
+      app.setShowMode(false);
+    } else {
+      exitArmed = setTimeout(() => {
+        disarm();
+        update();
+      }, SHOW_EXIT_MS);
+    }
+    update();
   });
 
   const fullscreenButton = h('button', { class: 'small fullscreen', onclick: () => toggleFullscreen() });
@@ -74,6 +98,7 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
       h('button', { class: 'small', title: 'Show the page up to its end point (/ or ⇧Z)', onclick: zoom.zoomFit }, 'Fit'),
     ),
     outputButton,
+    showButton,
     h('button', { class: 'small', title: 'Settings (⌘,)', onclick: openSettings }, '⚙ Settings'),
     fullscreenButton,
   );
@@ -84,6 +109,13 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
     const open = app.output.isOpen;
     outputButton.textContent = open ? 'Output open' : 'Open video output';
     outputButton.classList.toggle('active', open);
+    const show = app.showMode;
+    showButton.textContent = show && exitArmed ? 'Exit?' : 'SHOW';
+    showButton.classList.toggle('on', show);
+    showButton.title = show
+      ? 'Show mode: editing is locked. Click twice to edit again'
+      : 'Show mode: lock editing for the show';
+    document.body.classList.toggle('show-mode', show);
   }
 
   app.output.onChange(update);

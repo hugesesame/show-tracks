@@ -48,6 +48,16 @@ import {
 } from '../storage/db';
 
 const SKIP_SECONDS = 5;
+const SHOW_MODE_KEY = 'cue-player-show-mode';
+
+/** Show mode survives a reload in the middle of a show. */
+function loadShowMode(): boolean {
+  try {
+    return localStorage.getItem(SHOW_MODE_KEY) === 'on';
+  } catch {
+    return false;
+  }
+}
 /** Markers this close to the playhead count as "here" for prev/next jumps. */
 const MARKER_EPSILON = 0.05;
 
@@ -65,6 +75,7 @@ export class App {
   /** The page time cue notes were last checked at while playing; null after a start or jump. */
   private noteTime: number | null = null;
   private readonly events = new EventTarget();
+  private _showMode = loadShowMode();
 
   constructor(
     private readonly db: IDBDatabase,
@@ -223,6 +234,29 @@ export class App {
     return record;
   }
 
+  // ---- show mode ----
+
+  /** Show mode locks editing, leaving only what runs the show. */
+  get showMode(): boolean {
+    return this._showMode;
+  }
+
+  setShowMode(on: boolean): void {
+    this._showMode = on;
+    try {
+      localStorage.setItem(SHOW_MODE_KEY, on ? 'on' : 'off');
+    } catch {
+      // Not remembering it across reloads is fine.
+    }
+    this.emit('change');
+  }
+
+  /** True, with a note to the user, when an edit is refused in show mode. */
+  editLocked(): boolean {
+    if (this._showMode) this.error('Show mode: editing is locked. Press SHOW to edit.');
+    return this._showMode;
+  }
+
   // ---- transport ----
 
   go(): void {
@@ -282,10 +316,12 @@ export class App {
   }
 
   toggleLoopPages(): void {
+    if (this.editLocked()) return;
     this.commit(updateSettings(this._project, { loopPages: !this._project.settings.loopPages }));
   }
 
   setEndAction(pageId: string, endAction: EndAction): void {
+    if (this.editLocked()) return;
     this.commit(updatePage(this._project, pageId, { endAction }));
   }
 
@@ -358,6 +394,7 @@ export class App {
   // ---- markers ----
 
   addMarkerAtPlayhead(): void {
+    if (this.editLocked()) return;
     if (!this.transport.hasMedia) {
       this.error('Load audio or video first.');
       return;
@@ -379,15 +416,18 @@ export class App {
   }
 
   renameMarker(markerId: string, name: string): void {
+    if (this.editLocked()) return;
     this.updateCurrentPage((page) => renameMarker(page, markerId, name));
   }
 
   setMarkerTime(markerId: string, time: number): void {
+    if (this.editLocked()) return;
     this.updateCurrentPage((page, duration) => setMarkerTime(page, markerId, time, duration));
   }
 
   /** MIDI switch, note or memo of a cue. */
   setMarkerFields(markerId: string, patch: MarkerFields): void {
+    if (this.editLocked()) return;
     this.updateCurrentPage((page) => setMarkerFields(page, markerId, patch));
   }
 
@@ -397,24 +437,29 @@ export class App {
   }
 
   setMemoLook(patch: Partial<Pick<Settings, 'memoSize' | 'memoColor' | 'memoOutline' | 'memoOutlineColor' | 'memoOutlineOn' | 'memoPosition' | 'memoFade' | 'memoFadeOn' | 'memoOutput'>>): void {
+    if (this.editLocked()) return;
     this.commit(updateSettings(this._project, patch));
   }
 
   /** Turns the cues' MIDI Notes on this page on or off as a whole. */
   toggleMidiNotes(): void {
+    if (this.editLocked()) return;
     this.commit(updatePage(this._project, this.page.id, { midiNotes: !this.page.midiNotes }));
   }
 
   setNoteDefaults(patch: Partial<Pick<Settings, 'noteChannel' | 'noteNumber' | 'noteVelocity'>>): void {
+    if (this.editLocked()) return;
     this.commit(updateSettings(this._project, patch));
   }
 
   removeMarker(markerId: string): void {
+    if (this.editLocked()) return;
     this.updateCurrentPage((page) => removeMarker(page, markerId));
   }
 
   /** Places a clip on the timeline; markers move with the audio clip. */
   moveClip(kind: MediaRecord['kind'], offset: number): void {
+    if (this.editLocked()) return;
     const durations = { audio: this.transport.audioDuration, video: this.transport.videoDuration };
     const page = this.page;
     this.commit(replacePage(this._project, moveClip(page, kind, offset, durations)), page.markers);
@@ -424,6 +469,7 @@ export class App {
 
   /** Sets the in / out point or the overlap mark; null clears it. A new range re-arms GO on its first cue. */
   setRangePoint(point: 'start' | 'end' | 'overlap', time: number | null): void {
+    if (this.editLocked()) return;
     if (!this.transport.hasMedia) {
       this.error('Load audio or video first.');
       return;
@@ -457,19 +503,23 @@ export class App {
   }
 
   addPage(): void {
+    if (this.editLocked()) return;
     this.commit(addPage(this._project, createPage(`Page ${this._project.pages.length + 1}`)));
   }
 
   renamePage(name: string, pageId = this.page.id): void {
+    if (this.editLocked()) return;
     this.commit(renamePage(this._project, pageId, name));
   }
 
   /** Moves a page to `toIndex` in the list without it. */
   movePage(pageId: string, toIndex: number): void {
+    if (this.editLocked()) return;
     this.commit(movePage(this._project, pageId, toIndex));
   }
 
   removeCurrentPage(): void {
+    if (this.editLocked()) return;
     const page = this.page;
     if (this._project.pages.length === 1) {
       this.error('The last page cannot be deleted.');
@@ -482,6 +532,7 @@ export class App {
   // ---- media ----
 
   async setMedia(kind: MediaRecord['kind'], file: File): Promise<void> {
+    if (this.editLocked()) return;
     let record: MediaRecord;
     try {
       record = await importMediaFile(file, kind);
@@ -505,6 +556,7 @@ export class App {
   }
 
   async clearMedia(kind: MediaRecord['kind']): Promise<void> {
+    if (this.editLocked()) return;
     const page = this.page;
     const previous = kind === 'audio' ? page.audioMediaId : page.videoMediaId;
     const patch = kind === 'audio' ? { audioMediaId: null } : { videoMediaId: null };
@@ -527,15 +579,18 @@ export class App {
   // ---- settings ----
 
   setFps(fps: Fps): void {
+    if (this.editLocked()) return;
     this.commit(updateSettings(this._project, { mtcFps: fps }));
   }
 
   setMidiOutput(id: string | null): void {
+    if (this.editLocked()) return;
     this.mtc.selectOutput(id);
     this.commit(updateSettings(this._project, { midiOutputId: id }));
   }
 
   setPageOffset(seconds: number): void {
+    if (this.editLocked()) return;
     this.commit(updatePage(this._project, this.page.id, { mtcOffset: seconds }));
   }
 
@@ -568,6 +623,7 @@ export class App {
 
   /** Returns false when the file could not be read. */
   async importJson(text: string): Promise<boolean> {
+    if (this.editLocked()) return false;
     let imported: ReturnType<typeof importProjectJson>;
     try {
       imported = importProjectJson(text);
@@ -583,6 +639,7 @@ export class App {
   }
 
   async newProject(): Promise<void> {
+    if (this.editLocked()) return;
     this.importedMediaNames = {};
     await this.replaceProject(createProject());
   }
