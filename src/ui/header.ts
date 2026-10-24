@@ -76,12 +76,14 @@ export function createHeader(app: App) {
     const status = app.mtc.status;
     let [className, text, title] = [
       `mtc ${status}`,
-      { on: 'MTC ON', off: 'MTC OFF', denied: 'MTC BLOCKED', unsupported: 'MTC N/A' }[status],
-      status === 'denied'
-        ? 'MIDI access is blocked. Allow it in the browser site settings.'
-        : status === 'unsupported'
-          ? 'This browser does not support Web MIDI. Please use Chrome.'
-          : '',
+      // OUT pairs with IN on pages that follow a DAW; ■ means nothing is going out.
+      { on: 'MTC OUT', off: 'MTC OUT ■', denied: 'MTC BLOCKED', unsupported: 'MTC N/A' }[status],
+      {
+        on: 'Sending MTC to the MIDI output.',
+        off: 'Not sending MTC: choose a MIDI output in Settings.',
+        denied: 'MIDI access is blocked. Allow it in the browser site settings.',
+        unsupported: 'This browser does not support Web MIDI. Please use Chrome.',
+      }[status],
     ];
     if (app.following && status !== 'denied' && status !== 'unsupported') {
       const state = app.project.settings.mtcInputId ? app.mtcInState : null;
