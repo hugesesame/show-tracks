@@ -6,7 +6,13 @@ import { formatClock, formatCountdown } from './format';
 import { toggleFullscreen } from './fullscreen';
 
 export function createHeader(app: App) {
-  const go = h('button', { class: 'go', title: 'GO (G)', onclick: () => app.go() }, 'GO');
+  // "▶ STANDBY" under GO says what it does: play the cue on standby, named to its right.
+  const go = h(
+    'button',
+    { class: 'go', title: 'GO: play from the cue on standby (G)', onclick: () => app.go() },
+    h('span', { class: 'go-label' }, 'GO'),
+    h('span', { class: 'go-hint' }, '▶ STANDBY'),
+  );
   const standbyName = h('div', { class: 'standby-name' });
   const pageNumber = h('div', { class: 'page-number' });
   const pageName = h('div', { class: 'page-name' });

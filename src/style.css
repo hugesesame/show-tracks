@@ -107,15 +107,32 @@ button:focus-visible {
 }
 
 .go {
-  width: 96px;
+  width: 120px;
   height: 56px;
-  font-size: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0;
   font-weight: 800;
-  letter-spacing: 2px;
   background: transparent;
   color: var(--go);
   border: 2px solid var(--go);
   border-radius: 10px;
+}
+
+.go-label {
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: 2px;
+}
+
+.go-hint {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  opacity: 0.75;
 }
 
 .go:hover:not(:disabled) {
