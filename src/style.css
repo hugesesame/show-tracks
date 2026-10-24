@@ -94,7 +94,7 @@ button:focus-visible {
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 16px;
-  padding: 10px 16px;
+  padding: 14px 16px;
   background: var(--panel);
   border-bottom: 1px solid var(--line);
 }
@@ -107,8 +107,8 @@ button:focus-visible {
 }
 
 .go {
-  width: 120px;
-  height: 56px;
+  width: 140px;
+  height: 76px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -123,13 +123,13 @@ button:focus-visible {
 }
 
 .go-label {
-  font-size: 24px;
+  font-size: 30px;
   line-height: 1;
   letter-spacing: 2px;
 }
 
 .go-hint {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 1px;
   opacity: 0.75;
@@ -160,7 +160,7 @@ button:focus-visible {
 }
 
 .standby-name {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -170,7 +170,7 @@ button:focus-visible {
 .page-info {
   max-width: 40%;
   /* Sized like the page name so 5ch is five of its characters. */
-  font-size: 24px;
+  font-size: 28px;
   margin-right: calc(clamp(8px, 2vw, 32px) + 5ch);
   text-align: center;
 }
@@ -199,7 +199,7 @@ button:focus-visible {
 }
 
 .readout-value {
-  font: 600 clamp(22px, 2.4vw, 34px) / 1 var(--mono);
+  font: 600 clamp(26px, 2.9vw, 42px) / 1 var(--mono);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -215,7 +215,7 @@ button:focus-visible {
 }
 
 .page-name {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -249,7 +249,7 @@ button:focus-visible {
 
 .main {
   display: grid;
-  grid-template-rows: var(--track-h, 260px) 5px minmax(0, 1fr);
+  grid-template-rows: var(--track-h, 232px) 5px minmax(0, 1fr);
   grid-template-columns: var(--pages-w, 360px) 5px minmax(0, 1fr) 5px var(--monitor-w, 360px);
   min-height: 0;
   min-width: 0;
