@@ -1,6 +1,7 @@
 import { go, initialCueState, passed, reconcile, select, type CueState } from '../cue/cueController';
 import { History } from './history';
 import { AudioOutput } from '../engine/audioOutput';
+import { MidiPresses, remoteAction } from '../engine/midiRemote';
 import { MtcOutput } from '../engine/mtc';
 import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
@@ -34,7 +35,7 @@ import {
   updatePage,
   updateSettings,
 } from '../model/project';
-import type { EndAction, MediaRecord, Page, Project, Settings } from '../model/types';
+import type { EndAction, MediaRecord, MidiTrigger, Page, Project, RemoteAction, Settings } from '../model/types';
 import { OutputWindow } from '../output/outputWindow';
 import {
   createAutosaver,
@@ -84,6 +85,9 @@ export class App {
   /** Set while an edit is under way, so its commit clears the steps Redo could bring back. */
   private editing = false;
   private _showMode = loadShowMode();
+  private readonly presses = new MidiPresses();
+  /** A remote control waiting for its note or CC, while Learn is on. */
+  private learning: { action: RemoteAction; done: () => void } | null = null;
   private fadeTimer: ReturnType<typeof setTimeout> | undefined;
   private fadeEnd = 0;
 
@@ -129,6 +133,7 @@ export class App {
     await this.loadCurrentPage();
     await this.audioOutput.init();
     await this.mtc.init();
+    this.listenToRemote();
     this.mtc.selectOutput(this._project.settings.midiOutputId);
   }
 
@@ -307,6 +312,77 @@ export class App {
       void this.loadCurrentPage();
     }
     this.emit('change');
+  }
+
+  // ---- MIDI remote ----
+
+  private listenToRemote(): void {
+    this.mtc.listen(this._project.settings.midiInputId, (data) => this.remoteMessage(data));
+  }
+
+  /** A press on the MIDI input: assigned while learning, else run if it is assigned. Works in show mode. */
+  private remoteMessage(data: Uint8Array): void {
+    const press = this.presses.read(data);
+    if (!press) return;
+    if (this.learning) {
+      const { action, done } = this.learning;
+      this.learning = null;
+      this.setRemote(action, press);
+      done();
+      return;
+    }
+    const action = remoteAction(press, this._project.settings.midiRemote);
+    if (action) this.runRemote(action);
+  }
+
+  private runRemote(action: RemoteAction): void {
+    ({
+      go: () => this.go(),
+      playStop: () => this.togglePlay(),
+      fadeOut: () => this.fadeOutStop(),
+      previousCue: () => this.previousMarker(),
+      nextCue: () => this.nextMarker(),
+    })[action]();
+    this.events.dispatchEvent(new CustomEvent('remote', { detail: action }));
+  }
+
+  /** Called with each action a MIDI remote runs, so its button can light up. */
+  onRemote(listener: (action: RemoteAction) => void): void {
+    this.events.addEventListener('remote', (e) => listener((e as CustomEvent<RemoteAction>).detail));
+  }
+
+  setMidiInput(id: string | null): void {
+    if (this.editLocked()) return;
+    this.commit(updateSettings(this._project, { midiInputId: id }));
+    this.listenToRemote();
+  }
+
+  /** Learn: the next note or CC on the MIDI input runs this action. Resolves when it arrives or is cancelled. */
+  learnRemote(action: RemoteAction): Promise<void> {
+    this.learning?.done();
+    if (this.editLocked()) return Promise.resolve();
+    return new Promise((done) => (this.learning = { action, done }));
+  }
+
+  cancelLearn(): void {
+    this.learning?.done();
+    this.learning = null;
+  }
+
+  get learningRemote(): RemoteAction | null {
+    return this.learning?.action ?? null;
+  }
+
+  /** Assigns a note or CC to an action (null removes it); one note or CC runs one action only. */
+  setRemote(action: RemoteAction, trigger: MidiTrigger | null): void {
+    if (this.editLocked()) return;
+    const same = (t: MidiTrigger) =>
+      trigger !== null && t.type === trigger.type && t.channel === trigger.channel && t.number === trigger.number;
+    const remote = Object.fromEntries(
+      Object.entries(this._project.settings.midiRemote).filter(([a, t]) => a !== action && !same(t)),
+    ) as Settings['midiRemote'];
+    if (trigger) remote[action] = trigger;
+    this.commit(updateSettings(this._project, { midiRemote: remote }));
   }
 
   // ---- transport ----
@@ -801,6 +877,7 @@ export class App {
     this.autosaver.schedule(project);
     this.applyPageSettings();
     this.mtc.selectOutput(project.settings.midiOutputId);
+    this.listenToRemote();
     await this.loadCurrentPage();
   }
 }

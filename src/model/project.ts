@@ -10,6 +10,8 @@ export const MASTER_VOLUME = 1;
 const DEFAULT_SETTINGS: Settings = {
   mtcFps: '30',
   midiOutputId: null,
+  midiInputId: null,
+  midiRemote: {},
   loopPages: false,
   fadeOut: 2,
   masterVolume: MASTER_VOLUME,
@@ -144,15 +146,15 @@ export function updateSettings(project: Project, patch: Partial<Settings>): Proj
 
 /**
  * A state Undo goes back to, keeping what is live now: the mixer (levels, pan,
- * mute, Master), the MIDI output and the page on screen are not undone.
+ * mute, Master), the MIDI ports and the page on screen are not undone.
  */
 export function keepLive(state: Project, current: Project): Project {
   const now = new Map(current.pages.map((p) => [p.id, p]));
-  const { masterVolume, masterMuted, masterPan, midiOutputId } = current.settings;
+  const { masterVolume, masterMuted, masterPan, midiOutputId, midiInputId } = current.settings;
   return {
     ...state,
     currentPageId: state.pages.some((p) => p.id === current.currentPageId) ? current.currentPageId : state.currentPageId,
-    settings: { ...state.settings, masterVolume, masterMuted, masterPan, midiOutputId },
+    settings: { ...state.settings, masterVolume, masterMuted, masterPan, midiOutputId, midiInputId },
     pages: state.pages.map((p) => {
       const live = now.get(p.id);
       if (!live) return p;

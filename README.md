@@ -27,6 +27,7 @@
 - **Text on screen at each cue**: lyrics in time with the music, prompts for performers, or text over the video for a karaoke-style picture. Choose the size, color, outline, position and a dissolve between lines.
 - **MIDI Note at each cue**, to control lights or other gear. Turn it on or off per cue or for a whole page.
 - **MTC** follows the playback time, with an offset per page.
+- **MIDI remote**: run GO, Play / Stop, Fade out and Previous / Next cue from a foot switch, pad or desk. Press Learn, then the key.
 - **Video output window** for a second display, with the text over the video. The main screen frames the picture the same way, so what you see is what the audience sees.
 - **Mixer** with Audio, Video and Master faders, pan and mute.
 - **Audio output**: play through an audio interface or any other output device. Unplugged during a show, the sound moves to the system default and comes back when the device is connected again.
@@ -54,7 +55,7 @@ The browser asks for permission the first time. Choose **Allow**. If you blocked
 
 | When | What the browser asks | Why |
 |---|---|---|
-| The app opens | To control MIDI devices | To send MTC and MIDI Notes |
+| The app opens | To control MIDI devices | To send MTC and MIDI Notes, and to listen to the MIDI remote |
 | You press **Open video output** | To allow pop-ups (only if the window was blocked) | To open the output window |
 | You press **Save** the first time | Where to save the file | To write the project file |
 | You press **Show names** next to Audio output | To use the microphone | Chrome names output devices only then. Nothing is recorded |

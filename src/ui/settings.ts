@@ -1,10 +1,20 @@
 import type { App } from '../app/app';
 import { FPS_OPTIONS, formatTimecode, parseTimecode, secondsToTimecode, timecodeToSeconds, type Fps } from '../engine/timecode';
+import { triggerLabel } from '../engine/midiRemote';
+import type { RemoteAction } from '../model/types';
 import { storageEstimate } from '../storage/db';
 import { h } from './dom';
 import { fileButtons, type FileMenu } from './fileMenu';
 
 const FPS_LABELS: Record<Fps, string> = { '24': '24', '25': '25', '29.97df': '29.97 DF', '30': '30' };
+
+const REMOTE_ACTIONS: { action: RemoteAction; label: string }[] = [
+  { action: 'go', label: 'GO' },
+  { action: 'playStop', label: 'Play / Stop' },
+  { action: 'fadeOut', label: 'Fade out' },
+  { action: 'previousCue', label: 'Previous cue' },
+  { action: 'nextCue', label: 'Next cue' },
+];
 
 const formatBytes = (bytes: number) =>
   bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.round(bytes / 1e6)} MB`;
@@ -104,6 +114,38 @@ export function createSettings(app: App, files: FileMenu) {
           ? 'All of the app’s sound plays through this device. It is remembered on this computer.'
           : 'Chrome shows device names once the microphone is allowed. Show names asks once; nothing is recorded.';
 
+    // The MIDI remote: an input, and the note or CC each control answers to.
+    const inputSelect = h(
+      'select',
+      { onchange: () => app.setMidiInput(inputSelect.value || null) },
+      h('option', { value: '' }, 'None'),
+      ...app.mtc.inputs().map((i) => h('option', { value: i.id, selected: i.id === settings.midiInputId }, i.name)),
+    );
+    const inputName = app.mtc.inputs().find((i) => i.id === settings.midiInputId)?.name;
+    const outputName = app.mtc.outputs().find((o) => o.id === settings.midiOutputId)?.name;
+    const loopback = inputName !== undefined && inputName === outputName;
+    const remoteRows = REMOTE_ACTIONS.map(({ action, label }) => {
+      const trigger = settings.midiRemote[action];
+      const learning = app.learningRemote === action;
+      const learn = h(
+        'button',
+        {
+          type: 'button',
+          class: `small${learning ? ' active' : ''}`,
+          title: 'Then press the key, pad or pedal on the MIDI device',
+          onclick: () => {
+            if (learning) app.cancelLearn();
+            else void app.learnRemote(action).then(render);
+            render();
+          },
+        },
+        learning ? 'Press a key…' : 'Learn',
+      );
+      const clear = h('button', { type: 'button', class: 'small', title: 'Remove', onclick: () => { app.setRemote(action, null); render(); } }, '×');
+      clear.hidden = !trigger;
+      return row(label, h('span', { class: 'remote-trigger' }, trigger ? triggerLabel(trigger) : '—'), ' ', learn, ' ', clear);
+    });
+
     const fadeOut = numberField(settings.fadeOut, 0, 10, (n) => app.setFadeOut(n), 0.5);
 
     const pageName = h('input', {
@@ -138,6 +180,16 @@ export function createSettings(app: App, files: FileMenu) {
         row('MIDI output', midiSelect),
         midiHint ? h('div', { class: 'hint' }, midiHint) : null,
         row('Frame rate', fpsSelect),
+        h('h3', {}, 'MIDI remote'),
+        row('MIDI input', inputSelect),
+        ...remoteRows,
+        h(
+          'div',
+          { class: 'hint' },
+          loopback
+            ? 'The input is the same port as the MIDI output: cue notes sent out could come back and run these controls. Use separate ports.'
+            : 'Run the show from a foot switch, pad or desk: press Learn, then the key. Notes and CCs both work, also in show mode.',
+        ),
         h('h3', {}, 'MIDI Note'),
         row('Channel', channelSelect),
         row('Note', numberField(settings.noteNumber, 0, 127, (n) => app.setNoteDefaults({ noteNumber: n }))),
@@ -176,8 +228,9 @@ export function createSettings(app: App, files: FileMenu) {
   function lockForShow(): void {
     if (!app.showMode) return;
     dialog.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select').forEach((c) => (c.disabled = true));
-    dialog.querySelectorAll<HTMLButtonElement>('.file-buttons button').forEach((b) => {
-      if (['New', 'Import', 'Restore', 'Find media'].includes(b.textContent ?? '')) b.disabled = true;
+    // Saving and closing stay; everything that changes the show is locked.
+    dialog.querySelectorAll<HTMLButtonElement>('button').forEach((b) => {
+      if (!['Close', 'Export', 'Save', 'Backup'].includes(b.textContent ?? '')) b.disabled = true;
     });
     dialog.querySelector('h2')?.after(h('div', { class: 'hint' }, 'Show mode: settings are locked. Press SHOW twice to edit.'));
   }
@@ -186,6 +239,9 @@ export function createSettings(app: App, files: FileMenu) {
     render();
     dialog.showModal();
   }
+
+  // Closing Settings ends a Learn that never got its key.
+  dialog.addEventListener('close', () => app.cancelLearn());
 
   return { element: dialog, open };
 }

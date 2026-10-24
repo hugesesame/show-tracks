@@ -3,6 +3,9 @@ import type { Fps } from '../engine/timecode';
 export type Settings = {
   mtcFps: Fps;
   midiOutputId: string | null;
+  /** The MIDI input the remote listens to, and which notes or CCs run which control. */
+  midiInputId: string | null;
+  midiRemote: Partial<Record<RemoteAction, MidiTrigger>>;
   /** After the last page comes the first one again. */
   loopPages: boolean;
   /** Seconds Esc takes to fade everything out before stopping. */
@@ -102,3 +105,9 @@ export type MediaRecord = {
 export type IdGenerator = () => string;
 
 export const randomId: IdGenerator = () => crypto.randomUUID();
+
+/** What a MIDI remote (foot switch, pad, desk button) can do. */
+export type RemoteAction = 'go' | 'playStop' | 'fadeOut' | 'previousCue' | 'nextCue';
+
+/** A note or CC on a channel (1..16) that runs a remote action. */
+export type MidiTrigger = { type: 'note' | 'cc'; channel: number; number: number };

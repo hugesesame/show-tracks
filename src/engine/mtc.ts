@@ -20,11 +20,17 @@ function startWorkerTicker(onTick: () => void): void {
   worker.onmessage = onTick;
 }
 
-/** Sends the page time as MTC, and the cues' MIDI Notes, to the selected Web MIDI output. */
+/**
+ * Sends the page time as MTC, and the cues' MIDI Notes, to the selected Web MIDI
+ * output, and hands what one MIDI input plays to the remote.
+ */
 export class MtcOutput {
   private access: MIDIAccess | null = null;
   private output: MIDIOutput | null = null;
   private outputId: string | null = null;
+  private input: MIDIInput | null = null;
+  private inputId: string | null = null;
+  private onInput: (data: Uint8Array) => void = () => {};
   private readonly scheduler = new MtcScheduler((data, at) => this.output?.send(data, at));
   private readonly events = new EventTarget();
   private _status: MtcStatus = 'off';
@@ -53,11 +59,33 @@ export class MtcOutput {
     try {
       // SysEx is needed for Full Frame messages.
       this.access = await navigator.requestMIDIAccess({ sysex: true });
-      this.access.onstatechange = () => this.selectOutput(this.outputId);
+      this.access.onstatechange = () => {
+        this.selectOutput(this.outputId);
+        this.attachInput();
+      };
       this.selectOutput(this.outputId);
     } catch {
       this.setStatus('denied');
     }
+  }
+
+  inputs(): MidiOutputInfo[] {
+    if (!this.access) return [];
+    return Array.from(this.access.inputs.values(), (i) => ({ id: i.id, name: i.name ?? i.id }));
+  }
+
+  /** Listens to one MIDI input (null for none), also after it is unplugged and connected again. */
+  listen(id: string | null, onMessage: (data: Uint8Array) => void): void {
+    this.inputId = id;
+    this.onInput = onMessage;
+    this.attachInput();
+  }
+
+  private attachInput(): void {
+    if (this.input) this.input.onmidimessage = null;
+    const input = this.inputId ? this.access?.inputs.get(this.inputId) : undefined;
+    this.input = input && input.state === 'connected' ? input : null;
+    if (this.input) this.input.onmidimessage = (e) => e.data && this.onInput(e.data);
   }
 
   outputs(): MidiOutputInfo[] {

@@ -1,6 +1,7 @@
 import './style.css';
 import { App } from './app/app';
 import { createProject } from './model/project';
+import type { RemoteAction } from './model/types';
 import { enableOffline } from './offline';
 import { loadProject, openDb, requestPersistentStorage, saveProject, takeStashed } from './storage/db';
 import { createCueList, setEditGuard } from './ui/cueList';
@@ -93,6 +94,19 @@ async function main(): Promise<void> {
     monitorEmpty.hidden = app.page.videoMediaId !== null;
   };
   app.onChange(update);
+  // A control run from the MIDI remote lights its button for a moment.
+  const remoteButtons: Record<RemoteAction, string> = {
+    go: '.header .go',
+    playStop: '.footer .play',
+    fadeOut: '.footer .fade',
+    previousCue: '.footer button[title^="Previous marker"]',
+    nextCue: '.footer button[title^="Next marker"]',
+  };
+  app.onRemote((action) => {
+    const button = document.querySelector(remoteButtons[action]);
+    button?.classList.add('remote-hit');
+    setTimeout(() => button?.classList.remove('remote-hit'), 250);
+  });
   app.mtc.onChange(update);
   files.onChange(update);
   setEditGuard(() => !app.editLocked());

@@ -1374,6 +1374,17 @@ dialog.help {
   color: var(--range);
 }
 
+/* A control run from the MIDI remote lights up for a moment. */
+.remote-hit {
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+.remote-trigger {
+  display: inline-block;
+  min-width: 110px;
+  font: 12px var(--mono);
+}
+
 /* ---- show mode ---- */
 
 .show-toggle {

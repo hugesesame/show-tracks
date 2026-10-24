@@ -144,6 +144,8 @@ describe('project', () => {
     expect(project.settings).toEqual({
       mtcFps: '30',
       midiOutputId: null,
+      midiInputId: null,
+      midiRemote: {},
       loopPages: false,
       fadeOut: 2,
       masterVolume: 1,
