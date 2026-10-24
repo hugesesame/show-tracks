@@ -659,10 +659,57 @@ export class App {
 
   // ---- import / export ----
 
-  exportJson(): string {
+  /** The project file; a backup passes where each media file sits in its media folder. */
+  exportJson(files?: Record<string, string>): string {
     const ids = this._project.pages.flatMap((p) => [p.audioMediaId, p.videoMediaId]);
     const media = ids.flatMap((id) => this.mediaFor(id) ?? []);
-    return exportProjectJson(this._project, media);
+    return exportProjectJson(this._project, media, files);
+  }
+
+  /** Every media file the pages use, once each, read from the browser's store. */
+  async mediaRecords(): Promise<MediaRecord[]> {
+    const ids = new Set(this._project.pages.flatMap((p) => [p.audioMediaId, p.videoMediaId]));
+    const records = await Promise.all([...ids].map((id) => this.fetchMedia(id)));
+    return records.filter((r): r is MediaRecord => r !== null);
+  }
+
+  /** Media the pages use but this browser does not have, with the file names to look for. */
+  missingMedia(): { id: string; kind: MediaRecord['kind']; fileName: string }[] {
+    const missing = new Map<string, { id: string; kind: MediaRecord['kind']; fileName: string }>();
+    for (const page of this._project.pages) {
+      for (const [id, kind] of [[page.audioMediaId, 'audio'], [page.videoMediaId, 'video']] as const) {
+        if (!id || this.storedMediaIds.has(id) || missing.has(id)) continue;
+        const fileName = this.importedMediaNames[id];
+        if (fileName) missing.set(id, { id, kind, fileName });
+      }
+    }
+    return [...missing.values()];
+  }
+
+  /**
+   * Stores media files under the ids the pages already use (restoring a backup,
+   * or files found again). Returns how many could not be read.
+   */
+  async restoreMedia(
+    items: { id: string; kind: MediaRecord['kind']; file: File }[],
+    onProgress: (done: number, total: number) => void = () => {},
+  ): Promise<number> {
+    if (this.editLocked()) return items.length;
+    let failed = 0;
+    for (const [i, { id, kind, file }] of items.entries()) {
+      onProgress(i, items.length);
+      try {
+        const record = { ...(await importMediaFile(file, kind)), id };
+        await putMedia(this.db, record);
+        this.media.set(id, record);
+        this.storedMediaIds.add(id);
+      } catch {
+        failed++;
+      }
+    }
+    onProgress(items.length, items.length);
+    await this.loadCurrentPage();
+    return failed;
   }
 
   /** Media names from the last imported file, keyed by media id, for "please re-select" hints. */

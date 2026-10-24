@@ -15,9 +15,19 @@ function row(label: string, ...controls: (Node | string)[]): HTMLElement {
 
 export function createSettings(app: App, files: FileMenu) {
   const dialog = h('dialog');
+  /** The last backup, restore or media search message; kept across re-renders. */
+  let statusText = '';
+  let status = h('div', { class: 'hint backup-status' });
+  const report = (message: string) => {
+    statusText = message;
+    status.textContent = message;
+  };
+  const backupButton = (label: string, title: string, action: (report: (m: string) => void) => Promise<void>) =>
+    h('button', { type: 'button', title, onclick: async () => { await action(report); render(); } }, label);
 
   function render(): void {
     const { settings } = app.project;
+    status = h('div', { class: 'hint backup-status' }, statusText);
     const page = app.page;
 
     const midiSelect = h(
@@ -114,8 +124,19 @@ export function createSettings(app: App, files: FileMenu) {
         row('Page name', pageName),
         row('MTC offset', offset),
         h('h3', {}, 'Project'),
-        row('File', h('div', { class: 'file-buttons' }, ...fileButtons(files, render))),
-        h('div', { class: 'hint' }, 'Project files do not include audio or video. They stay in this browser; on another computer, re-select the media on each page.'),
+        row('File', h('div', { class: 'file-buttons' }, ...Object.values(fileButtons(files, render)))),
+        row(
+          'Backup',
+          h(
+            'div',
+            { class: 'file-buttons' },
+            backupButton('Backup', 'Save the project and all its media into a folder', files.backup),
+            backupButton('Restore', 'Open a backup folder: the project and its media together', files.restore),
+            backupButton('Find media', 'Look in a folder for missing media, by file name', files.findMedia),
+          ),
+        ),
+        status,
+        h('div', { class: 'hint' }, 'Save and Export write the project without its audio and video. Backup writes a folder with the project and its media, so Restore opens the show complete on another computer. Find media fills in missing media from a folder of the original files.'),
         row('Storage', usage),
         h('div', { class: 'actions' }, h('button', { value: 'close' }, 'Close')),
       ),
@@ -128,7 +149,7 @@ export function createSettings(app: App, files: FileMenu) {
     if (!app.showMode) return;
     dialog.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select').forEach((c) => (c.disabled = true));
     dialog.querySelectorAll<HTMLButtonElement>('.file-buttons button').forEach((b) => {
-      if (b.textContent === 'New' || b.textContent === 'Import') b.disabled = true;
+      if (['New', 'Import', 'Restore', 'Find media'].includes(b.textContent ?? '')) b.disabled = true;
     });
     dialog.querySelector('h2')?.after(h('div', { class: 'hint' }, 'Show mode: settings are locked. Press SHOW twice to edit.'));
   }

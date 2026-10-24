@@ -112,8 +112,10 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'Files',
         points: [
-          'New / Import / Export / Save are in the footer and Settings.',
-          'Project files do not include audio or video. On another computer, choose the media again on each page.',
+          'Save is in the footer; New, Import, Export, Save, Backup, Restore and Find media are in Settings.',
+          'Project files (Save / Export) do not include audio or video.',
+          'Backup writes a folder with the project and all its media; Restore opens it complete, also on another computer.',
+          'Find media: after Import, choose a folder of the original files and missing media are filled in by file name.',
         ],
       },
       {
@@ -228,8 +230,10 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'ファイル',
         points: [
-          'New / Import / Export / Save は、フッターと設定にあります。',
-          'プロジェクトファイルに音声や映像は入りません。別の PC では、各ページでメディアを選び直してください。',
+          'フッターには Save だけがあります。New、Import、Export、Save、Backup、Restore、Find media は設定にあります。',
+          'プロジェクトファイル（Save / Export）に音声や映像は入りません。',
+          'Backup は、プロジェクトとすべてのメディアをフォルダに書き出します。Restore で、別の PC でもそのまま開けます。',
+          'Find media: Import のあと、元のファイルがあるフォルダを選ぶと、見つからないメディアをファイル名で探して割り当てます。',
         ],
       },
       {

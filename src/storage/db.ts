@@ -130,21 +130,32 @@ const EXPORT_VERSION = 1;
 
 export type ExportedMedia = Record<string, { kind: MediaRecord['kind']; fileName: string }>;
 
-/** Exports the project with media file names only; media data stays in the browser. */
-export function exportProjectJson(project: Project, media: MediaRecord[]): string {
+/**
+ * Exports the project with media file names only; media data stays in the browser.
+ * A backup adds `files`: where each media file sits in the backup's media folder.
+ */
+export function exportProjectJson(project: Project, media: MediaRecord[], files?: Record<string, string>): string {
   const mediaInfo: ExportedMedia = {};
   for (const m of media) mediaInfo[m.id] = { kind: m.kind, fileName: m.fileName };
-  return JSON.stringify({ version: EXPORT_VERSION, project, media: mediaInfo }, null, 2);
+  return JSON.stringify({ version: EXPORT_VERSION, project, media: mediaInfo, ...(files && { files }) }, null, 2);
 }
 
-export function importProjectJson(text: string): { project: Project; media: ExportedMedia } {
+export function importProjectJson(text: string): {
+  project: Project;
+  media: ExportedMedia;
+  files: Record<string, string>;
+} {
   const data = JSON.parse(text);
   if (data?.version !== EXPORT_VERSION) throw new Error('Unsupported file');
   const project = data.project;
   if (!Array.isArray(project?.pages) || project.pages.length === 0 || typeof project.currentPageId !== 'string') {
     throw new Error('Invalid project format');
   }
-  return { project: normalizeProject(project as Project), media: (data.media ?? {}) as ExportedMedia };
+  return {
+    project: normalizeProject(project as Project),
+    media: (data.media ?? {}) as ExportedMedia,
+    files: (data.files ?? {}) as Record<string, string>,
+  };
 }
 
 /** Ids of pages that reference media not present in the store. */

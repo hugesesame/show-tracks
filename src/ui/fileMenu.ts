@@ -6,6 +6,8 @@ import {
   saveFileRecord,
   type FileRecord,
 } from '../storage/projectFile';
+import { BACKUP_MEDIA_DIR, BACKUP_PROJECT_FILE, backupFileNames } from '../storage/backup';
+import { importProjectJson } from '../storage/db';
 import { h } from './dom';
 
 // Chrome's File System Access API, which TypeScript's DOM types do not include yet.
@@ -16,7 +18,13 @@ type PickerOptions = {
 type FilePickers = {
   showOpenFilePicker(options?: PickerOptions): Promise<FileSystemFileHandle[]>;
   showSaveFilePicker(options?: PickerOptions): Promise<FileSystemFileHandle>;
+  showDirectoryPicker(options?: { mode?: 'read' | 'readwrite'; id?: string }): Promise<FileSystemDirectoryHandle>;
 };
+/** Folder listing, which TypeScript's DOM types do not include yet. */
+type ListableDirectory = FileSystemDirectoryHandle & { values(): AsyncIterable<FileSystemHandle> };
+
+/** Progress and results of a backup, restore or media search, shown next to its buttons. */
+export type Report = (message: string) => void;
 type PermissionHandle = FileSystemFileHandle & {
   queryPermission(d: { mode: 'readwrite' }): Promise<PermissionState>;
   requestPermission(d: { mode: 'readwrite' }): Promise<PermissionState>;
@@ -163,12 +171,115 @@ export function createFileMenu(app: App, db: IDBDatabase) {
     });
   }
 
+  async function pickFolder(mode: 'read' | 'readwrite'): Promise<FileSystemDirectoryHandle | null> {
+    if (!pickers.showDirectoryPicker) {
+      app.error('Backups need Chrome.');
+      return null;
+    }
+    try {
+      return await pickers.showDirectoryPicker({ mode, id: 'show-tracks-backup' });
+    } catch (e) {
+      if (!isAbort(e)) app.error(`Could not open the folder: ${(e as Error).message}`);
+      return null;
+    }
+  }
+
+  /** Writes the project and every media file it uses into a folder. */
+  async function backup(report: Report): Promise<void> {
+    const folder = await pickFolder('readwrite');
+    if (!folder) return;
+    try {
+      const records = await app.mediaRecords();
+      const names = backupFileNames(records);
+      const mediaFolder = await folder.getDirectoryHandle(BACKUP_MEDIA_DIR, { create: true });
+      for (const [i, record] of records.entries()) {
+        report(`Backing up media ${i + 1} / ${records.length}: ${names[record.id]}`);
+        const writable = await (await mediaFolder.getFileHandle(names[record.id], { create: true })).createWritable();
+        await writable.write(record.blob);
+        await writable.close();
+      }
+      const writable = await (await folder.getFileHandle(BACKUP_PROJECT_FILE, { create: true })).createWritable();
+      await writable.write(app.exportJson(names));
+      await writable.close();
+      report(`Backed up to “${folder.name}”: the project and ${records.length} media file(s).`);
+    } catch (e) {
+      report('');
+      app.error(`Backup failed: ${(e as Error).message}`);
+    }
+  }
+
+  /** Replaces the show with a backup folder: the project and its media together. */
+  async function restore(report: Report): Promise<void> {
+    if (app.editLocked() || !(await okToReplace('restoring a backup'))) return;
+    const folder = await pickFolder('read');
+    if (!folder) return;
+    let text: string;
+    try {
+      text = await (await (await folder.getFileHandle(BACKUP_PROJECT_FILE)).getFile()).text();
+    } catch {
+      app.error(`“${folder.name}” is not a backup: ${BACKUP_PROJECT_FILE} is missing.`);
+      return;
+    }
+    if (!(await app.importJson(text))) return;
+    const { media, files } = importProjectJson(text);
+    const items: { id: string; kind: 'audio' | 'video'; file: File }[] = [];
+    let notFound = 0;
+    const mediaFolder = await folder.getDirectoryHandle(BACKUP_MEDIA_DIR).catch(() => null);
+    for (const [id, name] of Object.entries(files)) {
+      const file = mediaFolder && (await mediaFolder.getFileHandle(name).then((f) => f.getFile()).catch(() => null));
+      if (file && media[id]) items.push({ id, kind: media[id].kind, file });
+      else notFound++;
+    }
+    const failed = await app.restoreMedia(items, (done, total) => report(`Restoring media ${done} / ${total}`));
+    await remember({ handle: null, name: folder.name, saved: projectSnapshot(app.project) });
+    const missing = notFound + failed;
+    report(
+      `Restored “${folder.name}” with ${items.length - failed} media file(s)` +
+        (missing ? `; ${missing} could not be read.` : '.'),
+    );
+  }
+
+  /** Finds missing media by file name in a folder (and the folders right inside it). */
+  async function findMedia(report: Report): Promise<void> {
+    if (app.editLocked()) return;
+    const missing = app.missingMedia();
+    if (missing.length === 0) {
+      report('No media is missing.');
+      return;
+    }
+    const folder = (await pickFolder('read')) as ListableDirectory | null;
+    if (!folder) return;
+    report('Looking for media…');
+    const found = new Map<string, FileSystemFileHandle>();
+    const look = async (dir: ListableDirectory, depth: number) => {
+      for await (const entry of dir.values()) {
+        if (entry.kind === 'file' && !found.has(entry.name)) found.set(entry.name, entry as FileSystemFileHandle);
+        else if (entry.kind === 'directory' && depth > 0) await look(entry as ListableDirectory, depth - 1);
+      }
+    };
+    await look(folder, 1);
+    const items: { id: string; kind: 'audio' | 'video'; file: File }[] = [];
+    for (const m of missing) {
+      const handle = found.get(m.fileName);
+      if (handle) items.push({ id: m.id, kind: m.kind, file: await handle.getFile() });
+    }
+    const failed = await app.restoreMedia(items, (done, total) => report(`Loading media ${done} / ${total}`));
+    const stillMissing = missing.length - items.length + failed;
+    report(
+      `Found ${items.length - failed} of ${missing.length} missing media file(s)` +
+        (stillMissing ? `; still missing: ${missing.filter((m) => !items.some((i) => i.id === m.id)).map((m) => m.fileName).join(', ')}.` : '.'),
+    );
+  }
+
   return {
     confirmDialog,
     newProject,
     open,
     save,
     saveAs,
+    backup,
+    restore,
+    findMedia,
     get fileName(): string | null {
       return file?.name ?? null;
     },
@@ -191,14 +302,14 @@ export function createFileMenu(app: App, db: IDBDatabase) {
 
 export type FileMenu = ReturnType<typeof createFileMenu>;
 
-/** The four file buttons, shared by the footer and Settings. */
-export function fileButtons(menu: FileMenu, after: () => void = () => {}): HTMLButtonElement[] {
+/** The file buttons: Save also sits in the footer, all of them in Settings. */
+export function fileButtons(menu: FileMenu, after: () => void = () => {}) {
   const button = (label: string, title: string, action: () => unknown) =>
     h('button', { type: 'button', title, onclick: async () => { await action(); after(); } }, label);
-  return [
-    button('New', 'New project', menu.newProject),
-    button('Import', 'Open a project file', menu.open),
-    button('Export', 'Save to a new file (⇧⌘S)', menu.saveAs),
-    button('Save', 'Save (⌘S)', menu.save),
-  ];
+  return {
+    new: button('New', 'New project', menu.newProject),
+    import: button('Import', 'Open a project file', menu.open),
+    export: button('Export', 'Save to a new file (⇧⌘S)', menu.saveAs),
+    save: button('Save', 'Save (⌘S)', menu.save),
+  };
 }
