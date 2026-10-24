@@ -67,6 +67,7 @@ On a Mac, the **IAC Driver** in Audio MIDI Setup sends MIDI to other apps on the
 - Your show and its audio and video are saved automatically in this computer's browser as you work.
 - Nothing is sent anywhere. The show is not on other computers, or in other browsers on the same computer.
 - Clearing the browser's site data deletes the show and its media too.
+- If the app is open in more than one tab, a yellow warning appears. The tabs overwrite each other's edits, so close all but one.
 - **Save** (`⌘S`) writes the project to a file wherever you choose. **The project file does not include audio or video.**
 - **Backup** (in **Settings**) writes a folder with the project and all its audio and video. Copy that folder to move a show to another computer, and open it there with **Restore**. Make one before every show.
 - **Find media** (in **Settings**): if you only have the project file, choose a folder with the original audio and video files, and the missing media are found by file name.

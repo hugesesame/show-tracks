@@ -1392,6 +1392,23 @@ body.show-mode .app-name {
   color: var(--playhead);
 }
 
+/* ---- another tab open ---- */
+
+.tab-warning {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  max-width: min(720px, 92vw);
+  padding: 8px 16px;
+  background: #3d3410;
+  border: 1px solid #f1c40f;
+  border-radius: 6px;
+  color: #f8e08e;
+  font-weight: 600;
+}
+
 /* ---- toasts ---- */
 
 .toasts {

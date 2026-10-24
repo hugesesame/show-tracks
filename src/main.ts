@@ -16,6 +16,7 @@ import { createMediaBar } from './ui/mediaBar';
 import { createMemoStage } from './ui/memoStage';
 import { createMemoView } from './ui/memoView';
 import { createMixer } from './ui/mixer';
+import { createOtherTabsWarning } from './ui/otherTabs';
 import { createPageList } from './ui/pageList';
 import { createSettings } from './ui/settings';
 import { createTrack } from './ui/track';
@@ -69,7 +70,15 @@ async function main(): Promise<void> {
     splitters.monitorSplitter,
     monitor.element,
   );
-  root.replaceChildren(header.element, main, footer.element, settings.element, help.element, files.confirmDialog);
+  root.replaceChildren(
+    header.element,
+    main,
+    footer.element,
+    settings.element,
+    help.element,
+    files.confirmDialog,
+    createOtherTabsWarning().element,
+  );
   splitters.apply();
 
   const update = () => {
