@@ -3,7 +3,7 @@ import { isEditing } from './dom';
 import type { FileMenu } from './fileMenu';
 import { toggleFullscreen } from './fullscreen';
 
-export type ZoomControls = { zoomIn(): void; zoomOut(): void };
+export type ZoomControls = { zoomIn(): void; zoomOut(): void; zoomFit(): void };
 
 export function installKeyboard(
   app: App,
@@ -35,6 +35,13 @@ export function installKeyboard(
     if (e.key === '?') {
       e.preventDefault();
       openHelp();
+      return;
+    }
+
+    // / fits the track to the end point; so does Shift+Z, as in Final Cut Pro and Resolve.
+    if (e.key === '/' || (e.code === 'Slash' && !e.shiftKey) || (e.code === 'KeyZ' && e.shiftKey)) {
+      e.preventDefault();
+      zoom.zoomFit();
       return;
     }
 
