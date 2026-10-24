@@ -1,4 +1,5 @@
 import { go, initialCueState, passed, reconcile, select, type CueState } from '../cue/cueController';
+import { History } from './history';
 import { MtcOutput } from '../engine/mtc';
 import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
@@ -22,6 +23,7 @@ import {
   createPage,
   createProject,
   currentPage,
+  keepLive,
   movePage,
   nextPage,
   removePage,
@@ -75,6 +77,10 @@ export class App {
   /** The page time cue notes were last checked at while playing; null after a start or jump. */
   private noteTime: number | null = null;
   private readonly events = new EventTarget();
+  /** Earlier projects, for Undo; an edit records the project as it was before. */
+  private readonly history = new History<Project>();
+  /** Set while an edit is under way, so its commit clears the steps Redo could bring back. */
+  private editing = false;
   private _showMode = loadShowMode();
   private fadeTimer: ReturnType<typeof setTimeout> | undefined;
   private fadeEnd = 0;
@@ -113,6 +119,8 @@ export class App {
 
   async start(): Promise<void> {
     this.storedMediaIds = await listMediaIds(this.db);
+    // Media kept for Undo in an earlier session is no longer needed.
+    void this.deleteUnusedMedia([...this.storedMediaIds]);
     this.applyPageSettings();
     await this.loadCurrentPage();
     await this.mtc.init();
@@ -167,6 +175,7 @@ export class App {
   }
 
   private commit(project: Project, previousMarkers = this.page.markers): void {
+    if (this.editing && project !== this._project) this.history.clearRedo();
     const pageChanged = project.currentPageId !== this._project.currentPageId;
     this._project = project;
     this._cue = reconcile(project, this._cue, previousMarkers);
@@ -255,8 +264,44 @@ export class App {
 
   /** True, with a note to the user, when an edit is refused in show mode. */
   editLocked(): boolean {
-    if (this._showMode) this.error('Show mode: editing is locked. Press SHOW to edit.');
-    return this._showMode;
+    if (this._showMode) {
+      this.error('Show mode: editing is locked. Press SHOW to edit.');
+      return true;
+    }
+    // Every edit passes through here first: keep the project as it was, for Undo.
+    this.history.record(this._project, performance.now());
+    this.editing = true;
+    queueMicrotask(() => (this.editing = false));
+    return false;
+  }
+
+  /** ⌘Z: back one edit. The mixer, the MIDI output and the page on screen stay as they are. */
+  undo(): void {
+    if (this._showMode) return void this.editLocked();
+    const state = this.history.undo(this._project);
+    if (state) this.restore(keepLive(state, this._project));
+  }
+
+  /** ⇧⌘Z: forward again after Undo. */
+  redo(): void {
+    if (this._showMode) return void this.editLocked();
+    const state = this.history.redo(this._project);
+    if (state) this.restore(keepLive(state, this._project));
+  }
+
+  /** Puts back a project from the history, reloading the media if the page shown now uses other files. */
+  private restore(project: Project): void {
+    const before = this.page;
+    this._project = project;
+    this._cue = reconcile(project, this._cue, before.markers);
+    this.autosaver.schedule(project);
+    this.applyPageSettings();
+    const now = this.page;
+    if (now.id !== before.id || now.audioMediaId !== before.audioMediaId || now.videoMediaId !== before.videoMediaId) {
+      this.transport.pause();
+      void this.loadCurrentPage();
+    }
+    this.emit('change');
   }
 
   // ---- transport ----
@@ -592,6 +637,8 @@ export class App {
     const page = this.page;
     const previous = kind === 'audio' ? page.audioMediaId : page.videoMediaId;
     const patch = kind === 'audio' ? { audioMediaId: record.id } : { videoMediaId: record.id };
+    // The file took a while to read, so the edit's own Redo clearing has lapsed.
+    this.history.clearRedo();
     this.commit(updatePage(this._project, page.id, patch));
     await this.loadCurrentPage();
     void this.deleteUnusedMedia([previous]);
@@ -610,7 +657,9 @@ export class App {
   private async deleteUnusedMedia(ids: (string | null)[]): Promise<void> {
     for (const id of ids) {
       if (!id) continue;
-      const used = this._project.pages.some((p) => p.audioMediaId === id || p.videoMediaId === id);
+      // Media an Undo could bring back stays too.
+      const projects = [this._project, ...this.history.states()];
+      const used = projects.some((pr) => pr.pages.some((p) => p.audioMediaId === id || p.videoMediaId === id));
       if (used) continue;
       this.media.delete(id);
       this.storedMediaIds.delete(id);
@@ -739,6 +788,8 @@ export class App {
   }
 
   private async replaceProject(project: Project): Promise<void> {
+    // A new or opened show starts its own history.
+    this.history.clear();
     this.transport.pause();
     this._project = project;
     this._cue = initialCueState(project, project.currentPageId);

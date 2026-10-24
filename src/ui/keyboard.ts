@@ -21,6 +21,14 @@ export function installKeyboard(
       void (e.shiftKey ? files.saveAs() : files.save());
       return;
     }
+    // ⌘Z / ⇧⌘Z undo and redo edits; while typing, the field's own undo applies.
+    if ((e.metaKey || e.ctrlKey) && e.code === 'KeyZ' && !isEditing(e.target)) {
+      e.preventDefault();
+      if (document.querySelector('dialog[open]')) return;
+      if (e.shiftKey) app.redo();
+      else app.undo();
+      return;
+    }
     // ⌘, (Ctrl+, elsewhere) opens Settings, as in most apps.
     if ((e.metaKey || e.ctrlKey) && e.code === 'Comma') {
       e.preventDefault();

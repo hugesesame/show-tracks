@@ -13,6 +13,7 @@ import {
   createPage,
   createProject,
   currentPage,
+  keepLive,
   movePage,
   normalizeProject,
   removePage,
@@ -239,5 +240,17 @@ describe('nextPage', () => {
     expect(nextPage(project, 'a')?.id).toBe('b');
     expect(nextPage(project, 'b')).toBeNull();
     expect(nextPage(updateSettings(project, { loopPages: true }), 'b')?.id).toBe('a');
+  });
+});
+
+describe('keepLive', () => {
+  it('goes back to the earlier state but keeps the mixer, the MIDI output and the page on screen', () => {
+    const before = addPage(createProject(createPage('A', 'a')), createPage('B', 'b'));
+    let now = updatePage(before, 'a', { name: 'Renamed', audioVolume: 0.3, audioMuted: true, videoPan: -0.5 });
+    now = updateSettings(setCurrentPage(now, 'a'), { masterVolume: 0.4, midiOutputId: 'iac', fadeOut: 5 });
+    const undone = keepLive(before, now);
+    expect(undone.pages[0]).toMatchObject({ name: 'A', audioVolume: 0.3, audioMuted: true, videoPan: -0.5 });
+    expect(undone.settings).toMatchObject({ masterVolume: 0.4, midiOutputId: 'iac', fadeOut: 2 });
+    expect(undone.currentPageId).toBe('a');
   });
 });
