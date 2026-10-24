@@ -13,7 +13,7 @@ const END_ACTIONS: { action: EndAction; label: string; title: string }[] = [
 const DRAG_START_PX = 4;
 
 /** All pages: click to open one, double-click its name to rename. */
-export function createPageList(app: App, openHelp: () => void) {
+export function createPageList(app: App, openHelp: () => void, openTimecode: () => void) {
   const list = h('div', { class: 'page-list' });
   const dropLine = h('div', { class: 'drop-line', hidden: true });
   const loopButton = h('button', { class: 'small loop-pages', onclick: () => app.toggleLoopPages() }, '🔁');
@@ -94,9 +94,15 @@ export function createPageList(app: App, openHelp: () => void) {
         'button',
         {
           class: 'end-action mtc',
-          tabIndex: -1,
-          'aria-disabled': 'true',
-          title: 'This page follows MTC from a DAW, so it has no end action. Set Timecode to Send MTC in Settings to use one.',
+          title: 'This page follows MTC from a DAW, so it has no end action. Click to open its Timecode setting.',
+          onclick: (e: Event) => {
+            e.stopPropagation();
+            // Settings shows the page it was opened from.
+            app.selectPage(page.id);
+            openTimecode();
+          },
+          ondblclick: (e: Event) => e.stopPropagation(),
+          onpointerdown: (e: Event) => e.stopPropagation(),
         },
         'MTC',
       );

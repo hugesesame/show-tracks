@@ -184,6 +184,9 @@ export function createSettings(app: App, files: FileMenu) {
         ? 'The DAW runs this page: it plays, stops and locates with the MTC coming in, and its cues send memos and MIDI Notes. The MTC offset is the timecode of the page’s start.'
         : 'This page sends MTC from its playback time, starting at the MTC offset.';
 
+    const timecodeRow = row('Timecode', timecodeSelect);
+    timecodeRow.classList.add('timecode-row');
+
     const hasMedia = hasAudio || page.videoMediaId !== null;
     const blankLength = h('input', {
       value: formatCountdown(page.blankLength),
@@ -256,7 +259,7 @@ export function createSettings(app: App, files: FileMenu) {
         h('div', { class: 'hint' }, 'Esc fades everything out over this time, then stops. Press Esc again to stop at once.'),
         h('h3', {}, `This page (${page.name})`),
         row('Page name', pageName),
-        row('Timecode', timecodeSelect),
+        timecodeRow,
         row('MTC offset', offset),
         h('div', { class: 'hint' }, timecodeHint),
         hasMedia ? null : row('Length', blankLength),
@@ -298,8 +301,16 @@ export function createSettings(app: App, files: FileMenu) {
     dialog.showModal();
   }
 
+  /** Opens at this page's Timecode setting (from the MTC badge in PAGES). */
+  function openTimecode(): void {
+    open();
+    const target = dialog.querySelector('.timecode-row');
+    target?.scrollIntoView({ block: 'center' });
+    target?.querySelector('select')?.focus({ preventScroll: true });
+  }
+
   // Closing Settings ends a Learn that never got its key.
   dialog.addEventListener('close', () => app.cancelLearn());
 
-  return { element: dialog, open };
+  return { element: dialog, open, openTimecode };
 }
