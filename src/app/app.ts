@@ -26,6 +26,7 @@ import {
   createPage,
   createProject,
   currentPage,
+  followsMtc,
   keepLive,
   movePage,
   nextPage,
@@ -408,8 +409,7 @@ export class App {
 
   /** The current page follows the MTC coming in: it is set to, and has no audio of its own. */
   get following(): boolean {
-    const page = this.page;
-    return page.followMtc && page.audioMediaId === null;
+    return followsMtc(this.page);
   }
 
   /** Whether MTC is coming in on the chosen input. */

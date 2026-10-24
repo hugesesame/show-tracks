@@ -1,4 +1,5 @@
 import type { App } from '../app/app';
+import { followsMtc } from '../model/project';
 import type { EndAction, Page } from '../model/types';
 import { editableCell } from './cueList';
 import { autoScrollButton, deleteButton, h } from './dom';
@@ -79,7 +80,7 @@ export function createPageList(app: App, openHelp: () => void) {
     const show = app.showMode;
     addButton.disabled = loopButton.disabled = show;
     removeButton.disabled = show || pages.length === 1;
-    list.querySelectorAll<HTMLButtonElement>('.end-action').forEach((b) => (b.disabled = show));
+    list.querySelectorAll<HTMLButtonElement>('.end-action:not(.mtc)').forEach((b) => (b.disabled = show));
     const looping = app.project.settings.loopPages;
     loopButton.classList.toggle('active', looping);
     loopButton.title = looping ? 'Loop all pages: on (after the last page comes the first)' : 'Loop all pages: off';
@@ -87,6 +88,19 @@ export function createPageList(app: App, openHelp: () => void) {
 
   /** Cycles Stop → Next → Next ▶ for what happens at the end of the page. */
   function endActionButton(page: Page): HTMLButtonElement {
+    // A page following a DAW ends where the DAW goes; its own setting is kept for when it sends MTC again.
+    if (followsMtc(page)) {
+      return h(
+        'button',
+        {
+          class: 'end-action mtc',
+          tabIndex: -1,
+          'aria-disabled': 'true',
+          title: 'This page follows MTC from a DAW, so it has no end action. Set Timecode to Send MTC in Settings to use one.',
+        },
+        'MTC',
+      );
+    }
     const index = END_ACTIONS.findIndex((a) => a.action === page.endAction);
     const current = END_ACTIONS[index];
     return h(

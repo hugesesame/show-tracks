@@ -95,6 +95,11 @@ export function createProject(firstPage: Page = createPage('Page 1')): Project {
   };
 }
 
+/** The page follows the MTC coming in from a DAW: it is set to, and has no audio of its own. */
+export function followsMtc(page: Page): boolean {
+  return page.followMtc && page.audioMediaId === null;
+}
+
 export function currentPage(project: Project): Page {
   return project.pages.find((p) => p.id === project.currentPageId) ?? project.pages[0];
 }

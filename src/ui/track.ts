@@ -319,7 +319,8 @@ export function createTrack(app: App) {
       [end, -1, colors['--range'], 1],
     ];
     if (page.overlapAt !== null) {
-      const works = activeOverlap(page, app.duration) !== null && nextPage(app.project, page.id) !== null;
+      const works =
+        activeOverlap(page, app.duration) !== null && nextPage(app.project, page.id) !== null && !app.following;
       flags.push([page.overlapAt, 1, colors['--overlap'], works ? 1 : 0.4]);
     }
     for (const [time, direction, color, alpha] of flags) {

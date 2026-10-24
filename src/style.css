@@ -617,6 +617,11 @@ button.active {
   border-color: var(--accent);
 }
 
+.end-action.mtc {
+  border-style: dashed;
+  cursor: default;
+}
+
 .page-row .num {
   color: var(--muted);
   font-size: 11px;

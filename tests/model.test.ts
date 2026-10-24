@@ -13,6 +13,7 @@ import {
   createPage,
   createProject,
   currentPage,
+  followsMtc,
   keepLive,
   movePage,
   normalizeProject,
@@ -104,6 +105,14 @@ describe('markers', () => {
     const project = normalizeProject(old);
     expect(project.settings.mtcInputId).toBeNull();
     expect(project.pages[0]).toMatchObject({ followMtc: false, blankLength: 300 });
+  });
+
+  it('follows MTC only on pages without audio', () => {
+    const page = { ...createPage('A', 'a'), followMtc: true };
+    expect(followsMtc(page)).toBe(true);
+    expect(followsMtc({ ...page, videoMediaId: 'v' })).toBe(true);
+    expect(followsMtc({ ...page, audioMediaId: 'x' })).toBe(false);
+    expect(followsMtc(createPage('B', 'b'))).toBe(false);
   });
 
   it('shows the memo of the last cue passed', () => {
