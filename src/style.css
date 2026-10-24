@@ -1293,6 +1293,8 @@ dialog {
   padding: 0;
   width: min(520px, 92vw);
   user-select: text;
+  /* Scrolled by wheel or trackpad, like the lists. */
+  scrollbar-width: none;
 }
 
 dialog::backdrop {
