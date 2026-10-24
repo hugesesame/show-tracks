@@ -235,6 +235,11 @@ button:focus-visible {
   border-color: var(--go);
 }
 
+.mtc.in {
+  color: var(--playhead);
+  border-color: var(--playhead);
+}
+
 .mtc.denied {
   color: var(--danger);
   border-color: var(--danger);

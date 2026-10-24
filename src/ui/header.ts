@@ -85,7 +85,8 @@ export function createHeader(app: App) {
     ];
     if (app.following && status !== 'denied' && status !== 'unsupported') {
       const state = app.project.settings.mtcInputId ? app.mtcInState : null;
-      className = `mtc ${state === 'running' ? 'on' : 'off'}`;
+      // Red as the playhead: the DAW is running the page now. Sending stays green.
+      className = `mtc ${state === 'running' ? 'in' : 'off'}`;
       text = state === 'running' ? 'MTC IN' : 'MTC IN ■';
       title = !state
         ? 'This page follows MTC from a DAW: choose the MTC input in Settings.'
