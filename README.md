@@ -28,7 +28,8 @@
 - **MIDI Note at each cue**, to control lights or other gear. Turn it on or off per cue or for a whole page.
 - **MTC** follows the playback time, with an offset per page.
 - **MIDI remote**: run GO, Play / Stop, Fade out and Previous / Next cue from a foot switch, pad or desk. Press Learn, then the key.
-- **Video output window** for a second display, with the text over the video. The main screen frames the picture the same way, so what you see is what the audience sees.
+- **Video output window** for a second display, with the text over the video.
+- **Prompter window** with the text alone, for the performers' monitor. Turn the text off on the video output, and the audience sees the video while the performers read the lyrics or prompts. The main screen frames the picture the same way, so what you see is what the audience sees.
 - **Mixer** with Audio, Video and Master faders, pan and mute.
 - **Audio output**: play through an audio interface or any other output device. Unplugged during a show, the sound moves to the system default and comes back when the device is connected again.
 - **Show mode** locks editing for the performance, so a stray click cannot move a cue or the playhead.

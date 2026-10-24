@@ -138,7 +138,9 @@ export function createMemoView(app: App) {
     fadeValue.classList.toggle('off', !s.memoFadeOn);
     for (const b of positions) b.classList.toggle('active', b.dataset.position === s.memoPosition);
     output.classList.toggle('active', s.memoOutput);
-    output.title = s.memoOutput ? 'Shown on the video output: click to hide' : 'Hidden on the video output: click to show';
+    output.title = s.memoOutput
+      ? 'Shown over the video on the video output: click to hide (the prompter always shows them)'
+      : 'Hidden on the video output: click to show (the prompter always shows them)';
   }
 
   /** Call every frame with the memo to show. */

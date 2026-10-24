@@ -125,8 +125,11 @@ async function main(): Promise<void> {
     if (monitor.view() === 'memo') memoView.render(memo);
     if (monitor.view() === 'video' && monitor.memoOnVideo()) monitor.videoMemo.render(memo, settings);
     app.output.renderMemo(settings.memoOutput ? memo : null, settings);
+    // The prompter always shows the memos; Output only decides the video output.
+    app.prompter.renderMemo(memo, settings);
     monitor.setAspect(app.output.aspect ?? 16 / 9);
     app.output.check();
+    app.prompter.check();
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);

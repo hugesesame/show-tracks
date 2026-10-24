@@ -75,6 +75,11 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
     update();
   });
 
+  const prompterButton = h('button', { class: 'small', title: 'A window with the memos alone, for the performers’ monitor' });
+  prompterButton.addEventListener('click', () => {
+    if (!app.prompter.open()) app.error('Could not open the prompter window. Please allow pop-ups.');
+  });
+
   const fullscreenButton = h('button', { class: 'small fullscreen', onclick: () => toggleFullscreen() });
   const updateFullscreen = () => {
     const on = document.fullscreenElement !== null;
@@ -98,6 +103,7 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
       h('button', { class: 'small', title: 'Show the page up to its end point (/ or ⇧Z)', onclick: zoom.zoomFit }, 'Fit'),
     ),
     outputButton,
+    prompterButton,
     showButton,
     h('button', { class: 'small', title: 'Settings (⌘,)', onclick: openSettings }, '⚙ Settings'),
     fullscreenButton,
@@ -109,6 +115,9 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
     const open = app.output.isOpen;
     outputButton.textContent = open ? 'Output open' : 'Open video output';
     outputButton.classList.toggle('active', open);
+    const prompting = app.prompter.isOpen;
+    prompterButton.textContent = prompting ? 'Prompter open' : 'Open prompter';
+    prompterButton.classList.toggle('active', prompting);
     const show = app.showMode;
     showButton.textContent = show && exitArmed ? 'Exit?' : 'SHOW';
     showButton.classList.toggle('on', show);
@@ -119,5 +128,6 @@ export function createMediaBar(app: App, openSettings: () => void, zoom: TrackZo
   }
 
   app.output.onChange(update);
+  app.prompter.onChange(update);
   return { element, update };
 }

@@ -69,6 +69,8 @@ export class App {
   readonly transport: Transport;
   readonly mtc: MtcOutput;
   readonly output: OutputWindow;
+  /** The memos alone, for the performers' monitor. */
+  readonly prompter: OutputWindow;
   readonly audioOutput: AudioOutput;
   private _project: Project;
   private _cue: CueState;
@@ -101,6 +103,7 @@ export class App {
     this.transport = new Transport(monitor);
     this.mtc = new MtcOutput(() => ({ time: this.transport.now(), playing: this.transport.playing }));
     this.output = new OutputWindow(this.transport);
+    this.prompter = new OutputWindow(this.transport, 'prompter');
     this.audioOutput = new AudioOutput(this.transport.mixer, (message) => this.error(message));
     this.audioOutput.onChange(() => this.emit('change'));
     this.autosaver = createAutosaver(

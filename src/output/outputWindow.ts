@@ -2,11 +2,18 @@ import type { Transport } from '../engine/transport';
 import { toggleFullscreen } from '../ui/fullscreen';
 import { createMemoStage, type MemoLook } from '../ui/memoStage';
 
-const WINDOW_NAME = 'cue-player-output';
+/** The video output for the audience, or the prompter: the memos alone, for the performers. */
+export type OutputKind = 'video' | 'prompter';
+
+const WINDOWS: Record<OutputKind, { name: string; title: string }> = {
+  video: { name: 'cue-player-output', title: 'Video Output' },
+  prompter: { name: 'cue-player-prompter', title: 'Prompter' },
+};
 
 /**
- * A second window showing the video, and the cue memos over it, for a secondary display.
- * It is same-origin, so its video element is driven directly from here.
+ * A window for a secondary display: the video with the cue memos over it, or
+ * (as the prompter) the memos alone on black. It is same-origin, so its video
+ * element is driven directly from here.
  */
 export class OutputWindow {
   private win: Window | null = null;
@@ -14,7 +21,10 @@ export class OutputWindow {
   private memo: ReturnType<typeof createMemoStage> | null = null;
   private readonly events = new EventTarget();
 
-  constructor(private readonly transport: Transport) {
+  constructor(
+    private readonly transport: Transport,
+    private readonly kind: OutputKind = 'video',
+  ) {
     transport.on('load', () => this.updateSource());
   }
 
@@ -32,7 +42,7 @@ export class OutputWindow {
       this.win!.focus();
       return true;
     }
-    const win = window.open('', WINDOW_NAME, 'popup,width=960,height=540');
+    const win = window.open('', WINDOWS[this.kind].name, 'popup,width=960,height=540');
     if (!win) return false;
     this.win = win;
     const doc = win.document;
@@ -45,15 +55,18 @@ export class OutputWindow {
     `;
     doc.head.replaceChildren(style);
     // After the head is replaced, which would drop the title element.
-    doc.title = 'Video Output';
-    const video = doc.createElement('video');
-    video.muted = true;
-    video.playsInline = true;
+    doc.title = WINDOWS[this.kind].title;
     this.memo = createMemoStage(doc);
-    doc.body.append(video, this.memo.element);
-    this.video = video;
-    this.updateSource();
-    this.transport.videoSync.add(video);
+    if (this.kind === 'video') {
+      const video = doc.createElement('video');
+      video.muted = true;
+      video.playsInline = true;
+      doc.body.append(video);
+      this.video = video;
+      this.updateSource();
+      this.transport.videoSync.add(video);
+    }
+    doc.body.append(this.memo.element);
     win.addEventListener('pagehide', () => this.handleClosed());
     // There are no controls on the output, so double-click anywhere toggles fullscreen.
     // Assigned rather than added: reopening an existing window must not stack handlers.
