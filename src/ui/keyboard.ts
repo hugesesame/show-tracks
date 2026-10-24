@@ -80,8 +80,9 @@ export function installKeyboard(
       ArrowUp: () => (e.altKey ? app.selectAdjacentPage(-1) : app.previousMarker()),
       ArrowDown: () => (e.altKey ? app.selectAdjacentPage(1) : app.nextMarker()),
       Home: () => app.toStart(),
-      BracketLeft: () => app.rewind(),
-      BracketRight: () => app.fastForward(),
+      // , and . sit in the same place on US and JIS keyboards (and match Logic Pro).
+      Comma: () => app.rewind(),
+      Period: () => app.fastForward(),
       // Esc fades out and stops, as in QLab; pressed again it stops at once.
       Escape: () => app.fadeOutStop(),
     };
