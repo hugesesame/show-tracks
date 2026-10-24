@@ -97,6 +97,15 @@ describe('markers', () => {
     expect(project.pages[0]).toMatchObject({ audioPan: 0, videoPan: 0, rangeStart: null, rangeEnd: null });
   });
 
+  it('fills in MTC following and the blank length missing from older saves', () => {
+    const old = JSON.parse(JSON.stringify(createProject(createPage('A', 'a'))));
+    delete old.settings.mtcInputId;
+    for (const key of ['followMtc', 'blankLength']) delete old.pages[0][key];
+    const project = normalizeProject(old);
+    expect(project.settings.mtcInputId).toBeNull();
+    expect(project.pages[0]).toMatchObject({ followMtc: false, blankLength: 300 });
+  });
+
   it('shows the memo of the last cue passed', () => {
     let page = createPage('P', 'p');
     page = addMarker(page, 5, 100, () => 'a').page;
@@ -145,6 +154,7 @@ describe('project', () => {
       mtcFps: '30',
       midiOutputId: null,
       midiInputId: null,
+      mtcInputId: null,
       midiRemote: {},
       loopPages: false,
       fadeOut: 2,
@@ -184,6 +194,8 @@ describe('project', () => {
       rangeEnd: null,
       overlapAt: null,
       mtcOffset: 0,
+      followMtc: false,
+      blankLength: 300,
       endAction: 'stop',
       markers: [],
       midiNotes: true,
@@ -249,10 +261,10 @@ describe('keepLive', () => {
   it('goes back to the earlier state but keeps the mixer, the MIDI output and the page on screen', () => {
     const before = addPage(createProject(createPage('A', 'a')), createPage('B', 'b'));
     let now = updatePage(before, 'a', { name: 'Renamed', audioVolume: 0.3, audioMuted: true, videoPan: -0.5 });
-    now = updateSettings(setCurrentPage(now, 'a'), { masterVolume: 0.4, midiOutputId: 'iac', fadeOut: 5 });
+    now = updateSettings(setCurrentPage(now, 'a'), { masterVolume: 0.4, midiOutputId: 'iac', mtcInputId: 'daw', fadeOut: 5 });
     const undone = keepLive(before, now);
     expect(undone.pages[0]).toMatchObject({ name: 'A', audioVolume: 0.3, audioMuted: true, videoPan: -0.5 });
-    expect(undone.settings).toMatchObject({ masterVolume: 0.4, midiOutputId: 'iac', fadeOut: 2 });
+    expect(undone.settings).toMatchObject({ masterVolume: 0.4, midiOutputId: 'iac', mtcInputId: 'daw', fadeOut: 2 });
     expect(undone.currentPageId).toBe('a');
   });
 });

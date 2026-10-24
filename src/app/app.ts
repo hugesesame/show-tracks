@@ -3,6 +3,7 @@ import { History } from './history';
 import { AudioOutput } from '../engine/audioOutput';
 import { MidiPresses, remoteAction } from '../engine/midiRemote';
 import { MtcOutput } from '../engine/mtc';
+import { MtcInput, type MtcInputState } from '../engine/mtcInput';
 import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
 import { importMediaFile } from '../media/importMedia';
@@ -64,6 +65,8 @@ function loadShowMode(): boolean {
 }
 /** Markers this close to the playhead count as "here" for prev/next jumps. */
 const MARKER_EPSILON = 0.05;
+/** Following MTC, the playhead is corrected once it is this far off (about a frame). */
+const FOLLOW_DRIFT = 0.04;
 
 export class App {
   readonly transport: Transport;
@@ -72,6 +75,10 @@ export class App {
   /** The memos alone, for the performers' monitor. */
   readonly prompter: OutputWindow;
   readonly audioOutput: AudioOutput;
+  /** MTC coming in from a DAW, for pages that follow it. */
+  readonly mtcIn = new MtcInput();
+  /** What the incoming MTC said at the last check, to act only when it changes. */
+  private mtcFollowed: { state: MtcInputState; seconds: number } | null = null;
   private _project: Project;
   private _cue: CueState;
   private readonly media = new Map<string, MediaRecord>();
@@ -114,7 +121,10 @@ export class App {
       this.mtc.locate(this.transport.now());
       this.noteTime = null;
     });
-    this.mtc.onTick(() => this.followPlayback());
+    this.mtc.onTick(() => {
+      this.followIncomingMtc();
+      this.followPlayback();
+    });
     this.transport.on('playstate', () => {
       if (!this.transport.playing) this.mtc.locate(this.transport.now());
       this.emit('change');
@@ -137,6 +147,7 @@ export class App {
     await this.audioOutput.init();
     await this.mtc.init();
     this.listenToRemote();
+    this.listenToMtc();
     this.mtc.selectOutput(this._project.settings.midiOutputId);
   }
 
@@ -208,22 +219,27 @@ export class App {
 
   private applyPageSettings(): void {
     const page = this.page;
+    if (this.loadedPageId === page.id) {
+      this.transport.setBlankLength(page.blankLength);
+      this.transport.setOffsets(page.audioOffset, page.videoOffset);
+    }
     this.transport.setRange(page.rangeStart, page.rangeEnd);
-    const hasNext = nextPage(this._project, page.id) !== null;
+    // A page following a DAW hands over to the next page only by hand.
+    const hasNext = nextPage(this._project, page.id) !== null && !this.following;
     this.transport.setOverlap(hasNext ? activeOverlap(page, this.duration) : null);
-    if (this.loadedPageId === page.id) this.transport.setOffsets(page.audioOffset, page.videoOffset);
     const { mixer } = this.transport;
     const { masterVolume, masterMuted, masterPan } = this._project.settings;
     mixer.setLevel(this.transport.channel('audio'), page.audioVolume, page.audioMuted, page.audioPan);
     mixer.setLevel('video', page.videoAudioVolume, !page.videoAudioEnabled, page.videoPan);
     mixer.setLevel('master', masterVolume, masterMuted, masterPan);
-    this.mtc.configure(this._project.settings.mtcFps, page.mtcOffset);
+    this.mtc.configure(this._project.settings.mtcFps, page.mtcOffset, !this.following);
   }
 
   private async loadCurrentPage(): Promise<void> {
     const load = async () => {
       const page = this.page;
       const [audio, video] = await Promise.all([this.fetchMedia(page.audioMediaId), this.fetchMedia(page.videoMediaId)]);
+      this.transport.setBlankLength(page.blankLength);
       try {
         await this.transport.load(audio?.blob ?? null, video?.blob ?? null, page.audioOffset, page.videoOffset);
       } catch {
@@ -320,7 +336,7 @@ export class App {
   // ---- MIDI remote ----
 
   private listenToRemote(): void {
-    this.mtc.listen(this._project.settings.midiInputId, (data) => this.remoteMessage(data));
+    this.mtc.listen('remote', this._project.settings.midiInputId, (data) => this.remoteMessage(data));
   }
 
   /** A press on the MIDI input: assigned while learning, else run if it is assigned. Works in show mode. */
@@ -388,6 +404,76 @@ export class App {
     this.commit(updateSettings(this._project, { midiRemote: remote }));
   }
 
+  // ---- MTC from a DAW ----
+
+  /** The current page follows the MTC coming in: it is set to, and has no audio of its own. */
+  get following(): boolean {
+    const page = this.page;
+    return page.followMtc && page.audioMediaId === null;
+  }
+
+  /** Whether MTC is coming in on the chosen input. */
+  get mtcInState(): MtcInputState {
+    return this.mtcIn.now(performance.now()).state;
+  }
+
+  private listenToMtc(): void {
+    this.mtc.listen('mtc', this._project.settings.mtcInputId, (data) => this.mtcIn.read(data, performance.now()));
+  }
+
+  setMtcInput(id: string | null): void {
+    if (this.editLocked()) return;
+    this.commit(updateSettings(this._project, { mtcInputId: id }));
+    this.mtcIn.reset();
+    this.listenToMtc();
+  }
+
+  setFollowMtc(on: boolean): void {
+    if (this.editLocked()) return;
+    this.commit(updatePage(this._project, this.page.id, { followMtc: on }));
+  }
+
+  /** The length of the blank track a page without media has. */
+  setBlankLength(seconds: number): void {
+    if (this.editLocked()) return;
+    this.commit(updatePage(this._project, this.page.id, { blankLength: seconds }));
+  }
+
+  /**
+   * Every 10 ms on a page that follows MTC: plays while the DAW plays inside the
+   * page's in / out points, and stops where the DAW stops or locates.
+   */
+  private followIncomingMtc(): void {
+    if (!this.following || this.loadedPageId !== this.page.id) {
+      this.mtcFollowed = null;
+      return;
+    }
+    const { seconds, state } = this.mtcIn.now(performance.now());
+    const last = this.mtcFollowed;
+    this.mtcFollowed = { state, seconds };
+    if (state === 'waiting') return;
+    const t = this.transport;
+    const { start, end } = this.range;
+    const time = seconds - this.page.mtcOffset;
+    const held = Math.min(Math.max(time, start), end);
+    if (state === 'running') {
+      if (time < start || time >= end) {
+        // The DAW plays outside this page: wait at the nearer edge.
+        if (t.playing) t.pause();
+        if (Math.abs(t.now() - held) > FOLLOW_DRIFT) t.seek(held);
+      } else if (!t.playing) {
+        this.cancelFade();
+        t.seek(time);
+        t.play();
+      } else if (Math.abs(t.now() - time) > FOLLOW_DRIFT) t.follow(time);
+      return;
+    }
+    // Stopped: act once when the DAW stops or locates, so the page can still be played by hand.
+    if (last && last.state === 'stopped' && last.seconds === seconds) return;
+    if (t.playing) t.pause();
+    t.seek(held);
+  }
+
   // ---- transport ----
 
   go(): void {
@@ -421,6 +507,8 @@ export class App {
   private async handlePageEnd(): Promise<void> {
     // A page ending during a fade out does not start the next one.
     if (this.fadeTimer !== undefined) return this.stop();
+    // Nor one following a DAW: it waits for the DAW.
+    if (this.following) return;
     const { endAction } = this.page;
     const next = nextPage(this._project, this.page.id);
     if (endAction === 'stop' || !next) return;
@@ -554,7 +642,8 @@ export class App {
       this._cue = passed(this._project, this._cue, ranThrough[ranThrough.length - 1].id);
       this.emit('change');
     }
-    this.noteTime = time;
+    // Following MTC may step back a little; the cues just sent are not sent again.
+    this.noteTime = this.noteTime === null ? time : Math.max(this.noteTime, time);
   }
 
   /** The cue playing: the last one at or before `time`. */
@@ -566,10 +655,6 @@ export class App {
 
   addMarkerAtPlayhead(): void {
     if (this.editLocked()) return;
-    if (!this.transport.hasMedia) {
-      this.error('Load audio or video first.');
-      return;
-    }
     const page = this.page;
     const result = addMarker(page, this.transport.now(), this.duration);
     this.commit(replacePage(this._project, result.page), page.markers);
@@ -641,10 +726,6 @@ export class App {
   /** Sets the in / out point or the overlap mark; null clears it. A new range re-arms GO on its first cue. */
   setRangePoint(point: 'start' | 'end' | 'overlap', time: number | null): void {
     if (this.editLocked()) return;
-    if (!this.transport.hasMedia) {
-      this.error('Load audio or video first.');
-      return;
-    }
     const page = this.page;
     const set = point === 'start' ? setRangeStart : point === 'end' ? setRangeEnd : setOverlap;
     const updated = set(page, time, this.duration);
@@ -881,6 +962,8 @@ export class App {
     this.applyPageSettings();
     this.mtc.selectOutput(project.settings.midiOutputId);
     this.listenToRemote();
+    this.mtcIn.reset();
+    this.listenToMtc();
     await this.loadCurrentPage();
   }
 }

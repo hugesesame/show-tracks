@@ -5,6 +5,8 @@ export type Settings = {
   midiOutputId: string | null;
   /** The MIDI input the remote listens to, and which notes or CCs run which control. */
   midiInputId: string | null;
+  /** The MIDI input MTC comes in on, for pages that follow a DAW. */
+  mtcInputId: string | null;
   midiRemote: Partial<Record<RemoteAction, MidiTrigger>>;
   /** After the last page comes the first one again. */
   loopPages: boolean;
@@ -70,8 +72,12 @@ export type Page = {
   rangeEnd: number | null;
   /** Where the next page starts while this one rings out (page time), or null. */
   overlapAt: number | null;
-  /** Seconds added to the page time when sending MTC. */
+  /** Seconds added to the page time when sending MTC (taken off when following it). */
   mtcOffset: number;
+  /** Follows the MTC coming in (from a DAW) instead of sending it; works on pages without audio. */
+  followMtc: boolean;
+  /** How long the track is while the page has no audio or video, in seconds. */
+  blankLength: number;
   /** Always sorted by time. */
   markers: Marker[];
   /** Turns the cues' MIDI Notes on this page on or off as a whole. */

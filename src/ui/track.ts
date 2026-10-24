@@ -515,10 +515,13 @@ export function createTrack(app: App) {
     headers.video.update();
     const page = app.page;
     const missing = app.missingMediaPageIds().includes(page.id);
+    // Without media the page is a blank track: cues can go on it, e.g. to follow a DAW.
     empty.textContent = missing
       ? 'Media missing: choose the file again with the buttons above.'
-      : !page.audioMediaId && !page.videoMediaId
-        ? 'Choose an audio or video file.'
+      : !page.audioMediaId && !page.videoMediaId && page.markers.length === 0
+        ? page.followMtc
+          ? 'A blank track following MTC from a DAW. Press M to put cues on it.'
+          : 'Choose an audio or video file, or press M to put cues on this blank track.'
         : '';
   }
 

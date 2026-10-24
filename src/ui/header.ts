@@ -67,23 +67,42 @@ export function createHeader(app: App) {
     pageNumber.textContent = `PAGE ${index + 1}`;
     pageName.textContent = app.page.name;
 
+    showMtc();
+  }
+
+  /** Sending MTC, or on a page that follows a DAW, whether its MTC is coming in. */
+  let shownMtc = '';
+  function showMtc(): void {
     const status = app.mtc.status;
-    mtcIndicator.className = `mtc ${status}`;
-    mtcIndicator.textContent = {
-      on: 'MTC ON',
-      off: 'MTC OFF',
-      denied: 'MTC BLOCKED',
-      unsupported: 'MTC N/A',
-    }[status];
-    mtcIndicator.title =
+    let [className, text, title] = [
+      `mtc ${status}`,
+      { on: 'MTC ON', off: 'MTC OFF', denied: 'MTC BLOCKED', unsupported: 'MTC N/A' }[status],
       status === 'denied'
         ? 'MIDI access is blocked. Allow it in the browser site settings.'
         : status === 'unsupported'
           ? 'This browser does not support Web MIDI. Please use Chrome.'
-          : '';
+          : '',
+    ];
+    if (app.following && status !== 'denied' && status !== 'unsupported') {
+      const state = app.project.settings.mtcInputId ? app.mtcInState : null;
+      className = `mtc ${state === 'running' ? 'on' : 'off'}`;
+      text = state === 'running' ? 'MTC IN' : 'MTC IN ■';
+      title = !state
+        ? 'This page follows MTC from a DAW: choose the MTC input in Settings.'
+        : state === 'running'
+          ? 'Following the MTC coming in from the DAW.'
+          : 'This page follows MTC from a DAW; none is coming in now.';
+    }
+    const key = `${className}|${text}|${title}`;
+    if (key === shownMtc) return;
+    shownMtc = key;
+    mtcIndicator.className = className;
+    mtcIndicator.textContent = text;
+    mtcIndicator.title = title;
   }
 
   function tick(time: number): void {
+    showMtc();
     const { mtcFps } = app.project.settings;
     tc.textContent = formatTimecode(secondsToTimecode(time, mtcFps, app.page.mtcOffset), mtcFps);
     // Whole seconds counting down to 00:00 at the out point.

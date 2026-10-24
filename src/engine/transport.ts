@@ -49,6 +49,8 @@ export class Transport {
   private videoOffset = 0;
   private _videoUrl: string | null = null;
   private _duration = 0;
+  /** How long the page is while it has no audio or video. */
+  private blankLength = 0;
   private rangeStart: number | null = null;
   private rangeEnd: number | null = null;
   private overlapAt: number | null = null;
@@ -189,6 +191,12 @@ export class Transport {
     return this.hasAudio || this.hasVideo;
   }
 
+  /** The length of the page while it has no audio or video: a blank track to put cues on. */
+  setBlankLength(seconds: number): void {
+    this.blankLength = seconds;
+    this.setOffsets(this.audioOffset, this.videoOffset);
+  }
+
   get playing(): boolean {
     return this._playing;
   }
@@ -240,10 +248,12 @@ export class Transport {
     const moved = audioOffset !== this.audioOffset;
     this.audioOffset = audioOffset;
     this.videoOffset = videoOffset;
-    this._duration = pageDuration(
-      { audioMediaId: this.hasAudio ? 'a' : null, videoMediaId: this.hasVideo ? 'v' : null, audioOffset, videoOffset },
-      { audio: this.audioDuration, video: this.videoDuration },
-    );
+    this._duration = this.hasMedia
+      ? pageDuration(
+          { audioMediaId: this.hasAudio ? 'a' : null, videoMediaId: this.hasVideo ? 'v' : null, audioOffset, videoOffset },
+          { audio: this.audioDuration, video: this.videoDuration },
+        )
+      : this.blankLength;
     if (moved) this.syncAudio(this.now(), true);
   }
 
@@ -266,7 +276,7 @@ export class Transport {
   }
 
   play(): void {
-    if (!this.hasMedia) return;
+    if (this._duration <= 0) return;
     void this.mixer.resume();
     const { start, end } = this.range;
     // From the out point on, play starts over at the in point.
@@ -293,13 +303,24 @@ export class Transport {
   }
 
   seek(time: number): void {
-    if (!this.hasMedia) return;
+    if (this._duration <= 0) return;
     const target = Math.min(Math.max(time, 0), this._duration);
     this.lastTime = target;
     if (this._playing) this.clock.start(target, performance.now());
     else this.clock.stop(target);
     this.syncAudio(target, true);
     this.emit('locate');
+  }
+
+  /**
+   * Keeps playing from `time` without counting it as a jump: following MTC
+   * corrects small drift this way, so the cues in between still fire.
+   */
+  follow(time: number): void {
+    if (!this._playing) return;
+    const target = Math.min(Math.max(time, 0), this._duration);
+    this.clock.start(target, performance.now());
+    this.syncAudio(target, true);
   }
 
   skip(delta: number): void {

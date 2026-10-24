@@ -6,7 +6,7 @@
 - At the markers on the track it can show text: lyrics in time with the music, or text over the video for a karaoke-style video.
 - In the same way, it can send a MIDI Note at each marker, to control external gear.
 - Pages set the running order. When a song ends, the next page can play on by itself, or start over the end of the song with the overlap mark.
-- It sends MTC from the playback time.
+- It sends MTC from the playback time, or follows MTC from a DAW: the DAW plays the sound, and Show Tracks shows the text and sends the MIDI Notes.
 - Chrome only. Media and the project are kept in this browser.
 
 > [!IMPORTANT]
@@ -27,6 +27,7 @@
 - **Text on screen at each cue**: lyrics in time with the music, prompts for performers, or text over the video for a karaoke-style picture. Choose the size, color, outline, position and a dissolve between lines.
 - **MIDI Note at each cue**, to control lights or other gear. Turn it on or off per cue or for a whole page.
 - **MTC** follows the playback time, with an offset per page.
+- **Follow a DAW**: a page without audio is a blank track to put cues on. Set it to follow MTC, and it plays, stops and locates with the DAW, sending its memos and MIDI Notes on time.
 - **MIDI remote**: run GO, Play / Stop, Fade out and Previous / Next cue from a foot switch, pad or desk. Press Learn, then the key.
 - **Video output window** for a second display, with the text over the video.
 - **Prompter window** with the text alone, for the performers' monitor. Turn the text off on the video output, and the audience sees the video while the performers read the lyrics or prompts. The main screen frames the picture the same way, so what you see is what the audience sees.
@@ -56,7 +57,7 @@ The browser asks for permission the first time. Choose **Allow**. If you blocked
 
 | When | What the browser asks | Why |
 |---|---|---|
-| The app opens | To control MIDI devices | To send MTC and MIDI Notes, and to listen to the MIDI remote |
+| The app opens | To control MIDI devices | To send MTC and MIDI Notes, and to listen to the MIDI remote and MTC from a DAW |
 | You press **Open video output** | To allow pop-ups (only if the window was blocked) | To open the output window |
 | You press **Save** the first time | Where to save the file | To write the project file |
 | You press **Show names** next to Audio output | To use the microphone | Chrome names output devices only then. Nothing is recorded |

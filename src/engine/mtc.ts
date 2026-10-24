@@ -6,6 +6,9 @@ export type MtcStatus = 'off' | 'on' | 'denied' | 'unsupported';
 
 export type MidiOutputInfo = { id: string; name: string };
 
+/** What a MIDI input is listened to for: the remote, or MTC from a DAW. */
+export type InputUse = 'remote' | 'mtc';
+
 const TICK_MS = 10;
 /** Cue notes are triggers: Note Off follows this soon after Note On. */
 const NOTE_LENGTH_MS = 100;
@@ -22,15 +25,15 @@ function startWorkerTicker(onTick: () => void): void {
 
 /**
  * Sends the page time as MTC, and the cues' MIDI Notes, to the selected Web MIDI
- * output, and hands what one MIDI input plays to the remote.
+ * output, and hands what the chosen MIDI inputs play to the remote and the MTC follower.
  */
 export class MtcOutput {
   private access: MIDIAccess | null = null;
   private output: MIDIOutput | null = null;
   private outputId: string | null = null;
-  private input: MIDIInput | null = null;
-  private inputId: string | null = null;
-  private onInput: (data: Uint8Array) => void = () => {};
+  private readonly listeners = new Map<InputUse, { id: string | null; onMessage: (data: Uint8Array) => void }>();
+  /** Off while the page follows MTC coming in: it is then the receiver, not the sender. */
+  private sending = true;
   private readonly scheduler = new MtcScheduler((data, at) => this.output?.send(data, at));
   private readonly events = new EventTarget();
   private _status: MtcStatus = 'off';
@@ -49,7 +52,7 @@ export class MtcOutput {
   async init(): Promise<void> {
     startWorkerTicker(() => {
       const { time, playing } = this.getTime();
-      if (this.output) this.scheduler.tick(time, playing, performance.now());
+      if (this.output && this.sending) this.scheduler.tick(time, playing, performance.now());
       this.tickListeners.forEach((l) => l());
     });
     if (!navigator.requestMIDIAccess) {
@@ -61,7 +64,7 @@ export class MtcOutput {
       this.access = await navigator.requestMIDIAccess({ sysex: true });
       this.access.onstatechange = () => {
         this.selectOutput(this.outputId);
-        this.attachInput();
+        this.attachInputs();
       };
       this.selectOutput(this.outputId);
     } catch {
@@ -74,18 +77,22 @@ export class MtcOutput {
     return Array.from(this.access.inputs.values(), (i) => ({ id: i.id, name: i.name ?? i.id }));
   }
 
-  /** Listens to one MIDI input (null for none), also after it is unplugged and connected again. */
-  listen(id: string | null, onMessage: (data: Uint8Array) => void): void {
-    this.inputId = id;
-    this.onInput = onMessage;
-    this.attachInput();
+  /** Listens to one MIDI input (null for none) for a use, also after it is unplugged and connected again. */
+  listen(use: InputUse, id: string | null, onMessage: (data: Uint8Array) => void): void {
+    this.listeners.set(use, { id, onMessage });
+    this.attachInputs();
   }
 
-  private attachInput(): void {
-    if (this.input) this.input.onmidimessage = null;
-    const input = this.inputId ? this.access?.inputs.get(this.inputId) : undefined;
-    this.input = input && input.state === 'connected' ? input : null;
-    if (this.input) this.input.onmidimessage = (e) => e.data && this.onInput(e.data);
+  /** One input may serve both uses. */
+  private attachInputs(): void {
+    if (!this.access) return;
+    for (const input of this.access.inputs.values()) {
+      const uses = [...this.listeners.values()].filter((l) => l.id === input.id);
+      input.onmidimessage =
+        uses.length > 0 && input.state === 'connected'
+          ? (e) => e.data && uses.forEach((l) => l.onMessage(e.data!))
+          : null;
+    }
   }
 
   outputs(): MidiOutputInfo[] {
@@ -101,7 +108,9 @@ export class MtcOutput {
     this.setStatus(this.output ? 'on' : 'off');
   }
 
-  configure(fps: Fps, offsetSeconds: number): void {
+  /** `sending` is off while the page follows MTC coming in. */
+  configure(fps: Fps, offsetSeconds: number, sending = true): void {
+    this.sending = sending;
     this.scheduler.configure(fps, offsetSeconds);
   }
 
@@ -119,7 +128,7 @@ export class MtcOutput {
 
   /** Call on seek and stop. */
   locate(time: number): void {
-    if (this.output) this.scheduler.locate(time, performance.now());
+    if (this.output && this.sending) this.scheduler.locate(time, performance.now());
   }
 
   /** Also fires when only the output list changed. */

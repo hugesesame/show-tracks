@@ -4,6 +4,9 @@ import { orderMarkers } from './markers';
 /** Initial track volume for new pages: leaves headroom to turn a track up. */
 export const DEFAULT_VOLUME = 0.75;
 
+/** A page without audio or video is a blank track this long, for cues against a DAW. */
+export const BLANK_LENGTH = 5 * 60;
+
 /** The Master strip starts at full level: the tracks already leave headroom. */
 export const MASTER_VOLUME = 1;
 
@@ -11,6 +14,7 @@ const DEFAULT_SETTINGS: Settings = {
   mtcFps: '30',
   midiOutputId: null,
   midiInputId: null,
+  mtcInputId: null,
   midiRemote: {},
   loopPages: false,
   fadeOut: 2,
@@ -50,6 +54,8 @@ export function createPage(name: string, id: string = randomId()): Page {
     rangeEnd: null,
     overlapAt: null,
     mtcOffset: 0,
+    followMtc: false,
+    blankLength: BLANK_LENGTH,
     endAction: 'stop',
     markers: [],
     midiNotes: true,
@@ -73,6 +79,8 @@ export function normalizeProject(project: Project): Project {
       rangeStart: p.rangeStart ?? null,
       rangeEnd: p.rangeEnd ?? null,
       overlapAt: p.overlapAt ?? null,
+      followMtc: p.followMtc ?? false,
+      blankLength: p.blankLength ?? BLANK_LENGTH,
       midiNotes: p.midiNotes ?? true,
       markers: orderMarkers(p.markers.map((m) => ({ ...m, midiOn: m.midiOn ?? false, note: m.note ?? null, memo: m.memo ?? '' }))),
     })),
@@ -150,11 +158,11 @@ export function updateSettings(project: Project, patch: Partial<Settings>): Proj
  */
 export function keepLive(state: Project, current: Project): Project {
   const now = new Map(current.pages.map((p) => [p.id, p]));
-  const { masterVolume, masterMuted, masterPan, midiOutputId, midiInputId } = current.settings;
+  const { masterVolume, masterMuted, masterPan, midiOutputId, midiInputId, mtcInputId } = current.settings;
   return {
     ...state,
     currentPageId: state.pages.some((p) => p.id === current.currentPageId) ? current.currentPageId : state.currentPageId,
-    settings: { ...state.settings, masterVolume, masterMuted, masterPan, midiOutputId, midiInputId },
+    settings: { ...state.settings, masterVolume, masterMuted, masterPan, midiOutputId, midiInputId, mtcInputId },
     pages: state.pages.map((p) => {
       const live = now.get(p.id);
       if (!live) return p;

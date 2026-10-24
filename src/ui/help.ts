@@ -23,7 +23,7 @@ const HELP: Record<Lang, Text> = {
           'At the markers on the track it can show text: lyrics in time with the music, or text over the video for a karaoke-style video.',
           'In the same way, it can send a MIDI Note at each marker, to control external gear.',
           'Pages set the running order. When a song ends, the next page can play on by itself, or start over the end of the song with the overlap mark.',
-          'It sends MTC from the playback time.',
+          'It sends MTC from the playback time. A page can also follow MTC from a DAW instead, showing the memos and sending the MIDI Notes while the DAW plays the sound.',
           'Chrome only. Media and the project are kept in this browser.',
         ],
       },
@@ -108,6 +108,7 @@ const HELP: Record<Lang, Text> = {
         points: [
           'Settings: choose the MIDI output, the MTC frame rate and each page’s MTC offset.',
           'MIDI Note: channel, note and velocity used by cues without their own note.',
+          'Following a DAW: a page without audio is a blank track (its Length is in Settings, 5 minutes to start with). Put cues on it with M, then in Settings choose the MTC input and set Timecode to Follow MTC from a DAW. The page then plays, stops and locates with the DAW, from the MTC offset as its start; MTC IN lights at the top while it comes in. It does not send MTC, and does not go on to the next page by itself.',
           'On a Mac, the IAC Driver (Audio MIDI Setup) sends MIDI to other apps.',
           'MIDI remote (Settings): choose a MIDI input, then Learn a key, pad or pedal for GO, Play / Stop, Fade out, Previous cue and Next cue. Notes and CCs both work, also in show mode. Use a different port from the MIDI output.',
           'Audio output (Settings): the device all of the app’s sound plays through, such as an audio interface. It is remembered on this computer; Show names lets Chrome name the devices.',
@@ -146,7 +147,7 @@ const HELP: Record<Lang, Text> = {
           'トラックに打ったマーカーのタイミングで、文字を出力できます。音楽に合わせて歌詞を表示したり、文字を映像の上に載せてカラオケビデオ風にしたりできます。',
           '同じようにマーカーのタイミングで MIDI Note を出力できます。外部機器の制御用です。',
           'ページ管理で曲順を決めます。曲が終わったら次のページを自動で再生したり、オーバーラップ機能で曲の終わりに重ねて次の曲を始めたりできます。',
-          '再生時間で MTC を出力します。',
+          '再生時間で MTC を出力します。逆に、DAW から来る MTC に合わせて動くページも作れます。音は DAW が出し、Show Tracks はメモと MIDI Note を担当します。',
           'Chrome 専用です。メディアとプロジェクトは、このブラウザの中に保存されます。',
         ],
       },
@@ -231,6 +232,7 @@ const HELP: Record<Lang, Text> = {
         points: [
           '設定で、MIDI の出力先、MTC のフレームレート、ページごとの MTC オフセットを選びます。',
           'MIDI Note: 自分の番号を持たない Cue が使うチャンネル、ノート、ベロシティ。',
+          'DAW に合わせる: 音声のないページは空のトラックになります（長さは設定の Length で、最初は 5 分）。M で Cue を打ち、設定で MTC input を選んで、Timecode を Follow MTC from a DAW にします。ページは DAW に合わせて再生・停止・移動し、MTC オフセットの時間がページの頭になります。MTC が届いている間は、上に MTC IN が点きます。このページは MTC を送らず、次のページへも自動では進みません。',
           'Mac では IAC ドライバ（Audio MIDI 設定）で、ほかのアプリに MIDI を送れます。',
           'MIDI remote（設定）: MIDI の入力を選び、Learn で GO、Play / Stop、Fade out、Previous cue、Next cue にキー・パッド・ペダルを割り当てます。Note でも CC でも使え、ショーモード中も効きます。MIDI の出力とは別のポートを使ってください。',
           'Audio output（設定）: アプリの音をすべて出す機材（オーディオインターフェースなど）。この PC に覚えます。Show names を押すと、Chrome が機材の名前を表示します。',

@@ -5,6 +5,7 @@ import type { RemoteAction } from '../model/types';
 import { storageEstimate } from '../storage/db';
 import { h } from './dom';
 import { fileButtons, type FileMenu } from './fileMenu';
+import { formatCountdown, parseClock } from './format';
 
 const FPS_LABELS: Record<Fps, string> = { '24': '24', '25': '25', '29.97df': '29.97 DF', '30': '30' };
 
@@ -146,6 +147,57 @@ export function createSettings(app: App, files: FileMenu) {
       return row(label, h('span', { class: 'remote-trigger' }, trigger ? triggerLabel(trigger) : '—'), ' ', learn, ' ', clear);
     });
 
+    // MTC from a DAW: the input it comes in on, and whether this page follows it.
+    const mtcInputSelect = h(
+      'select',
+      {
+        onchange: () => {
+          app.setMtcInput(mtcInputSelect.value || null);
+          render();
+        },
+      },
+      h('option', { value: '' }, 'None'),
+      ...app.mtc.inputs().map((i) => h('option', { value: i.id, selected: i.id === settings.mtcInputId }, i.name)),
+    );
+    const mtcInputHint = !settings.mtcInputId
+      ? 'For pages that follow a DAW: choose the port the DAW sends MTC to (on a Mac, the IAC Driver).'
+      : { waiting: 'No MTC has come in yet. Start the DAW with MTC output on.', running: 'MTC is coming in.', stopped: 'MTC has come in; the DAW is stopped.' }[app.mtcInState];
+
+    const hasAudio = page.audioMediaId !== null;
+    const timecodeSelect = h(
+      'select',
+      {
+        onchange: () => {
+          app.setFollowMtc(timecodeSelect.value === 'follow');
+          render();
+        },
+      },
+      h('option', { value: 'send', selected: !page.followMtc }, 'Send MTC'),
+      h('option', { value: 'follow', selected: page.followMtc }, 'Follow MTC from a DAW'),
+    );
+    timecodeSelect.disabled = hasAudio && !page.followMtc;
+    const timecodeHint = hasAudio
+      ? page.followMtc
+        ? 'This page has an audio file, so it plays it and sends MTC. Following is for pages without audio.'
+        : 'Pages with an audio file play it and send MTC. Following is for pages without audio, while a DAW plays the sound.'
+      : page.followMtc
+        ? 'The DAW runs this page: it plays, stops and locates with the MTC coming in, and its cues send memos and MIDI Notes. The MTC offset is the timecode of the page’s start.'
+        : 'This page sends MTC from its playback time, starting at the MTC offset.';
+
+    const hasMedia = hasAudio || page.videoMediaId !== null;
+    const blankLength = h('input', {
+      value: formatCountdown(page.blankLength),
+      placeholder: '05:00',
+      onchange: () => {
+        const seconds = parseClock(blankLength.value);
+        if (seconds !== null && seconds >= 1) app.setBlankLength(Math.round(seconds));
+        else {
+          app.error('Enter the length as 05:00.');
+          render();
+        }
+      },
+    });
+
     const fadeOut = numberField(settings.fadeOut, 0, 10, (n) => app.setFadeOut(n), 0.5);
 
     const pageName = h('input', {
@@ -180,6 +232,8 @@ export function createSettings(app: App, files: FileMenu) {
         row('MIDI output', midiSelect),
         midiHint ? h('div', { class: 'hint' }, midiHint) : null,
         row('Frame rate', fpsSelect),
+        row('MTC input', mtcInputSelect),
+        h('div', { class: 'hint' }, mtcInputHint),
         h('h3', {}, 'MIDI remote'),
         row('MIDI input', inputSelect),
         ...remoteRows,
@@ -202,7 +256,11 @@ export function createSettings(app: App, files: FileMenu) {
         h('div', { class: 'hint' }, 'Esc fades everything out over this time, then stops. Press Esc again to stop at once.'),
         h('h3', {}, `This page (${page.name})`),
         row('Page name', pageName),
+        row('Timecode', timecodeSelect),
         row('MTC offset', offset),
+        h('div', { class: 'hint' }, timecodeHint),
+        hasMedia ? null : row('Length', blankLength),
+        hasMedia ? null : h('div', { class: 'hint' }, 'Without audio or video, the page is a blank track this long, to put cues on.'),
         h('h3', {}, 'Project'),
         row('File', h('div', { class: 'file-buttons' }, ...Object.values(fileButtons(files, render)))),
         row(
