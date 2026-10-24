@@ -20,6 +20,8 @@ const VIEW_HEADROOM = 1.15;
 const MIN_VIEW_SECONDS = 10;
 const ZOOM_STEP = 1.5;
 const MAX_ZOOM = 200;
+/** Fit leaves this much room right of the end point, so its flag stays in sight. */
+const FIT_END_PX = 24;
 /** While playing, the view scrolls when the playhead gets this close to the right edge. */
 const FOLLOW_EDGE = 0.95;
 
@@ -102,9 +104,16 @@ export function createTrack(app: App) {
     clampView();
   }
 
+  /** Shows the page from its start to the end point (the out point, or the end), just inside the right edge. */
   function zoomFit(): void {
-    zoom = 1;
     viewStart = 0;
+    const { end } = app.range;
+    if (end <= 0 || width <= FIT_END_PX) {
+      zoom = 1;
+      return;
+    }
+    const fitSpan = end * (width / (width - FIT_END_PX));
+    zoom = Math.min(Math.max(viewDuration() / fitSpan, 1), MAX_ZOOM);
   }
 
   function lane(kind: Kind): Rect {
