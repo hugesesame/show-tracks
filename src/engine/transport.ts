@@ -147,6 +147,11 @@ export class Transport {
     setTimeout(finish, 80);
   }
 
+  /** A previous page is still ringing out after an overlap. */
+  get ringing(): boolean {
+    return this.tail !== null;
+  }
+
   /** Pauses and also silences a page still ringing out. */
   stop(): void {
     this.pause();

@@ -76,6 +76,8 @@ export class App {
   private noteTime: number | null = null;
   private readonly events = new EventTarget();
   private _showMode = loadShowMode();
+  private fadeTimer: ReturnType<typeof setTimeout> | undefined;
+  private fadeEnd = 0;
 
   constructor(
     private readonly db: IDBDatabase,
@@ -260,6 +262,8 @@ export class App {
   // ---- transport ----
 
   go(): void {
+    // GO overrules a fade out: back to full level and on with the show.
+    this.cancelFade();
     const result = go(this._project, this._cue);
     this._cue = result.state;
     const { action } = result;
@@ -286,6 +290,8 @@ export class App {
 
   /** Follows the page's end action once playback reaches its end. */
   private async handlePageEnd(): Promise<void> {
+    // A page ending during a fade out does not start the next one.
+    if (this.fadeTimer !== undefined) return this.stop();
     const { endAction } = this.page;
     const next = nextPage(this._project, this.page.id);
     if (endAction === 'stop' || !next) return;
@@ -303,6 +309,7 @@ export class App {
 
   /** At the overlap mark the next page starts while this page's audio rings out to its out point. */
   private async handleOverlap(): Promise<void> {
+    if (this.fadeTimer !== undefined) return this.stop();
     const next = nextPage(this._project, this.page.id);
     if (!next) return;
     this.transport.handOff(this.range.end);
@@ -326,11 +333,46 @@ export class App {
   }
 
   togglePlay(): void {
-    this.transport.toggle();
+    if (this.transport.playing) this.stop();
+    else {
+      this.cancelFade();
+      this.transport.play();
+    }
   }
 
+  /** Stops at once, also ending a fade in progress. */
   stop(): void {
+    this.cancelFade();
     this.transport.stop();
+  }
+
+  /** Seconds left of a fade out in progress, or 0. */
+  get fadeRemaining(): number {
+    return this.fadeTimer === undefined ? 0 : Math.max(0, (this.fadeEnd - performance.now()) / 1000);
+  }
+
+  /**
+   * Esc, as in QLab: fades everything out over the set time, then stops.
+   * Pressed again during the fade, it stops at once.
+   */
+  fadeOutStop(): void {
+    if (this.fadeTimer !== undefined) return this.stop();
+    if (!this.transport.playing && !this.transport.ringing) return;
+    const seconds = this._project.settings.fadeOut;
+    if (seconds <= 0) return this.stop();
+    this.transport.mixer.fadeAll(seconds);
+    this.fadeEnd = performance.now() + seconds * 1000;
+    this.fadeTimer = setTimeout(() => this.stop(), seconds * 1000);
+    this.emit('change');
+  }
+
+  /** Ends a fade (stopped, or overruled by GO or play) and brings the level back. */
+  private cancelFade(): void {
+    if (this.fadeTimer === undefined) return;
+    clearTimeout(this.fadeTimer);
+    this.fadeTimer = undefined;
+    this.transport.mixer.restoreAll();
+    this.emit('change');
   }
 
   seek(time: number): void {
@@ -587,6 +629,11 @@ export class App {
     if (this.editLocked()) return;
     this.mtc.selectOutput(id);
     this.commit(updateSettings(this._project, { midiOutputId: id }));
+  }
+
+  setFadeOut(seconds: number): void {
+    if (this.editLocked()) return;
+    this.commit(updateSettings(this._project, { fadeOut: seconds }));
   }
 
   setPageOffset(seconds: number): void {

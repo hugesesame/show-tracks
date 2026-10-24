@@ -74,7 +74,8 @@ export function installKeyboard(
       Home: () => app.toStart(),
       BracketLeft: () => app.rewind(),
       BracketRight: () => app.fastForward(),
-      Escape: () => app.stop(),
+      // Esc fades out and stops, as in QLab; pressed again it stops at once.
+      Escape: () => app.fadeOutStop(),
     };
     // e.code keeps G / M working with a Japanese IME layout.
     const action = actions[e.code];

@@ -39,9 +39,9 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'Keyboard',
         rows: [
-          ['Space', 'Play / stop'],
+          ['Space', 'Play / stop at once'],
           ['G', 'GO: play from the cue on standby'],
-          ['Esc', 'Stop (also silences a page still ringing out)'],
+          ['Esc', 'Fade out and stop (time in Settings); again to stop at once'],
           ['M', 'Add a cue at the playhead'],
           ['← / →', 'Previous / next cue'],
           ['↑ / ↓', 'Previous / next cue, in Cue List order'],
@@ -52,7 +52,7 @@ const HELP: Record<Lang, Text> = {
           ['X', 'Overlap mark at the playhead (⌥ clears)'],
           ['= / -', 'Zoom the track in / out'],
           ['/  or  ⇧Z', 'Fit: show the page up to its end point'],
-          ['F', 'Fullscreen'],
+          ['F', 'Fullscreen (to leave it: F, or hold Esc)'],
           ['⌘S / ⇧⌘S', 'Save / save to a new file'],
           ['⌘,', 'Settings'],
           ['?', 'This help'],
@@ -155,9 +155,9 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'キーボード',
         rows: [
-          ['Space', '再生 / 停止'],
+          ['Space', '再生 / すぐに停止'],
           ['G', 'GO: 待機中の Cue から再生'],
-          ['Esc', '停止（鳴り残っている前のページの音も止める）'],
+          ['Esc', 'フェードアウトして停止（長さは設定で）。もう一度押すとすぐに停止'],
           ['M', '再生位置に Cue を追加'],
           ['← / →', '前 / 次の Cue へ'],
           ['↑ / ↓', 'Cue List の順で前 / 次の Cue へ'],
@@ -168,7 +168,7 @@ const HELP: Record<Lang, Text> = {
           ['X', '再生位置にオーバーラップのマーク（⌥ で解除）'],
           ['= / -', 'トラックの拡大 / 縮小'],
           ['/  または  ⇧Z', 'Fit: エンドポイントまでを表示'],
-          ['F', '全画面'],
+          ['F', '全画面（解除は F か Esc の長押し）'],
           ['⌘S / ⇧⌘S', '保存 / 別のファイルに保存'],
           ['⌘,', '設定'],
           ['?', 'このヘルプ'],

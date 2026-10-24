@@ -5,6 +5,8 @@ export type Settings = {
   midiOutputId: string | null;
   /** After the last page comes the first one again. */
   loopPages: boolean;
+  /** Seconds Esc takes to fade everything out before stopping. */
+  fadeOut: number;
   /** The Master strip, after both tracks. Pan is -1 (left) .. 1 (right). */
   masterVolume: number;
   masterMuted: boolean;

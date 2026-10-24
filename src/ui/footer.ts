@@ -43,6 +43,7 @@ export function createFooter(app: App, files: FileMenu) {
   );
   const loop = h('button', { class: 'loop', title: 'Loop the page', onclick: () => app.toggleLoop() }, '🔁');
   const play = h('button', { class: 'play', title: 'Play / Stop (Space)', onclick: () => app.togglePlay() }, '▶');
+  const fade = h('button', { class: 'fade', title: 'Fade out and stop (Esc); again to stop at once', onclick: () => app.fadeOutStop() }, 'Fade');
   const element = h(
     'footer',
     { class: 'footer' },
@@ -53,6 +54,7 @@ export function createFooter(app: App, files: FileMenu) {
       h('button', { title: 'Go to start (Home)', onclick: () => app.toStart() }, '⏮'),
       repeatButton('◀◀', 'Rewind 5s (⌥← / [)', () => app.rewind()),
       play,
+      fade,
       repeatButton('▶▶', 'Fast forward 5s (⌥→ / ])', () => app.fastForward()),
       h('button', { title: 'Previous marker (←)', onclick: () => app.previousMarker() }, '|◀'),
       h('button', { title: 'Next marker (→)', onclick: () => app.nextMarker() }, '▶|'),
@@ -64,9 +66,13 @@ export function createFooter(app: App, files: FileMenu) {
   // The computer's time of day, for keeping to a running order.
   const showTime = () => {
     clock.textContent = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    // The seconds left of a fade out, counted down on its button.
+    const left = app.fadeRemaining;
+    fade.textContent = left > 0 ? `${left.toFixed(1)}s` : 'Fade';
+    fade.classList.toggle('fading', left > 0);
   };
   showTime();
-  setInterval(showTime, 250);
+  setInterval(showTime, 100);
 
   function update(): void {
     const playing = app.transport.playing;

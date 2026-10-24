@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS: Settings = {
   mtcFps: '30',
   midiOutputId: null,
   loopPages: false,
+  fadeOut: 2,
   masterVolume: MASTER_VOLUME,
   masterMuted: false,
   masterPan: 0,

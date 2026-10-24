@@ -144,6 +144,7 @@ describe('project', () => {
       mtcFps: '30',
       midiOutputId: null,
       loopPages: false,
+      fadeOut: 2,
       masterVolume: 1,
       masterMuted: false,
       masterPan: 0,

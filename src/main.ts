@@ -7,6 +7,7 @@ import { createCueList, setEditGuard } from './ui/cueList';
 import { byId, h } from './ui/dom';
 import { createFileMenu } from './ui/fileMenu';
 import { createFooter } from './ui/footer';
+import { keepEscapeInFullscreen } from './ui/fullscreen';
 import { createHeader } from './ui/header';
 import { installKeyboard } from './ui/keyboard';
 import { createSplitters } from './ui/layout';
@@ -86,6 +87,7 @@ async function main(): Promise<void> {
   app.mtc.onChange(update);
   files.onChange(update);
   setEditGuard(() => !app.editLocked());
+  keepEscapeInFullscreen();
   installKeyboard(app, track, files, settings.open, help.open);
   update();
 

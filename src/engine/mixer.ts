@@ -5,6 +5,8 @@ export type StripKind = TrackKind | 'master';
 export type ChannelKey = 'deck0' | 'deck1' | 'video' | 'master';
 
 const METER_FLOOR_DB = -60;
+/** Where a fade out ends before cutting to silence: -60 dB, the bottom of the meters. */
+const FADE_FLOOR = 0.001;
 
 /** Peak amplitude to a 0..1 meter position on a -60..0 dBFS scale. */
 export function meterLevel(peak: number): number {
@@ -22,12 +24,14 @@ type Channel = {
 
 /**
  * Routes each media element through volume → pan → stereo meter, then both
- * tracks through the Master strip to the speakers. Meters read after the
- * volume and pan, like a DAW channel.
+ * tracks through the fade-out stage and the Master strip to the speakers.
+ * Meters read after the volume and pan, like a DAW channel.
  */
 export class Mixer {
   private readonly context = new AudioContext();
   private readonly channels: Record<ChannelKey, Channel>;
+  /** Before the Master: fades everything out without moving the Master fader, and shows on its meter. */
+  private readonly fader: GainNode;
   private readonly buffer = new Float32Array(1024);
 
   constructor(elements: { decks: [HTMLMediaElement, HTMLMediaElement]; video: HTMLMediaElement }) {
@@ -46,11 +50,13 @@ export class Mixer {
       return { gain, panner, analysers };
     };
     const master = strip(this.context.destination);
+    this.fader = new GainNode(this.context);
+    this.fader.connect(master.gain);
     const track = (element: HTMLMediaElement): Channel => {
       // Levels are set on the gain nodes, so the element itself stays at full volume.
       element.volume = 1;
       element.muted = false;
-      const channel = strip(master.gain);
+      const channel = strip(this.fader);
       this.context.createMediaElementSource(element).connect(channel.gain);
       return channel;
     };
@@ -81,6 +87,29 @@ export class Mixer {
   /** Fades a channel out quickly, without the click of a hard stop. */
   fadeOut(key: ChannelKey): void {
     this.channels[key].gain.gain.setTargetAtTime(0, this.context.currentTime, 0.01);
+  }
+
+  /**
+   * Fades the whole output to silence over `seconds`, steadily in dB like a
+   * desk fader (a straight gain ramp sounds as if it drops away at the end).
+   */
+  fadeAll(seconds: number): void {
+    const gain = this.fader.gain;
+    const now = this.context.currentTime;
+    const from = Math.max(gain.value, FADE_FLOOR);
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(from, now);
+    gain.exponentialRampToValueAtTime(FADE_FLOOR, now + seconds);
+    gain.setValueAtTime(0, now + seconds);
+  }
+
+  /** Brings the whole output back to full level after a fade, quickly but without a click. */
+  restoreAll(): void {
+    const gain = this.fader.gain;
+    const now = this.context.currentTime;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    gain.setTargetAtTime(1, now, 0.02);
   }
 
   /** Current peak of each channel, as meter positions (0..1). */

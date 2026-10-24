@@ -1346,6 +1346,17 @@ dialog.help {
   line-height: 1.5;
 }
 
+/* Counts down while everything fades out. */
+.footer .fade {
+  min-width: 56px;
+  font-variant-numeric: tabular-nums;
+}
+
+.footer .fade.fading {
+  border-color: var(--range);
+  color: var(--range);
+}
+
 /* ---- show mode ---- */
 
 .show-toggle {
