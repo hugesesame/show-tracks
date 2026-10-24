@@ -98,9 +98,9 @@ const HELP: Record<Lang, Text> = {
           ['Video', 'The video; + Memo lays the memos over it'],
           ['Memo', 'The memo of the last cue passed (lyrics, prompts); ⚙ shows the settings'],
           ['Mixer', 'Audio, Video and Master faders with pan and mute; double-click resets'],
-          ['Output', 'Also show the memos over the video on the video output'],
+          ['Video (Memo on video output)', 'On: the memos also show over the video on the video output. Off: the video alone'],
           ['Open video output', 'A window for the second display; double-click it or press F for fullscreen'],
-          ['Open prompter', 'A window with the memos alone, for the performers. Turn Output off to keep them off the audience’s video'],
+          ['Open prompter', 'A window with the memos alone, for the performers. Turn Video off in the Memo settings to keep them off the audience’s video'],
         ],
       },
       {
@@ -221,9 +221,9 @@ const HELP: Record<Lang, Text> = {
           ['Video', '映像。+ Memo で映像の上にメモを重ねる'],
           ['Memo', '最後に通過した Cue のメモ（歌詞、カンペ）。⚙ で設定を表示'],
           ['Mixer', 'Audio、Video、Master のフェーダー、Pan、ミュート。ダブルクリックで元に戻る'],
-          ['Output', '映像出力でも、映像の上にメモを出す'],
+          ['Video（Memo on video output）', 'On: 映像出力でも映像の上にメモを出す。Off: 映像だけ'],
           ['Open video output', '外部モニター用のウィンドウ。ダブルクリックか F で全画面'],
-          ['Open prompter', 'メモだけを出す演者用のウィンドウ。Output を Off にすると、お客さん向けの映像にはメモが出ない'],
+          ['Open prompter', 'メモだけを出す演者用のウィンドウ。Memo の設定の Video を Off にすると、お客さん向けの映像にはメモが出ない'],
         ],
       },
       {

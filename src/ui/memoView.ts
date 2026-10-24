@@ -68,11 +68,12 @@ export function createMemoView(app: App) {
   const positions = POSITIONS.map(({ position, label }) =>
     h('button', { type: 'button', class: 'small', 'data-position': position, onclick: () => app.setMemoLook({ memoPosition: position }) }, label),
   );
-  const output = h('button', {
+  // Whether the memos sit over the video on the video output; the prompter always shows them.
+  const onVideo = h('button', {
     type: 'button',
-    class: 'small',
+    class: 'small memo-switch',
     onclick: () => app.setMemoLook({ memoOutput: !app.project.settings.memoOutput }),
-  }, 'Output');
+  });
   const controls = h(
     'div',
     { class: 'memo-controls' },
@@ -80,7 +81,14 @@ export function createMemoView(app: App) {
     sliderRow('Aa', size, color),
     sliderRow('Edge', outline, outlineColor, outlineOn),
     sliderRow('Fade', fade, fadeValue, fadeOn),
-    h('div', { class: 'memo-group' }, h('div', { class: 'memo-group memo-positions' }, ...positions), output),
+    h(
+      'div',
+      { class: 'memo-group' },
+      h('span', { class: 'memo-label' }, 'Video'),
+      h('span', { class: 'memo-row-text' }, 'Memo on video output'),
+      onVideo,
+    ),
+    h('div', { class: 'memo-group memo-positions' }, ...positions),
   );
   // The settings fold away, leaving the room to the screen.
   let controlsShown = true;
@@ -128,7 +136,7 @@ export function createMemoView(app: App) {
     switchButton(outlineOn, s.memoOutlineOn, 'Outline');
     // Show mode locks the look; off switches lock their own row.
     const show = app.showMode;
-    for (const control of [size, color, outlineOn, fadeOn, output, ...positions]) control.disabled = show;
+    for (const control of [size, color, outlineOn, fadeOn, onVideo, ...positions]) control.disabled = show;
     outline.disabled = outlineColor.disabled = show || !s.memoOutlineOn;
     fade.value = String(s.memoFade);
     fade.style.setProperty('--fill', String(s.memoFade / Number(fade.max)));
@@ -137,10 +145,10 @@ export function createMemoView(app: App) {
     fade.disabled = show || !s.memoFadeOn;
     fadeValue.classList.toggle('off', !s.memoFadeOn);
     for (const b of positions) b.classList.toggle('active', b.dataset.position === s.memoPosition);
-    output.classList.toggle('active', s.memoOutput);
-    output.title = s.memoOutput
-      ? 'Shown over the video on the video output: click to hide (the prompter always shows them)'
-      : 'Hidden on the video output: click to show (the prompter always shows them)';
+    switchButton(onVideo, s.memoOutput, 'Memo on video output');
+    onVideo.title = s.memoOutput
+      ? 'The memos show over the video on the video output: click to hide them there (the prompter always shows them)'
+      : 'The video output shows the video alone: click to show the memos over it (the prompter always shows them)';
   }
 
   /** Call every frame with the memo to show. */
