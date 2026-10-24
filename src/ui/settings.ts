@@ -163,31 +163,12 @@ export function createSettings(app: App, files: FileMenu) {
       ? 'For pages that follow a DAW: choose the port the DAW sends MTC to (on a Mac, the IAC Driver).'
       : { waiting: 'No MTC has come in yet. Start the DAW with MTC output on.', running: 'MTC is coming in.', stopped: 'MTC has come in; the DAW is stopped.' }[app.mtcInState];
 
-    const hasAudio = page.audioMediaId !== null;
-    const timecodeSelect = h(
-      'select',
-      {
-        onchange: () => {
-          app.setFollowMtc(timecodeSelect.value === 'follow');
-          render();
-        },
-      },
-      h('option', { value: 'send', selected: !page.followMtc }, 'Send MTC'),
-      h('option', { value: 'follow', selected: page.followMtc }, 'Follow MTC from a DAW'),
-    );
-    timecodeSelect.disabled = hasAudio && !page.followMtc;
-    const timecodeHint = hasAudio
-      ? page.followMtc
-        ? 'This page has an audio file, so it plays it and sends MTC. Following is for pages without audio.'
-        : 'Pages with an audio file play it and send MTC. Following is for pages without audio, while a DAW plays the sound.'
-      : page.followMtc
-        ? 'The DAW runs this page: it plays, stops and locates with the MTC coming in, and its cues send memos and MIDI Notes. The MTC offset is the timecode of the page’s start.'
-        : 'This page sends MTC from its playback time, starting at the MTC offset.';
+    // The list a page is in (Play or MTC In) decides whether it sends or follows MTC.
+    const offsetHint = page.followMtc
+      ? 'An MTC In page: the DAW runs it. It plays, stops and locates with the MTC coming in, starting at this timecode, and its cues send memos and MIDI Notes.'
+      : 'This page sends MTC from its playback time, starting at this timecode.';
 
-    const timecodeRow = row('Timecode', timecodeSelect);
-    timecodeRow.classList.add('timecode-row');
-
-    const hasMedia = hasAudio || page.videoMediaId !== null;
+    const hasMedia = page.audioMediaId !== null || page.videoMediaId !== null;
     const blankLength = h('input', {
       value: formatCountdown(page.blankLength),
       placeholder: '05:00',
@@ -259,9 +240,8 @@ export function createSettings(app: App, files: FileMenu) {
         h('div', { class: 'hint' }, 'Esc fades everything out over this time, then stops. Press Esc again to stop at once.'),
         h('h3', {}, `This page (${page.name})`),
         row('Page name', pageName),
-        timecodeRow,
         row('MTC offset', offset),
-        h('div', { class: 'hint' }, timecodeHint),
+        h('div', { class: 'hint' }, offsetHint),
         hasMedia ? null : row('Length', blankLength),
         hasMedia ? null : h('div', { class: 'hint' }, 'Without audio or video, the page is a blank track this long, to put cues on.'),
         h('h3', {}, 'Project'),
@@ -301,16 +281,5 @@ export function createSettings(app: App, files: FileMenu) {
     dialog.showModal();
   }
 
-  /** Opens at this page's Timecode setting (from the MTC badge in PAGES). */
-  function openTimecode(): void {
-    open();
-    const target = dialog.querySelector('.timecode-row');
-    target?.scrollIntoView({ block: 'center' });
-    target?.querySelector('select')?.focus({ preventScroll: true });
-  }
-
-  // Closing Settings ends a Learn that never got its key.
-  dialog.addEventListener('close', () => app.cancelLearn());
-
-  return { element: dialog, open, openTimecode };
+  return { element: dialog, open };
 }

@@ -38,6 +38,11 @@ function mediaSlot(app: App, kind: MediaRecord['kind'], label: string) {
     name.title = name.textContent;
     clear.hidden = id === null;
     choose.disabled = clear.disabled = app.showMode;
+    // On MTC In pages the DAW plays the sound; a video can still go with it.
+    if (kind === 'audio' && app.page.followMtc) {
+      choose.disabled = true;
+      choose.title = 'MTC In pages follow a DAW, which plays the sound';
+    } else choose.title = '';
   }
 
   return { element, update };

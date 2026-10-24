@@ -27,6 +27,9 @@ import {
   createProject,
   currentPage,
   followsMtc,
+  pageKind,
+  pagesOfKind,
+  type PageKind,
   keepLive,
   movePage,
   nextPage,
@@ -68,6 +71,8 @@ function loadShowMode(): boolean {
 const MARKER_EPSILON = 0.05;
 /** Following MTC, the playhead is corrected once it is this far off (about a frame). */
 const FOLLOW_DRIFT = 0.04;
+/** A step in the incoming MTC larger than this is a jump (a locate, a DAW loop), not drift. */
+const FOLLOW_JUMP = 0.5;
 
 export class App {
   readonly transport: Transport;
@@ -228,6 +233,8 @@ export class App {
     // A page following a DAW hands over to the next page only by hand.
     const hasNext = nextPage(this._project, page.id) !== null && !this.following;
     this.transport.setOverlap(hasNext ? activeOverlap(page, this.duration) : null);
+    // The DAW decides what plays; looping is set there.
+    if (page.followMtc) this.transport.loop = false;
     const { mixer } = this.transport;
     const { masterVolume, masterMuted, masterPan } = this._project.settings;
     mixer.setLevel(this.transport.channel('audio'), page.audioVolume, page.audioMuted, page.audioPan);
@@ -428,11 +435,6 @@ export class App {
     this.listenToMtc();
   }
 
-  setFollowMtc(on: boolean): void {
-    if (this.editLocked()) return;
-    this.commit(updatePage(this._project, this.page.id, { followMtc: on }));
-  }
-
   /** The length of the blank track a page without media has. */
   setBlankLength(seconds: number): void {
     if (this.editLocked()) return;
@@ -465,6 +467,9 @@ export class App {
         this.cancelFade();
         t.seek(time);
         t.play();
+      } else if (Math.abs(t.now() - time) > FOLLOW_JUMP) {
+        // A jump, e.g. the DAW looping: the cues after it send their notes again.
+        t.seek(time);
       } else if (Math.abs(t.now() - time) > FOLLOW_DRIFT) t.follow(time);
       return;
     }
@@ -499,6 +504,7 @@ export class App {
   }
 
   toggleLoop(): void {
+    if (this.page.followMtc) return;
     this.transport.loop = !this.transport.loop;
     this.emit('change');
   }
@@ -727,6 +733,10 @@ export class App {
   setRangePoint(point: 'start' | 'end' | 'overlap', time: number | null): void {
     if (this.editLocked()) return;
     const page = this.page;
+    if (point === 'overlap' && page.followMtc) {
+      this.error('MTC In pages follow the DAW, so they have no overlap mark.');
+      return;
+    }
     const set = point === 'start' ? setRangeStart : point === 'end' ? setRangeEnd : setOverlap;
     const updated = set(page, time, this.duration);
     if (updated === page) return;
@@ -747,16 +757,18 @@ export class App {
     this.commit(setCurrentPage(this._project, pageId));
   }
 
-  /** Opens the previous / next page in the list (no wrap-around). */
+  /** Opens the previous / next page in its list (no wrap-around). */
   selectAdjacentPage(direction: -1 | 1): void {
-    const index = this._project.pages.findIndex((p) => p.id === this.page.id);
-    const target = this._project.pages[index + direction];
+    const pages = pagesOfKind(this._project, pageKind(this.page));
+    const target = pages[pages.indexOf(this.page) + direction];
     if (target) this.selectPage(target.id);
   }
 
-  addPage(): void {
+  /** Adds a page to the Play or the MTC In list, numbered within it. */
+  addPage(kind: PageKind = pageKind(this.page)): void {
     if (this.editLocked()) return;
-    this.commit(addPage(this._project, createPage(`Page ${this._project.pages.length + 1}`)));
+    const page = createPage(`Page ${pagesOfKind(this._project, kind).length + 1}`);
+    this.commit(addPage(this._project, { ...page, followMtc: kind === 'mtc' }));
   }
 
   renamePage(name: string, pageId = this.page.id): void {

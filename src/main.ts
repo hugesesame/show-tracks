@@ -51,8 +51,7 @@ async function main(): Promise<void> {
   const track = createTrack(app);
   const cueList = createCueList(app);
   const help = createHelp();
-  // Settings is made below; the MTC badge only opens it once the app is running.
-  const pageList = createPageList(app, help.open, () => settings.openTimecode());
+  const pageList = createPageList(app, help.open);
   const files = createFileMenu(app, db);
   const footer = createFooter(app, files);
   const settings = createSettings(app, files);

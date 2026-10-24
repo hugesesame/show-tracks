@@ -1,5 +1,5 @@
 import type { App } from '../app/app';
-import { followsMtc } from '../model/project';
+import { pageKind, pagesOfKind, type PageKind } from '../model/project';
 import type { EndAction, Page } from '../model/types';
 import { editableCell } from './cueList';
 import { autoScrollButton, deleteButton, h } from './dom';
@@ -12,15 +12,41 @@ const END_ACTIONS: { action: EndAction; label: string; title: string }[] = [
 /** Pointer travel before a press on a row becomes a drag. */
 const DRAG_START_PX = 4;
 
-/** All pages: click to open one, double-click its name to rename. */
-export function createPageList(app: App, openHelp: () => void, openTimecode: () => void) {
+/**
+ * The pages of one list, Play or MTC In: click to open one, double-click its name to rename.
+ * Play pages play their own media; MTC In pages follow the MTC from a DAW.
+ */
+export function createPageList(app: App, openHelp: () => void) {
   const list = h('div', { class: 'page-list' });
   const dropLine = h('div', { class: 'drop-line', hidden: true });
+  const empty = h('div', { class: 'page-list-empty' }, 'No MTC In pages yet. Press + to add one: a blank track that follows the MTC from a DAW.');
   const loopButton = h('button', { class: 'small loop-pages', onclick: () => app.toggleLoopPages() }, '🔁');
 
   const removeButton = deleteButton('Delete page', () => app.removeCurrentPage());
   const autoScroll = autoScrollButton('cue-player-page-autoscroll');
-  const addButton = h('button', { class: 'small', title: 'Add page', onclick: () => app.addPage() }, '+');
+  /** The list shown; it follows the page opened, and the tabs switch it. */
+  let kind: PageKind = pageKind(app.page);
+  let shownPageId = app.page.id;
+  /** The page last open in each list, to come back to. */
+  const lastPage: Partial<Record<PageKind, string>> = { [kind]: shownPageId };
+  const addButton = h('button', { class: 'small', onclick: () => app.addPage(kind) }, '+');
+  const tab = (value: PageKind, label: string, title: string) =>
+    h('button', { type: 'button', class: 'small', 'data-kind': value, title, onclick: () => showList(value) }, label);
+  const tabs = h(
+    'div',
+    { class: 'column-tabs' },
+    tab('play', 'Play', 'Pages that play their own audio and video, and send MTC'),
+    tab('mtc', 'MTC In', 'Pages that follow the MTC from a DAW, which plays the sound'),
+  );
+
+  /** Shows a list, opening the page last open there (or its first page). */
+  function showList(value: PageKind): void {
+    kind = value;
+    const pages = pagesOfKind(app.project, value);
+    const target = pages.find((p) => p.id === lastPage[value]) ?? pages[0];
+    if (target && target.id !== app.page.id) app.selectPage(target.id);
+    else render();
+  }
   /** The page last brought to the top, so the list is only scrolled when the page changes. */
   let scrolledTo: string | null = null;
 
@@ -30,7 +56,7 @@ export function createPageList(app: App, openHelp: () => void, openTimecode: () 
     h(
       'div',
       { class: 'panel-title' },
-      h('span', {}, 'PAGES'),
+      h('div', { class: 'panel-heading' }, h('span', {}, 'PAGES'), tabs),
       h(
         'div',
         { class: 'panel-actions' },
@@ -45,6 +71,7 @@ export function createPageList(app: App, openHelp: () => void, openTimecode: () 
     h('div', { class: 'panel-footer' }, h('button', { class: 'small', title: 'Help (?)', onclick: openHelp }, '? Help')),
   );
   let renderedPages: Page[] | null = null;
+  let renderedKind: PageKind | null = null;
   let justDragged = false;
   let dirty = false;
 
@@ -60,7 +87,8 @@ export function createPageList(app: App, openHelp: () => void, openTimecode: () 
       { class: 'page-row', onclick: () => !justDragged && app.selectPage(page.id) },
       h('span', { class: 'num' }, String(index + 1)),
       name,
-      endActionButton(page),
+      // MTC In pages end where the DAW goes: they have no end action.
+      page.followMtc ? null : endActionButton(page),
     );
     el.addEventListener('dblclick', () => name.dispatchEvent(new MouseEvent('dblclick')));
     makeDraggable(el, page.id);
@@ -69,7 +97,7 @@ export function createPageList(app: App, openHelp: () => void, openTimecode: () 
 
   /** Moves the highlight without rebuilding, so a double click lands on the same element. */
   function updateCurrent(): void {
-    const pages = app.project.pages;
+    const pages = pagesOfKind(app.project, kind);
     list.querySelectorAll('.page-row').forEach((el, i) => el.classList.toggle('current', pages[i].id === app.page.id));
     // The page playing goes to the top, with the pages to come below it.
     if (autoScroll.isOn() && scrolledTo !== app.page.id) {
@@ -79,7 +107,11 @@ export function createPageList(app: App, openHelp: () => void, openTimecode: () 
     // Show mode locks editing; its buttons are shown as unavailable.
     const show = app.showMode;
     addButton.disabled = loopButton.disabled = show;
-    removeButton.disabled = show || pages.length === 1;
+    removeButton.disabled = show || app.project.pages.length === 1 || pageKind(app.page) !== kind;
+    // Looping the pages is for the Play list; the DAW runs the MTC In pages.
+    loopButton.hidden = kind === 'mtc';
+    addButton.title = kind === 'mtc' ? 'Add an MTC In page' : 'Add page';
+    for (const b of tabs.querySelectorAll<HTMLElement>('button')) b.classList.toggle('active', b.dataset.kind === kind);
     list.querySelectorAll<HTMLButtonElement>('.end-action:not(.mtc)').forEach((b) => (b.disabled = show));
     const looping = app.project.settings.loopPages;
     loopButton.classList.toggle('active', looping);
@@ -88,25 +120,6 @@ export function createPageList(app: App, openHelp: () => void, openTimecode: () 
 
   /** Cycles Stop → Next → Next ▶ for what happens at the end of the page. */
   function endActionButton(page: Page): HTMLButtonElement {
-    // A page following a DAW ends where the DAW goes; its own setting is kept for when it sends MTC again.
-    if (followsMtc(page)) {
-      return h(
-        'button',
-        {
-          class: 'end-action mtc',
-          title: 'This page follows MTC from a DAW, so it has no end action. Click to open its Timecode setting.',
-          onclick: (e: Event) => {
-            e.stopPropagation();
-            // Settings shows the page it was opened from.
-            app.selectPage(page.id);
-            openTimecode();
-          },
-          ondblclick: (e: Event) => e.stopPropagation(),
-          onpointerdown: (e: Event) => e.stopPropagation(),
-        },
-        'MTC',
-      );
-    }
     const index = END_ACTIONS.findIndex((a) => a.action === page.endAction);
     const current = END_ACTIONS[index];
     return h(
@@ -182,7 +195,9 @@ export function createPageList(app: App, openHelp: () => void, openTimecode: () 
   function render(): void {
     dirty = false;
     renderedPages = app.project.pages;
-    list.replaceChildren(...renderedPages.map(row), dropLine);
+    renderedKind = kind;
+    const pages = pagesOfKind(app.project, kind);
+    list.replaceChildren(...pages.map(row), dropLine, ...(pages.length ? [] : [empty]));
     updateCurrent();
   }
 
@@ -192,7 +207,16 @@ export function createPageList(app: App, openHelp: () => void, openTimecode: () 
       dirty = true;
       return;
     }
-    if (app.project.pages === renderedPages) updateCurrent();
+    // Opening a page of the other list (GO, a delete, Undo) shows that list.
+    if (app.page.id !== shownPageId) {
+      shownPageId = app.page.id;
+      lastPage[pageKind(app.page)] = app.page.id;
+      if (pageKind(app.page) !== kind) {
+        kind = pageKind(app.page);
+        return render();
+      }
+    }
+    if (app.project.pages === renderedPages && kind === renderedKind) updateCurrent();
     else render();
   }
 

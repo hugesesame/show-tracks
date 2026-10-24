@@ -1,6 +1,6 @@
 import type { App } from '../app/app';
 import { formatTimecode, secondsToTimecode } from '../engine/timecode';
-import { nextPage } from '../model/project';
+import { nextPage, pageKind, pagesOfKind } from '../model/project';
 import { h } from './dom';
 import { formatClock, formatCountdown } from './format';
 import { toggleFullscreen } from './fullscreen';
@@ -62,9 +62,10 @@ export function createHeader(app: App) {
     standbyName.textContent = standbyText();
     go.disabled = app.cue.standby.kind === 'none';
 
-    const pages = app.project.pages;
-    const index = pages.findIndex((p) => p.id === app.page.id);
-    pageNumber.textContent = `PAGE ${index + 1}`;
+    // Numbered within its list, as in PAGES.
+    const mtcIn = pageKind(app.page) === 'mtc';
+    const index = pagesOfKind(app.project, pageKind(app.page)).indexOf(app.page);
+    pageNumber.textContent = `${mtcIn ? 'MTC IN · ' : ''}PAGE ${index + 1}`;
     pageName.textContent = app.page.name;
 
     showMtc();

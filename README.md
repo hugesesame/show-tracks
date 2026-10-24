@@ -27,7 +27,7 @@
 - **Text on screen at each cue**: lyrics in time with the music, prompts for performers, or text over the video for a karaoke-style picture. Choose the size, color, outline, position and a dissolve between lines.
 - **MIDI Note at each cue**, to control lights or other gear. Turn it on or off per cue or for a whole page.
 - **MTC** follows the playback time, with an offset per page.
-- **Follow a DAW**: a page without audio is a blank track to put cues on. Set it to follow MTC, and it plays, stops and locates with the DAW, sending its memos and MIDI Notes on time.
+- **Follow a DAW**: PAGES has two lists, Play and MTC In. An MTC In page is a blank track to put cues on; it plays, stops and locates with the MTC from a DAW, sending its memos and MIDI Notes on time while the DAW plays the sound.
 - **MIDI remote**: run GO, Play / Stop, Fade out and Previous / Next cue from a foot switch, pad or desk. Press Learn, then the key.
 - **Video output window** for a second display, with the text over the video.
 - **Prompter window** with the text alone, for the performers' monitor. Turn the text off on the video output, and the audience sees the video while the performers read the lyrics or prompts. The main screen frames the picture the same way, so what you see is what the audience sees.

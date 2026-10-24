@@ -266,6 +266,38 @@ describe('nextPage', () => {
   });
 });
 
+describe('the Play and MTC In lists', () => {
+  // Play: a, c, e. MTC In: b, d — mixed in the stored order.
+  const mixed = () => {
+    const mtc = (name: string, id: string) => ({ ...createPage(name, id), followMtc: true });
+    let project = createProject(createPage('A', 'a'));
+    for (const page of [mtc('B', 'b'), createPage('C', 'c'), mtc('D', 'd'), createPage('E', 'e')]) project = addPage(project, page);
+    return project;
+  };
+
+  it('goes on to the next page of the same list, looping only the Play list', async () => {
+    const { nextPage } = await import('../src/model/project');
+    const looping = updateSettings(mixed(), { loopPages: true });
+    expect(nextPage(mixed(), 'a')?.id).toBe('c');
+    expect(nextPage(mixed(), 'b')?.id).toBe('d');
+    expect(nextPage(looping, 'e')?.id).toBe('a');
+    expect(nextPage(looping, 'd')).toBeNull();
+  });
+
+  it('moves a page within its own list', () => {
+    const ids = (project: ReturnType<typeof mixed>) => project.pages.map((p) => p.id).join('');
+    expect(ids(movePage(mixed(), 'e', 0))).toBe('eabcd');
+    expect(ids(movePage(mixed(), 'b', 1))).toBe('acdbe');
+    expect(ids(movePage(mixed(), 'a', 2))).toBe('bcdea');
+  });
+
+  it('selects a page of the same list after a delete, or the other list when it was the last', () => {
+    expect(removePage(setCurrentPage(mixed(), 'b'), 'b').currentPageId).toBe('d');
+    const onlyMtc = removePage(setCurrentPage(removePage(mixed(), 'b'), 'd'), 'd');
+    expect(onlyMtc.currentPageId).toBe('a');
+  });
+});
+
 describe('keepLive', () => {
   it('goes back to the earlier state but keeps the mixer, the MIDI output and the page on screen', () => {
     const before = addPage(createProject(createPage('A', 'a')), createPage('B', 'b'));

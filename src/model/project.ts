@@ -100,16 +100,30 @@ export function followsMtc(page: Page): boolean {
   return page.followMtc && page.audioMediaId === null;
 }
 
+/**
+ * PAGES keeps two lists: Play pages play their own media; MTC In pages follow a DAW.
+ * Running order, Next and moving pages stay within a list.
+ */
+export type PageKind = 'play' | 'mtc';
+
+export const pageKind = (page: Page): PageKind => (page.followMtc ? 'mtc' : 'play');
+
+export function pagesOfKind(project: Project, kind: PageKind): Page[] {
+  return project.pages.filter((p) => pageKind(p) === kind);
+}
+
 export function currentPage(project: Project): Page {
   return project.pages.find((p) => p.id === project.currentPageId) ?? project.pages[0];
 }
 
-/** The page after `pageId`; after the last page, the first one when looping pages. */
+/** The page after `pageId` in its list; after the last Play page, the first one when looping pages. */
 export function nextPage(project: Project, pageId: string): Page | null {
-  const index = project.pages.findIndex((p) => p.id === pageId);
-  if (index < 0) return null;
-  if (index < project.pages.length - 1) return project.pages[index + 1];
-  return project.settings.loopPages ? project.pages[0] : null;
+  const page = project.pages.find((p) => p.id === pageId);
+  if (!page) return null;
+  const pages = pagesOfKind(project, pageKind(page));
+  const index = pages.indexOf(page);
+  if (index < pages.length - 1) return pages[index + 1];
+  return project.settings.loopPages && pageKind(page) === 'play' ? pages[0] : null;
 }
 
 export function setCurrentPage(project: Project, pageId: string): Project {
@@ -122,13 +136,21 @@ export function addPage(project: Project, page: Page): Project {
   return { ...project, pages: [...project.pages, page], currentPageId: page.id };
 }
 
-/** Removes the page, selecting the next one (or the previous if it was last). The last page cannot be removed. */
+/**
+ * Removes the page, selecting the next one in its list (or the previous if it was last),
+ * or a page of the other list when it was the last of its own. The last page cannot be removed.
+ */
 export function removePage(project: Project, pageId: string): Project {
-  const index = project.pages.findIndex((p) => p.id === pageId);
-  if (index < 0 || project.pages.length === 1) return project;
+  const page = project.pages.find((p) => p.id === pageId);
+  if (!page || project.pages.length === 1) return project;
+  const kind = pageKind(page);
+  const index = pagesOfKind(project, kind).indexOf(page);
   const pages = project.pages.filter((p) => p.id !== pageId);
+  const rest = pages.filter((p) => pageKind(p) === kind);
   const currentPageId =
-    project.currentPageId === pageId ? pages[Math.min(index, pages.length - 1)].id : project.currentPageId;
+    project.currentPageId !== pageId
+      ? project.currentPageId
+      : (rest[Math.min(index, rest.length - 1)] ?? pages[0]).id;
   return { ...project, pages, currentPageId };
 }
 
@@ -145,11 +167,16 @@ export function renamePage(project: Project, pageId: string, name: string): Proj
   return updatePage(project, pageId, { name });
 }
 
+/** Moves a page to `toIndex` in its own list (counted without it). */
 export function movePage(project: Project, pageId: string, toIndex: number): Project {
   const page = project.pages.find((p) => p.id === pageId);
   if (!page) return project;
   const pages = project.pages.filter((p) => p.id !== pageId);
-  pages.splice(Math.min(Math.max(toIndex, 0), pages.length), 0, page);
+  const list = pages.filter((p) => pageKind(p) === pageKind(page));
+  const index = Math.min(Math.max(toIndex, 0), list.length);
+  // Before the page it lands on, or after the last of its list.
+  const at = index < list.length ? pages.indexOf(list[index]) : list.length ? pages.indexOf(list[list.length - 1]) + 1 : pages.length;
+  pages.splice(at, 0, page);
   return { ...project, pages };
 }
 

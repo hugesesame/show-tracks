@@ -78,7 +78,10 @@ export function createFooter(app: App, files: FileMenu) {
     play.textContent = playing ? '■' : '▶';
     play.classList.toggle('playing', playing);
     loop.classList.toggle('active', app.transport.loop);
-    loop.title = app.transport.loop ? 'Loop: on' : 'Loop: off';
+    loop.disabled = app.page.followMtc;
+    loop.title = app.page.followMtc
+      ? 'MTC In pages follow the DAW: set looping in the DAW'
+      : app.transport.loop ? 'Loop: on' : 'Loop: off';
     const unsaved = files.unsaved;
     fileName.textContent = `${files.fileName ?? 'Untitled'}${unsaved ? ' ●' : ''}`;
     fileName.title = unsaved ? 'Not saved to a file' : 'Saved';

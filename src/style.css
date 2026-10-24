@@ -622,8 +622,11 @@ button.active {
   border-color: var(--accent);
 }
 
-.end-action.mtc {
-  border-style: dashed;
+.page-list-empty {
+  padding: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .page-row .num {
