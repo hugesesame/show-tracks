@@ -1274,6 +1274,12 @@ button.active {
   text-transform: uppercase;
 }
 
+.app-version {
+  margin-left: -8px;
+  color: var(--muted);
+  font: 11px var(--mono);
+}
+
 /* ---- settings ---- */
 
 dialog {

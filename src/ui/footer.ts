@@ -1,5 +1,5 @@
 import type { App } from '../app/app';
-import { APP_NAME } from '../config';
+import { APP_NAME, APP_VERSION } from '../config';
 import { h } from './dom';
 import { fileButtons, type FileMenu } from './fileMenu';
 
@@ -59,7 +59,7 @@ export function createFooter(app: App, files: FileMenu) {
       h('button', { title: 'Next marker (→)', onclick: () => app.nextMarker() }, '▶|'),
       loop,
     ),
-    h('div', { class: 'footer-right' }, offline, h('div', { class: 'app-name' }, APP_NAME), clock),
+    h('div', { class: 'footer-right' }, offline, h('div', { class: 'app-name' }, APP_NAME), h('div', { class: 'app-version' }, `v${APP_VERSION}`), clock),
   );
 
   // The computer's time of day, for keeping to a running order.
