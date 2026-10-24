@@ -832,12 +832,6 @@ button.active {
   color: var(--muted);
 }
 
-.video-memo-toggle {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-}
-
 .monitor-tabs {
   position: absolute;
   top: 8px;

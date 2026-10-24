@@ -1,7 +1,7 @@
 import './style.css';
 import { App } from './app/app';
 import { createProject } from './model/project';
-import type { RemoteAction } from './model/types';
+import type { RemoteAction, Settings } from './model/types';
 import { enableOffline } from './offline';
 import { loadProject, openDb, requestPersistentStorage, saveProject, takeStashed } from './storage/db';
 import { createCueList, setEditGuard } from './ui/cueList';
@@ -123,7 +123,7 @@ async function main(): Promise<void> {
     const memo = app.memoAt(time);
     const { settings } = app.project;
     if (monitor.view() === 'memo') memoView.render(memo);
-    if (monitor.view() === 'video' && monitor.memoOnVideo()) monitor.videoMemo.render(memo, settings);
+    monitor.renderVideoMemo(memo, settings);
     app.output.renderMemo(settings.memoOutput ? memo : null, settings);
     // The prompter always shows the memos; Output only decides the video output.
     app.prompter.renderMemo(memo, settings);
@@ -141,7 +141,6 @@ async function main(): Promise<void> {
 }
 
 const MONITOR_VIEW_KEY = 'cue-player-monitor-view';
-const VIDEO_MEMO_KEY = 'cue-player-video-memo';
 
 /** The video monitor, or the mixer or the memo in its place; the choice is remembered in this browser. */
 function createMonitor(
@@ -161,34 +160,10 @@ function createMonitor(
     h('button', { type: 'button', class: 'small', 'data-view': name, onclick: () => show(name, true) }, label);
   const tabs = h('div', { class: 'monitor-tabs' }, tab('video', 'Video'), tab('memo', 'Memo'), tab('mixer', 'Mixer'));
   // The video element keeps playing under the others: it is also the Video track's sound.
-  // "+ Memo" lays the memos over the video, as on the video output.
+  // The Video view shows what the video output shows: the memos too while "Memo on video output" is on.
   const videoMemo = createMemoStage();
-  let memoOnVideo = false;
-  try {
-    memoOnVideo = localStorage.getItem(VIDEO_MEMO_KEY) === 'on';
-  } catch {
-    // Starting without the memo is fine.
-  }
-  const memoToggle = h(
-    'button',
-    {
-      type: 'button',
-      class: 'small video-memo-toggle',
-      title: 'Show the memos over the video',
-      onclick: () => {
-        memoOnVideo = !memoOnVideo;
-        try {
-          localStorage.setItem(VIDEO_MEMO_KEY, memoOnVideo ? 'on' : 'off');
-        } catch {
-          // Not remembering it is fine.
-        }
-        show(view);
-      },
-    },
-    '+ Memo',
-  );
   const screen = h('div', { class: 'screen' }, video, empty, videoMemo.element);
-  const element = h('section', { class: 'monitor' }, screen, mixer, memo, memoToggle, tabs);
+  const element = h('section', { class: 'monitor' }, screen, mixer, memo, tabs);
 
   function show(name: string, switched = false): void {
     view = name;
@@ -199,9 +174,6 @@ function createMonitor(
     }
     mixer.hidden = name !== 'mixer';
     memo.hidden = name !== 'memo';
-    memoToggle.hidden = name !== 'video';
-    memoToggle.classList.toggle('active', memoOnVideo);
-    videoMemo.element.hidden = name !== 'video' || !memoOnVideo;
     for (const b of tabs.querySelectorAll<HTMLElement>('button')) b.classList.toggle('active', b.dataset.view === name);
     // The mixer may need a wider monitor.
     if (switched) onSwitch();
@@ -210,10 +182,10 @@ function createMonitor(
 
   /**
    * The narrowest the monitor may get: the mixer's strips side by side (also for
-   * the memo), or for the video just "+ Memo" and the view buttons with 8px margins.
+   * the memo), or for the video just the view buttons with 8px margins.
    */
   function minWidth(): number {
-    if (view === 'video') return memoToggle.offsetWidth + tabs.offsetWidth + 24;
+    if (view === 'video') return tabs.offsetWidth + 16;
     // Under the memo the mixer is hidden; lay it out unseen just to measure it.
     const measuring = mixer.hidden;
     if (measuring) {
@@ -244,7 +216,13 @@ function createMonitor(
     element.style.setProperty('--screen-aspect', String(value));
   }
 
-  return { element, minWidth, setAspect, view: () => view, videoMemo, memoOnVideo: () => memoOnVideo };
+  /** Call every frame: the Video view mirrors the video output, memos included or not. */
+  function renderVideoMemo(memo: string, settings: Settings): void {
+    videoMemo.element.hidden = !settings.memoOutput;
+    if (view === 'video' && settings.memoOutput) videoMemo.render(memo, settings);
+  }
+
+  return { element, minWidth, setAspect, view: () => view, renderVideoMemo };
 }
 
 main().catch((error) => {

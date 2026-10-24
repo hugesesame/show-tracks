@@ -95,7 +95,7 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'Monitor',
         rows: [
-          ['Video', 'The video; + Memo lays the memos over it'],
+          ['Video', 'What the video output shows: the video, with the memos while Memo on video output is On'],
           ['Memo', 'The memo of the last cue passed (lyrics, prompts); ⚙ shows the settings'],
           ['Mixer', 'Audio, Video and Master faders with pan and mute; double-click resets'],
           ['Video (Memo on video output)', 'On: the memos also show over the video on the video output. Off: the video alone'],
@@ -218,7 +218,7 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'モニター',
         rows: [
-          ['Video', '映像。+ Memo で映像の上にメモを重ねる'],
+          ['Video', '映像出力と同じ画面。Memo on video output が On なら、映像の上にメモも出る'],
           ['Memo', '最後に通過した Cue のメモ（歌詞、カンペ）。⚙ で設定を表示'],
           ['Mixer', 'Audio、Video、Master のフェーダー、Pan、ミュート。ダブルクリックで元に戻る'],
           ['Video（Memo on video output）', 'On: 映像出力でも映像の上にメモを出す。Off: 映像だけ'],
