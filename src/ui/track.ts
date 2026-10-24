@@ -77,6 +77,9 @@ export function createTrack(app: App) {
   let zoom = 1;
   let viewStart = 0;
   let lastTime = 0;
+  /** The page and media last shown; when they change, the view is fitted once there is something to show. */
+  let shownKey = '';
+  let fitPending = false;
 
   /** Seconds covered at zoom 1. */
   const viewDuration = () =>
@@ -217,6 +220,17 @@ export function createTrack(app: App) {
 
   function draw(time: number): void {
     if (element.clientWidth !== width || element.clientHeight !== height) resize();
+    // A page opens fitted, as with Fit. Moving a clip changes the length but keeps the view.
+    const { id, audioMediaId, videoMediaId } = app.page;
+    const key = `${id}|${audioMediaId}|${videoMediaId}`;
+    if (key !== shownKey) {
+      shownKey = key;
+      fitPending = true;
+    }
+    if (fitPending && app.duration > 0 && width > 0) {
+      fitPending = false;
+      zoomFit();
+    }
     clampView();
     headers.audio.tick();
     headers.video.tick();
