@@ -108,19 +108,19 @@ const HELP: Record<Lang, Text> = {
         points: [
           'Settings: choose the MIDI output, the MTC frame rate and each page’s MTC offset.',
           'MIDI Note: channel, note and velocity used by cues without their own note.',
-          'Following a DAW: switch PAGES to MTC In and press + for a page that follows the MTC from a DAW, which plays the sound. Without audio, a page is a blank track (its Length is in Settings, 5 minutes to start with): put cues on it with M, and choose the MTC input in Settings. The page plays, stops and locates with the DAW, from its MTC offset as its start; MTC IN lights red at the top while MTC comes in (MTC OUT, green, is sending). MTC In pages send no MTC, and have no end action, page loop, loop or overlap: the DAW decides what plays. Running order and Next stay within each list.',
+          'Following a DAW: switch PAGES to MTC In and press + for a page that follows the MTC from a DAW, which plays the sound. Without audio, a page is a blank track (its Length is in Settings, 5 minutes to start with): put cues on it with M, and choose the MTC Input in Settings. The page plays, stops and locates with the DAW, from its MTC offset as its start; MTC IN lights red at the top while MTC comes in (MTC OUT, green, is sending). MTC In pages send no MTC, and have no end action, page loop, loop or overlap: the DAW decides what plays. Running order and Next stay within each list.',
           'On a Mac, the IAC Driver (Audio MIDI Setup) sends MIDI to other apps.',
-          'MIDI remote (Settings): choose a MIDI input, then Learn a key, pad or pedal for GO, Play / Stop, Fade out, Previous cue and Next cue. Notes and CCs both work, also in show mode. Use a different port from the MIDI output.',
-          'Audio output (Settings): the device all of the app’s sound plays through, such as an audio interface. It is remembered on this computer; Show names lets Chrome name the devices.',
+          'MIDI Remote (Settings): choose a MIDI input, then Learn a key, pad or pedal for GO, Play / Stop, Fade Out, Previous Cue and Next Cue. Notes and CCs both work, also in show mode. Use a different port from the MIDI output.',
+          'Audio Output (Settings): the device all of the app’s sound plays through, such as an audio interface. It is remembered on this computer; Show Names lets Chrome name the devices.',
         ],
       },
       {
         title: 'Files',
         points: [
-          'Save is in the footer; New, Import, Export, Save, Backup, Restore and Find media are in Settings.',
+          'Save is in the footer; New, Import, Export, Save, Backup, Restore and Find Media are in Settings.',
           'Project files (Save / Export) do not include audio or video.',
           'Backup writes a folder with the project and all its media; Restore opens it complete, also on another computer.',
-          'Find media: after Import, choose a folder of the original files and missing media are filled in by file name.',
+          'Find Media: after Import, choose a folder of the original files and missing media are filled in by file name.',
         ],
       },
       {
@@ -232,19 +232,19 @@ const HELP: Record<Lang, Text> = {
         points: [
           '設定で、MIDI の出力先、MTC のフレームレート、ページごとの MTC オフセットを選びます。',
           'MIDI Note: 自分の番号を持たない Cue が使うチャンネル、ノート、ベロシティ。',
-          'DAW に合わせる: PAGES を MTC In に切り替えて + を押すと、DAW の MTC に合わせて動くページを作れます。音は DAW が出します。音声のないページは空のトラックになります（長さは設定の Length で、最初は 5 分）。M で Cue を打ち、設定で MTC input を選びます。ページは DAW に合わせて再生・停止・移動し、MTC オフセットの時間がページの頭になります。MTC が届いている間は、上に MTC IN が赤く点きます（緑の MTC OUT は送信中）。MTC In のページは MTC を送らず、終わりの動作、ページのループ、ループ、オーバーラップもありません。何を流すかは DAW が決めます。曲順と Next は、それぞれの一覧の中で進みます。',
+          'DAW に合わせる: PAGES を MTC In に切り替えて + を押すと、DAW の MTC に合わせて動くページを作れます。音は DAW が出します。音声のないページは空のトラックになります（長さは設定の Length で、最初は 5 分）。M で Cue を打ち、設定で MTC Input を選びます。ページは DAW に合わせて再生・停止・移動し、MTC オフセットの時間がページの頭になります。MTC が届いている間は、上に MTC IN が赤く点きます（緑の MTC OUT は送信中）。MTC In のページは MTC を送らず、終わりの動作、ページのループ、ループ、オーバーラップもありません。何を流すかは DAW が決めます。曲順と Next は、それぞれの一覧の中で進みます。',
           'Mac では IAC ドライバ（Audio MIDI 設定）で、ほかのアプリに MIDI を送れます。',
-          'MIDI remote（設定）: MIDI の入力を選び、Learn で GO、Play / Stop、Fade out、Previous cue、Next cue にキー・パッド・ペダルを割り当てます。Note でも CC でも使え、ショーモード中も効きます。MIDI の出力とは別のポートを使ってください。',
-          'Audio output（設定）: アプリの音をすべて出す機材（オーディオインターフェースなど）。この PC に覚えます。Show names を押すと、Chrome が機材の名前を表示します。',
+          'MIDI Remote（設定）: MIDI の入力を選び、Learn で GO、Play / Stop、Fade Out、Previous Cue、Next Cue にキー・パッド・ペダルを割り当てます。Note でも CC でも使え、ショーモード中も効きます。MIDI の出力とは別のポートを使ってください。',
+          'Audio Output（設定）: アプリの音をすべて出す機材（オーディオインターフェースなど）。この PC に覚えます。Show Names を押すと、Chrome が機材の名前を表示します。',
         ],
       },
       {
         title: 'ファイル',
         points: [
-          'フッターには Save だけがあります。New、Import、Export、Save、Backup、Restore、Find media は設定にあります。',
+          'フッターには Save だけがあります。New、Import、Export、Save、Backup、Restore、Find Media は設定にあります。',
           'プロジェクトファイル（Save / Export）に音声や映像は入りません。',
           'Backup は、プロジェクトとすべてのメディアをフォルダに書き出します。Restore で、別の PC でもそのまま開けます。',
-          'Find media: Import のあと、元のファイルがあるフォルダを選ぶと、見つからないメディアをファイル名で探して割り当てます。',
+          'Find Media: Import のあと、元のファイルがあるフォルダを選ぶと、見つからないメディアをファイル名で探して割り当てます。',
         ],
       },
       {

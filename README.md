@@ -60,8 +60,8 @@ The browser asks for permission the first time. Choose **Allow**. If you blocked
 | The app opens | To control MIDI devices | To send MTC and MIDI Notes, and to listen to the MIDI remote and MTC from a DAW |
 | You press **Open Video Output** | To allow pop-ups (only if the window was blocked) | To open the output window |
 | You press **Save** the first time | Where to save the file | To write the project file |
-| You press **Show names** next to Audio output | To use the microphone | Chrome names output devices only then. Nothing is recorded |
-| You press **Backup**, **Restore** or **Find media** | Which folder, and to let the site see (or edit) its files | To write or read the backup and the media |
+| You press **Show Names** next to Audio Output | To use the microphone | Chrome names output devices only then. Nothing is recorded |
+| You press **Backup**, **Restore** or **Find Media** | Which folder, and to let the site see (or edit) its files | To write or read the backup and the media |
 
 On a Mac, the **IAC Driver** in Audio MIDI Setup sends MIDI to other apps on the same computer.
 
@@ -73,7 +73,7 @@ On a Mac, the **IAC Driver** in Audio MIDI Setup sends MIDI to other apps on the
 - If the app is open in more than one tab, a yellow warning appears. The tabs overwrite each other's edits, so close all but one.
 - **Save** (`⌘S`) writes the project to a file wherever you choose. **The project file does not include audio or video.**
 - **Backup** (in **Settings**) writes a folder with the project and all its audio and video. Copy that folder to move a show to another computer, and open it there with **Restore**. Make one before every show.
-- **Find media** (in **Settings**): if you only have the project file, choose a folder with the original audio and video files, and the missing media are found by file name.
+- **Find Media** (in **Settings**): if you only have the project file, choose a folder with the original audio and video files, and the missing media are found by file name.
 
 ## Without an internet connection
 

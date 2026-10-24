@@ -92,7 +92,7 @@ export function createHeader(app: App) {
       className = `mtc ${state === 'running' ? 'in' : 'off'}`;
       text = state === 'running' ? 'MTC IN' : 'MTC IN ■';
       title = !state
-        ? 'This page follows MTC from a DAW: choose the MTC input in Settings.'
+        ? 'This page follows MTC from a DAW: choose the MTC Input in Settings.'
         : state === 'running'
           ? 'Following the MTC coming in from the DAW.'
           : 'This page follows MTC from a DAW; none is coming in now.';

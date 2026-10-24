@@ -12,9 +12,9 @@ const FPS_LABELS: Record<Fps, string> = { '24': '24', '25': '25', '29.97df': '29
 const REMOTE_ACTIONS: { action: RemoteAction; label: string }[] = [
   { action: 'go', label: 'GO' },
   { action: 'playStop', label: 'Play / Stop' },
-  { action: 'fadeOut', label: 'Fade out' },
-  { action: 'previousCue', label: 'Previous cue' },
-  { action: 'nextCue', label: 'Next cue' },
+  { action: 'fadeOut', label: 'Fade Out' },
+  { action: 'previousCue', label: 'Previous Cue' },
+  { action: 'nextCue', label: 'Next Cue' },
 ];
 
 const formatBytes = (bytes: number) =>
@@ -104,7 +104,7 @@ export function createSettings(app: App, files: FileMenu) {
     const showNames = h(
       'button',
       { type: 'button', class: 'small', onclick: () => void out.showNames().then(render) },
-      'Show names',
+      'Show Names',
     );
     showNames.hidden = out.namesShown;
     const outputHint = !out.supported
@@ -113,7 +113,7 @@ export function createSettings(app: App, files: FileMenu) {
         ? 'The chosen device is not connected: the system default plays, and the sound goes back to the device when it is connected.'
         : out.namesShown
           ? 'All of the app’s sound plays through this device. It is remembered on this computer.'
-          : 'Chrome shows device names once the microphone is allowed. Show names asks once; nothing is recorded.';
+          : 'Chrome shows device names once the microphone is allowed. Show Names asks once; nothing is recorded.';
 
     // The MIDI remote: an input, and the note or CC each control answers to.
     const inputSelect = h(
@@ -213,13 +213,13 @@ export function createSettings(app: App, files: FileMenu) {
         { class: 'settings', method: 'dialog' },
         h('h2', {}, 'Settings'),
         h('h3', {}, 'MTC'),
-        row('MIDI output', midiSelect),
+        row('MIDI Output', midiSelect),
         midiHint ? h('div', { class: 'hint' }, midiHint) : null,
-        row('Frame rate', fpsSelect),
-        row('MTC input', mtcInputSelect),
+        row('Frame Rate', fpsSelect),
+        row('MTC Input', mtcInputSelect),
         h('div', { class: 'hint' }, mtcInputHint),
-        h('h3', {}, 'MIDI remote'),
-        row('MIDI input', inputSelect),
+        h('h3', {}, 'MIDI Remote'),
+        row('MIDI Input', inputSelect),
         ...remoteRows,
         h(
           'div',
@@ -234,13 +234,13 @@ export function createSettings(app: App, files: FileMenu) {
         row('Velocity', numberField(settings.noteVelocity, 1, 127, (n) => app.setNoteDefaults({ noteVelocity: n }))),
         h('div', { class: 'hint' }, 'Sent to the MIDI output above when playback reaches a cue with MIDI on. Cues can have their own note in the Cue List.'),
         h('h3', {}, 'Playback'),
-        row('Audio output', outputSelect, ' ', showNames),
+        row('Audio Output', outputSelect, ' ', showNames),
         h('div', { class: 'hint' }, outputHint),
-        row('Fade out (Esc)', fadeOut, ' seconds'),
+        row('Fade Out (Esc)', fadeOut, ' seconds'),
         h('div', { class: 'hint' }, 'Esc fades everything out over this time, then stops. Press Esc again to stop at once.'),
-        h('h3', {}, `This page (${page.name})`),
-        row('Page name', pageName),
-        row('MTC offset', offset),
+        h('h3', {}, `This Page (${page.name})`),
+        row('Page Name', pageName),
+        row('MTC Offset', offset),
         h('div', { class: 'hint' }, offsetHint),
         hasMedia ? null : row('Length', blankLength),
         hasMedia ? null : h('div', { class: 'hint' }, 'Without audio or video, the page is a blank track this long, to put cues on.'),
@@ -253,11 +253,11 @@ export function createSettings(app: App, files: FileMenu) {
             { class: 'file-buttons' },
             backupButton('Backup', 'Save the project and all its media into a folder', files.backup),
             backupButton('Restore', 'Open a backup folder: the project and its media together', files.restore),
-            backupButton('Find media', 'Look in a folder for missing media, by file name', files.findMedia),
+            backupButton('Find Media', 'Look in a folder for missing media, by file name', files.findMedia),
           ),
         ),
         status,
-        h('div', { class: 'hint' }, 'Save and Export write the project without its audio and video. Backup writes a folder with the project and its media, so Restore opens the show complete on another computer. Find media fills in missing media from a folder of the original files.'),
+        h('div', { class: 'hint' }, 'Save and Export write the project without its audio and video. Backup writes a folder with the project and its media, so Restore opens the show complete on another computer. Find Media fills in missing media from a folder of the original files.'),
         row('Storage', usage),
         h('div', { class: 'actions' }, h('button', { value: 'close' }, 'Close')),
       ),
