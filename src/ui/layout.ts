@@ -2,7 +2,9 @@ const STORAGE_KEY = 'cue-player-layout';
 
 type Sizes = { trackHeight: number; pagesWidth: number; monitorWidth: number };
 
-const DEFAULTS: Sizes = { trackHeight: 260, pagesWidth: 220, monitorWidth: 360 };
+/** PAGES starts as wide as the monitor, which fits the mixer's strips. */
+const PANEL_WIDTH = 360;
+const DEFAULTS: Sizes = { trackHeight: 260, pagesWidth: PANEL_WIDTH, monitorWidth: PANEL_WIDTH };
 const MIN = { track: 120, lower: 140, pages: 120, cues: 240, monitor: 160 };
 
 function load(): Sizes {

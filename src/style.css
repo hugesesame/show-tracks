@@ -228,7 +228,7 @@ button:focus-visible {
 .main {
   display: grid;
   grid-template-rows: var(--track-h, 260px) 5px minmax(0, 1fr);
-  grid-template-columns: var(--pages-w, 220px) 5px minmax(0, 1fr) 5px var(--monitor-w, 360px);
+  grid-template-columns: var(--pages-w, 360px) 5px minmax(0, 1fr) 5px var(--monitor-w, 360px);
   min-height: 0;
   min-width: 0;
 }
