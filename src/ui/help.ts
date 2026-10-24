@@ -52,7 +52,7 @@ const HELP: Record<Lang, Text> = {
         title: 'Track',
         rows: [
           ['Click / drag', 'Move the playhead'],
-          ['Drag a cue', 'Move the cue'],
+          ['Drag a cue', 'Move the cue: grab its name flag or its line'],
           ['Drag a clip', 'Move the audio or video on the page (cues move with the audio)'],
           ['Orange flags', 'In / out points: only this part plays. Drag them; ⌥-click clears'],
           ['Purple flag', 'Overlap mark: the next page starts here while this page’s audio rings out to its out point'],
@@ -157,7 +157,7 @@ const HELP: Record<Lang, Text> = {
         title: 'トラック',
         rows: [
           ['クリック / ドラッグ', '再生位置を動かす'],
-          ['Cue をドラッグ', 'Cue を動かす'],
+          ['Cue をドラッグ', 'Cue を動かす。名前の旗か縦の線をつかむ'],
           ['クリップをドラッグ', '音声や映像の位置を動かす（Cue は音声と一緒に動く）'],
           ['オレンジの旗', 'イン点 / アウト点。この間だけ再生する。ドラッグで移動、⌥ クリックで解除'],
           ['紫の旗', 'オーバーラップ。ここで次のページが始まり、このページの音はアウト点まで鳴り残る'],

@@ -340,7 +340,15 @@ export function createTrack(app: App) {
     ctx.globalAlpha = 1;
   }
 
-  function markerAt(x: number): string | null {
+  /** A cue under the pointer: its name flag in the marker strip, or near its line anywhere. */
+  function markerAt(x: number, y: number): string | null {
+    if (y <= LABEL_HEIGHT) {
+      // Later flags are drawn over earlier ones, so look from the last.
+      for (const marker of [...app.page.markers].reverse()) {
+        const left = timeToX(marker.time);
+        if (x >= left && x <= left + ctx.measureText(marker.name).width + 8) return marker.id;
+      }
+    }
     let best: string | null = null;
     let bestDistance = MARKER_HIT_PX;
     for (const marker of app.page.markers) {
@@ -381,7 +389,7 @@ export function createTrack(app: App) {
   function hit(x: number, y: number): { range: RangePoint } | { marker: string } | { clip: Kind } | null {
     const range = rangeAt(x, y);
     if (range) return { range };
-    const marker = markerAt(x);
+    const marker = markerAt(x, y);
     if (marker) return { marker };
     const kind = clipAt(x, y);
     return kind ? { clip: kind } : null;
@@ -416,7 +424,10 @@ export function createTrack(app: App) {
       }
     } else if (target && 'marker' in target) {
       app.selectCue(target.marker);
-      move = (ev) => app.setMarkerTime(target.marker, Math.min(xToTime(xOf(ev)), app.duration));
+      // Moves by the distance dragged, so grabbing the flag away from the line does not make it jump.
+      const startTime = app.page.markers.find((m) => m.id === target.marker)?.time ?? xToTime(startX);
+      move = (ev) =>
+        app.setMarkerTime(target.marker, Math.min(startTime + dxToTime(xOf(ev) - startX), app.duration));
     } else if (target && 'clip' in target) {
       frozenView = viewDuration();
       const page = app.page;
