@@ -108,6 +108,7 @@ const HELP: Record<Lang, Text> = {
           'Settings: choose the MIDI output, the MTC frame rate and each page’s MTC offset.',
           'MIDI Note: channel, note and velocity used by cues without their own note.',
           'On a Mac, the IAC Driver (Audio MIDI Setup) sends MIDI to other apps.',
+          'Audio output (Settings): the device all of the app’s sound plays through, such as an audio interface. It is remembered on this computer; Show names lets Chrome name the devices.',
         ],
       },
       {
@@ -227,6 +228,7 @@ const HELP: Record<Lang, Text> = {
           '設定で、MIDI の出力先、MTC のフレームレート、ページごとの MTC オフセットを選びます。',
           'MIDI Note: 自分の番号を持たない Cue が使うチャンネル、ノート、ベロシティ。',
           'Mac では IAC ドライバ（Audio MIDI 設定）で、ほかのアプリに MIDI を送れます。',
+          'Audio output（設定）: アプリの音をすべて出す機材（オーディオインターフェースなど）。この PC に覚えます。Show names を押すと、Chrome が機材の名前を表示します。',
         ],
       },
       {

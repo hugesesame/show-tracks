@@ -78,6 +78,32 @@ export function createSettings(app: App, files: FileMenu) {
       ),
     );
 
+    // The audio output belongs to this computer, not the project.
+    const out = app.audioOutput;
+    const outputSelect = h(
+      'select',
+      { onchange: () => void out.choose(outputSelect.value || null).then(render) },
+      h('option', { value: '' }, 'System default'),
+      ...out.devices.map((d) => h('option', { value: d.id, selected: d.id === out.chosen }, d.name)),
+    );
+    if (out.missing) {
+      // Still listed, so the choice is not lost while the device is unplugged.
+      outputSelect.append(h('option', { value: out.chosen!, selected: true }, 'Chosen device (not connected)'));
+    }
+    const showNames = h(
+      'button',
+      { type: 'button', class: 'small', onclick: () => void out.showNames().then(render) },
+      'Show names',
+    );
+    showNames.hidden = out.namesShown;
+    const outputHint = !out.supported
+      ? 'This browser cannot choose the audio output.'
+      : out.missing
+        ? 'The chosen device is not connected: the system default plays, and the sound goes back to the device when it is connected.'
+        : out.namesShown
+          ? 'All of the app’s sound plays through this device. It is remembered on this computer.'
+          : 'Chrome shows device names once the microphone is allowed. Show names asks once; nothing is recorded.';
+
     const fadeOut = numberField(settings.fadeOut, 0, 10, (n) => app.setFadeOut(n), 0.5);
 
     const pageName = h('input', {
@@ -118,6 +144,8 @@ export function createSettings(app: App, files: FileMenu) {
         row('Velocity', numberField(settings.noteVelocity, 1, 127, (n) => app.setNoteDefaults({ noteVelocity: n }))),
         h('div', { class: 'hint' }, 'Sent to the MIDI output above when playback reaches a cue with MIDI on. Cues can have their own note in the Cue List.'),
         h('h3', {}, 'Playback'),
+        row('Audio output', outputSelect, ' ', showNames),
+        h('div', { class: 'hint' }, outputHint),
         row('Fade out (Esc)', fadeOut, ' seconds'),
         h('div', { class: 'hint' }, 'Esc fades everything out over this time, then stops. Press Esc again to stop at once.'),
         h('h3', {}, `This page (${page.name})`),

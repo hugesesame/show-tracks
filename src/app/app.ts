@@ -1,5 +1,6 @@
 import { go, initialCueState, passed, reconcile, select, type CueState } from '../cue/cueController';
 import { History } from './history';
+import { AudioOutput } from '../engine/audioOutput';
 import { MtcOutput } from '../engine/mtc';
 import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
@@ -67,6 +68,7 @@ export class App {
   readonly transport: Transport;
   readonly mtc: MtcOutput;
   readonly output: OutputWindow;
+  readonly audioOutput: AudioOutput;
   private _project: Project;
   private _cue: CueState;
   private readonly media = new Map<string, MediaRecord>();
@@ -95,6 +97,8 @@ export class App {
     this.transport = new Transport(monitor);
     this.mtc = new MtcOutput(() => ({ time: this.transport.now(), playing: this.transport.playing }));
     this.output = new OutputWindow(this.transport);
+    this.audioOutput = new AudioOutput(this.transport.mixer, (message) => this.error(message));
+    this.audioOutput.onChange(() => this.emit('change'));
     this.autosaver = createAutosaver(
       (p) => saveProject(db, p),
       () => this.error('Saving failed. Storage may be full.'),
@@ -123,6 +127,7 @@ export class App {
     void this.deleteUnusedMedia([...this.storedMediaIds]);
     this.applyPageSettings();
     await this.loadCurrentPage();
+    await this.audioOutput.init();
     await this.mtc.init();
     this.mtc.selectOutput(this._project.settings.midiOutputId);
   }

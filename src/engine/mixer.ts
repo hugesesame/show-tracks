@@ -72,6 +72,12 @@ export class Mixer {
     for (const type of ['pointerdown', 'keydown']) window.addEventListener(type, resume, { capture: true });
   }
 
+  /** Sends all of the app's sound to an output device; null is the system default. */
+  async setOutput(deviceId: string | null): Promise<void> {
+    const context = this.context as AudioContext & { setSinkId?(id: string): Promise<void> };
+    await context.setSinkId?.(deviceId ?? '');
+  }
+
   resume(): Promise<void> {
     return this.context.state === 'suspended' ? this.context.resume() : Promise.resolve();
   }

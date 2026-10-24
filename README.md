@@ -29,6 +29,7 @@
 - **MTC** follows the playback time, with an offset per page.
 - **Video output window** for a second display, with the text over the video. The main screen frames the picture the same way, so what you see is what the audience sees.
 - **Mixer** with Audio, Video and Master faders, pan and mute.
+- **Audio output**: play through an audio interface or any other output device. Unplugged during a show, the sound moves to the system default and comes back when the device is connected again.
 - **Show mode** locks editing for the performance, so a stray click cannot move a cue or the playhead.
 - **Help** in English and Japanese inside the app: press `?`.
 
@@ -56,6 +57,7 @@ The browser asks for permission the first time. Choose **Allow**. If you blocked
 | The app opens | To control MIDI devices | To send MTC and MIDI Notes |
 | You press **Open video output** | To allow pop-ups (only if the window was blocked) | To open the output window |
 | You press **Save** the first time | Where to save the file | To write the project file |
+| You press **Show names** next to Audio output | To use the microphone | Chrome names output devices only then. Nothing is recorded |
 | You press **Backup**, **Restore** or **Find media** | Which folder, and to let the site see (or edit) its files | To write or read the backup and the media |
 
 On a Mac, the **IAC Driver** in Audio MIDI Setup sends MIDI to other apps on the same computer.
