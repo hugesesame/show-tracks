@@ -21,6 +21,7 @@ import {
 } from '../model/markers';
 import { cuesReached, noteFor } from '../model/notes';
 import { activeOverlap, setOverlap, setRangeEnd, setRangeStart, type PlayRange } from '../model/range';
+import { playListTime, type RunningTime } from '../model/runningTime';
 import {
   addPage,
   createPage,
@@ -48,7 +49,7 @@ import {
   exportProjectJson,
   getMedia,
   importProjectJson,
-  listMediaIds,
+  listMediaDurations,
   pagesWithMissingMedia,
   putMedia,
   saveProject,
@@ -88,7 +89,8 @@ export class App {
   private _project: Project;
   private _cue: CueState;
   private readonly media = new Map<string, MediaRecord>();
-  private storedMediaIds = new Set<string>();
+  /** The length of each media file stored in this browser, by id. */
+  private storedMedia = new Map<string, number>();
   private loadedPageId: string | null = null;
   private loading: Promise<void> = Promise.resolve();
   private readonly autosaver: Autosaver;
@@ -145,9 +147,9 @@ export class App {
   }
 
   async start(): Promise<void> {
-    this.storedMediaIds = await listMediaIds(this.db);
+    this.storedMedia = await listMediaDurations(this.db);
     // Media kept for Undo in an earlier session is no longer needed.
-    void this.deleteUnusedMedia([...this.storedMediaIds]);
+    void this.deleteUnusedMedia([...this.storedMedia.keys()]);
     this.applyPageSettings();
     await this.loadCurrentPage();
     await this.audioOutput.init();
@@ -185,7 +187,12 @@ export class App {
   }
 
   missingMediaPageIds(): string[] {
-    return pagesWithMissingMedia(this._project, this.storedMediaIds);
+    return pagesWithMissingMedia(this._project, new Set(this.storedMedia.keys()));
+  }
+
+  /** How long the Play list takes, played through once. */
+  playListTime(): RunningTime {
+    return playListTime(this._project, (id) => this.storedMedia.get(id) ?? null);
   }
 
   onChange(listener: () => void): void {
@@ -810,7 +817,7 @@ export class App {
       this.error('Storage is full, so the media was not saved. You will need to re-select it after reloading.');
     }
     this.media.set(record.id, record);
-    this.storedMediaIds.add(record.id);
+    this.storedMedia.set(record.id, record.duration);
     const page = this.page;
     const previous = kind === 'audio' ? page.audioMediaId : page.videoMediaId;
     const patch = kind === 'audio' ? { audioMediaId: record.id } : { videoMediaId: record.id };
@@ -839,7 +846,7 @@ export class App {
       const used = projects.some((pr) => pr.pages.some((p) => p.audioMediaId === id || p.videoMediaId === id));
       if (used) continue;
       this.media.delete(id);
-      this.storedMediaIds.delete(id);
+      this.storedMedia.delete(id);
       await deleteMedia(this.db, id).catch(() => {});
     }
   }
@@ -904,7 +911,7 @@ export class App {
     const missing = new Map<string, { id: string; kind: MediaRecord['kind']; fileName: string }>();
     for (const page of this._project.pages) {
       for (const [id, kind] of [[page.audioMediaId, 'audio'], [page.videoMediaId, 'video']] as const) {
-        if (!id || this.storedMediaIds.has(id) || missing.has(id)) continue;
+        if (!id || this.storedMedia.has(id) || missing.has(id)) continue;
         const fileName = this.importedMediaNames[id];
         if (fileName) missing.set(id, { id, kind, fileName });
       }
@@ -928,7 +935,7 @@ export class App {
         const record = { ...(await importMediaFile(file, kind)), id };
         await putMedia(this.db, record);
         this.media.set(id, record);
-        this.storedMediaIds.add(id);
+        this.storedMedia.set(id, record.duration);
       } catch {
         failed++;
       }

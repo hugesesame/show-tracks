@@ -1340,6 +1340,17 @@ dialog::backdrop {
   margin-top: auto;
   padding: 8px 12px;
   border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.play-list-time {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* ---- help ---- */

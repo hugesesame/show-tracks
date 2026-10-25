@@ -3,6 +3,7 @@ import { pageKind, pagesOfKind, type PageKind } from '../model/project';
 import type { EndAction, Page } from '../model/types';
 import { editableCell } from './cueList';
 import { autoScrollButton, deleteButton, h } from './dom';
+import { formatCountdown } from './format';
 
 const END_ACTIONS: { action: EndAction; label: string; title: string }[] = [
   { action: 'stop', label: 'Stop', title: 'At the end: stop' },
@@ -24,6 +25,7 @@ export function createPageList(app: App, openHelp: () => void) {
 
   const removeButton = deleteButton('Delete page', () => app.removeCurrentPage());
   const autoScroll = autoScrollButton('cue-player-page-autoscroll');
+  const total = h('span', { class: 'play-list-time' });
   /** The list shown; it follows the page opened, and the tabs switch it. */
   let kind: PageKind = pageKind(app.page);
   let shownPageId = app.page.id;
@@ -68,7 +70,7 @@ export function createPageList(app: App, openHelp: () => void) {
     ),
     list,
     // Help sits at the bottom of the pages, out of the way of the show.
-    h('div', { class: 'panel-footer' }, h('button', { class: 'small', title: 'Help (?)', onclick: openHelp }, '? Help')),
+    h('div', { class: 'panel-footer' }, h('button', { class: 'small', title: 'Help (?)', onclick: openHelp }, '? Help'), total),
   );
   let renderedPages: Page[] | null = null;
   let renderedKind: PageKind | null = null;
@@ -110,6 +112,13 @@ export function createPageList(app: App, openHelp: () => void) {
     removeButton.disabled = show || app.project.pages.length === 1 || pageKind(app.page) !== kind;
     // Looping the pages is for the Play list; the DAW runs the MTC In pages.
     loopButton.hidden = kind === 'mtc';
+    // The running time is the Play list's: the DAW sets how long the MTC In pages run.
+    total.hidden = kind === 'mtc';
+    const time = app.playListTime();
+    total.textContent = `Total ${formatCountdown(time.seconds)}${time.unknown ? ' +?' : ''}`;
+    total.title = time.unknown
+      ? 'The Play list played through, to the overlap marks. Some media is missing, so its length is left out'
+      : 'The Play list played through: each page from its in to its out point, or to its overlap mark';
     addButton.title = kind === 'mtc' ? 'Add an MTC In page' : 'Add page';
     for (const b of tabs.querySelectorAll<HTMLElement>('button')) b.classList.toggle('active', b.dataset.kind === kind);
     list.querySelectorAll<HTMLButtonElement>('.end-action:not(.mtc)').forEach((b) => (b.disabled = show));

@@ -49,8 +49,10 @@ export async function deleteMedia(db: IDBDatabase, id: string): Promise<void> {
   await run(db, MEDIA_STORE, 'readwrite', (s) => s.delete(id));
 }
 
-export async function listMediaIds(db: IDBDatabase): Promise<Set<string>> {
-  return new Set(await run<string[]>(db, MEDIA_STORE, 'readonly', (s) => s.getAllKeys()));
+/** The length of every stored media file, by id. */
+export async function listMediaDurations(db: IDBDatabase): Promise<Map<string, number>> {
+  const records = await run<MediaRecord[]>(db, MEDIA_STORE, 'readonly', (s) => s.getAll());
+  return new Map(records.map((r) => [r.id, r.duration]));
 }
 
 export type Autosaver = {
