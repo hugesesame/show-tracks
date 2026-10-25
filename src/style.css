@@ -1396,9 +1396,11 @@ dialog.help {
   line-height: 1.5;
 }
 
-/* Counts down while everything fades out. */
-.footer .fade {
-  min-width: 56px;
+/* Word buttons, one width so the words sit centred; Fade counts down while everything fades out. */
+.transport button.fade,
+.transport button.duck {
+  width: 64px;
+  padding: 0;
   font-variant-numeric: tabular-nums;
 }
 
