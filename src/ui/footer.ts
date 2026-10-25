@@ -38,7 +38,7 @@ export function createFooter(app: App, files: FileMenu) {
   const offline = h(
     'div',
     { class: 'offline-ready', hidden: true, title: 'A copy of the app is kept in this browser: it also opens without a connection' },
-    'Offline ready',
+    'Offline Ready',
   );
   const loop = h('button', { class: 'loop', title: 'Loop the page', onclick: () => app.toggleLoop() }, '🔁');
   const play = h('button', { class: 'play', title: 'Play / Stop (Space)', onclick: () => app.togglePlay() }, '▶');
