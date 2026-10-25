@@ -99,6 +99,7 @@ async function main(): Promise<void> {
     go: '.header .go',
     playStop: '.footer .play',
     fadeOut: '.footer .fade',
+    duck: '.footer .duck',
     previousCue: '.footer button[title^="Previous marker"]',
     nextCue: '.footer button[title^="Next marker"]',
   };

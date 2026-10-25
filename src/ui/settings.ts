@@ -13,6 +13,7 @@ const REMOTE_ACTIONS: { action: RemoteAction; label: string }[] = [
   { action: 'go', label: 'GO' },
   { action: 'playStop', label: 'Play / Stop' },
   { action: 'fadeOut', label: 'Fade Out' },
+  { action: 'duck', label: 'Duck' },
   { action: 'previousCue', label: 'Previous Cue' },
   { action: 'nextCue', label: 'Next Cue' },
 ];
@@ -183,6 +184,8 @@ export function createSettings(app: App, files: FileMenu) {
     });
 
     const fadeOut = numberField(settings.fadeOut, 0, 10, (n) => app.setFadeOut(n), 0.5);
+    const duckDepth = numberField(settings.duckDepth, 1, 40, (n) => app.setDuck({ duckDepth: n }));
+    const duckFade = numberField(settings.duckFade, 0, 10, (n) => app.setDuck({ duckFade: n }), 0.1);
 
     const pageName = h('input', {
       value: page.name,
@@ -238,6 +241,9 @@ export function createSettings(app: App, files: FileMenu) {
         h('div', { class: 'hint' }, outputHint),
         row('Fade Out (Esc)', fadeOut, ' seconds'),
         h('div', { class: 'hint' }, 'Esc fades everything out over this time, then stops. Press Esc again to stop at once.'),
+        row('Duck (D)', '− ', duckDepth, ' dB'),
+        row('Duck Fade', duckFade, ' seconds'),
+        h('div', { class: 'hint' }, 'D lowers everything by this much, for an announcement; press D again to bring it back. Both ways glide over the Duck Fade time.'),
         h('h3', {}, `This Page (${page.name})`),
         row('Page Name', pageName),
         row('MTC Offset', offset),

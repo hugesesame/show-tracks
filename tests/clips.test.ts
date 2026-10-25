@@ -67,7 +67,7 @@ describe('normalizeProject', () => {
     const project = normalizeProject({
       pages: [legacy as Page],
       currentPageId: 'old',
-      settings: { mtcFps: '30', midiOutputId: null, midiInputId: null, mtcInputId: null, midiRemote: {}, loopPages: false, fadeOut: 2, masterVolume: 1, masterMuted: false, masterPan: 0, noteChannel: 1, noteNumber: 60, noteVelocity: 127, memoSize: 8, memoColor: '#ffffff', memoOutline: 0.08, memoOutlineColor: '#000000', memoOutlineOn: true, memoPosition: 'bottom', memoFade: 0.5, memoFadeOn: true, memoOutput: true },
+      settings: { mtcFps: '30', midiOutputId: null, midiInputId: null, mtcInputId: null, midiRemote: {}, loopPages: false, fadeOut: 2, duckDepth: 12, duckFade: 0.5, masterVolume: 1, masterMuted: false, masterPan: 0, noteChannel: 1, noteNumber: 60, noteVelocity: 127, memoSize: 8, memoColor: '#ffffff', memoOutline: 0.08, memoOutlineColor: '#000000', memoOutlineOn: true, memoPosition: 'bottom', memoFade: 0.5, memoFadeOn: true, memoOutput: true },
     });
     expect(project.pages[0].audioOffset).toBe(0);
     expect(project.pages[0].videoOffset).toBe(0);

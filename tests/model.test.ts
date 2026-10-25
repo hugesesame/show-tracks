@@ -167,6 +167,8 @@ describe('project', () => {
       midiRemote: {},
       loopPages: false,
       fadeOut: 2,
+      duckDepth: 12,
+      duckFade: 0.5,
       masterVolume: 1,
       masterMuted: false,
       masterPan: 0,

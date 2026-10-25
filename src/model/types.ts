@@ -12,6 +12,9 @@ export type Settings = {
   loopPages: boolean;
   /** Seconds Esc takes to fade everything out before stopping. */
   fadeOut: number;
+  /** D lowers everything by this many dB for an announcement, gliding over `duckFade` seconds both ways. */
+  duckDepth: number;
+  duckFade: number;
   /** The Master strip, after both tracks. Pan is -1 (left) .. 1 (right). */
   masterVolume: number;
   masterMuted: boolean;
@@ -113,7 +116,7 @@ export type IdGenerator = () => string;
 export const randomId: IdGenerator = () => crypto.randomUUID();
 
 /** What a MIDI remote (foot switch, pad, desk button) can do. */
-export type RemoteAction = 'go' | 'playStop' | 'fadeOut' | 'previousCue' | 'nextCue';
+export type RemoteAction = 'go' | 'playStop' | 'fadeOut' | 'duck' | 'previousCue' | 'nextCue';
 
 /** A note or CC on a channel (1..16) that runs a remote action. */
 export type MidiTrigger = { type: 'note' | 'cc'; channel: number; number: number };

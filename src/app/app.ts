@@ -107,6 +107,7 @@ export class App {
   private learning: { action: RemoteAction; done: () => void } | null = null;
   private fadeTimer: ReturnType<typeof setTimeout> | undefined;
   private fadeEnd = 0;
+  private _ducked = false;
 
   constructor(
     private readonly db: IDBDatabase,
@@ -374,6 +375,7 @@ export class App {
       go: () => this.go(),
       playStop: () => this.togglePlay(),
       fadeOut: () => this.fadeOutStop(),
+      duck: () => this.toggleDuck(),
       previousCue: () => this.previousMarker(),
       nextCue: () => this.nextMarker(),
     })[action]();
@@ -594,6 +596,23 @@ export class App {
     this.fadeEnd = performance.now() + seconds * 1000;
     this.fadeTimer = setTimeout(() => this.stop(), seconds * 1000);
     this.emit('change');
+  }
+
+  /** Everything is lowered for an announcement. */
+  get ducked(): boolean {
+    return this._ducked;
+  }
+
+  /** D: lowers everything by the set dB, and brings it back on the next press. Works in show mode. */
+  toggleDuck(): void {
+    this._ducked = !this._ducked;
+    this.applyDuck();
+    this.emit('change');
+  }
+
+  private applyDuck(): void {
+    const { duckDepth, duckFade } = this._project.settings;
+    this.transport.mixer.setDuck(this._ducked ? duckDepth : 0, duckFade);
   }
 
   /** Ends a fade (stopped, or overruled by GO or play) and brings the level back. */
@@ -867,6 +886,13 @@ export class App {
   setFadeOut(seconds: number): void {
     if (this.editLocked()) return;
     this.commit(updateSettings(this._project, { fadeOut: seconds }));
+  }
+
+  /** How far D lowers everything and how long it glides; a new depth applies at once while ducked. */
+  setDuck(patch: Partial<Pick<Settings, 'duckDepth' | 'duckFade'>>): void {
+    if (this.editLocked()) return;
+    this.commit(updateSettings(this._project, patch));
+    if (this._ducked) this.applyDuck();
   }
 
   setPageOffset(seconds: number): void {

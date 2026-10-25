@@ -1407,6 +1407,13 @@ dialog.help {
   color: var(--range);
 }
 
+/* Lit while the sound is lowered. */
+.footer .duck.ducked {
+  border-color: var(--range);
+  background: var(--range);
+  color: #000;
+}
+
 /* A control run from the MIDI remote lights up for a moment. */
 .remote-hit {
   box-shadow: 0 0 0 3px var(--accent);

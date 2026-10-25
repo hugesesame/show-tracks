@@ -24,7 +24,7 @@ type Channel = {
 
 /**
  * Routes each media element through volume → pan → stereo meter, then both
- * tracks through the fade-out stage and the Master strip to the speakers.
+ * tracks through the fade-out and duck stages and the Master strip to the speakers.
  * Meters read after the volume and pan, like a DAW channel.
  */
 export class Mixer {
@@ -32,6 +32,8 @@ export class Mixer {
   private readonly channels: Record<ChannelKey, Channel>;
   /** Before the Master: fades everything out without moving the Master fader, and shows on its meter. */
   private readonly fader: GainNode;
+  /** After the fade-out stage: lowers everything for an announcement, leaving the faders where they are. */
+  private readonly duck: GainNode;
   private readonly buffer = new Float32Array(1024);
 
   constructor(elements: { decks: [HTMLMediaElement, HTMLMediaElement]; video: HTMLMediaElement }) {
@@ -51,7 +53,8 @@ export class Mixer {
     };
     const master = strip(this.context.destination);
     this.fader = new GainNode(this.context);
-    this.fader.connect(master.gain);
+    this.duck = new GainNode(this.context);
+    this.fader.connect(this.duck).connect(master.gain);
     const track = (element: HTMLMediaElement): Channel => {
       // Levels are set on the gain nodes, so the element itself stays at full volume.
       element.volume = 1;
@@ -116,6 +119,17 @@ export class Mixer {
     gain.cancelScheduledValues(now);
     gain.setValueAtTime(gain.value, now);
     gain.setTargetAtTime(1, now, 0.02);
+  }
+
+  /** Lowers the whole output by `db` (0 brings it back) over `seconds`, steadily in dB. */
+  setDuck(db: number, seconds: number): void {
+    const gain = this.duck.gain;
+    const now = this.context.currentTime;
+    const target = 10 ** (-Math.max(0, db) / 20);
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    if (seconds > 0) gain.exponentialRampToValueAtTime(target, now + seconds);
+    else gain.setTargetAtTime(target, now, 0.01);
   }
 
   /** Current peak of each channel, as meter positions (0..1). */

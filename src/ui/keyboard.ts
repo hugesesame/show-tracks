@@ -85,12 +85,14 @@ export function installKeyboard(
       Period: () => app.fastForward(),
       // Esc fades out and stops, as in QLab; pressed again it stops at once.
       Escape: () => app.fadeOutStop(),
+      // D ducks everything for an announcement; pressed again it comes back.
+      KeyD: () => app.toggleDuck(),
     };
     // e.code keeps G / M working with a Japanese IME layout.
     const action = actions[e.code];
     if (!action) return;
     // GO and marker shortcuts must not fire repeatedly while a key is held.
-    if (e.repeat && ['KeyG', 'KeyM', 'KeyF', 'KeyI', 'KeyO', 'KeyX', 'Space'].includes(e.code)) return;
+    if (e.repeat && ['KeyG', 'KeyM', 'KeyF', 'KeyI', 'KeyO', 'KeyX', 'KeyD', 'Space'].includes(e.code)) return;
     e.preventDefault();
     // A focused button would otherwise also react to Space.
     if (document.activeElement instanceof HTMLButtonElement) document.activeElement.blur();

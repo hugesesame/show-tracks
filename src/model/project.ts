@@ -18,6 +18,8 @@ const DEFAULT_SETTINGS: Settings = {
   midiRemote: {},
   loopPages: false,
   fadeOut: 2,
+  duckDepth: 12,
+  duckFade: 0.5,
   masterVolume: MASTER_VOLUME,
   masterMuted: false,
   masterPan: 0,

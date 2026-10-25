@@ -43,6 +43,7 @@ export function createFooter(app: App, files: FileMenu) {
   const loop = h('button', { class: 'loop', title: 'Loop the page', onclick: () => app.toggleLoop() }, '🔁');
   const play = h('button', { class: 'play', title: 'Play / Stop (Space)', onclick: () => app.togglePlay() }, '▶');
   const fade = h('button', { class: 'fade', title: 'Fade out and stop (Esc); again to stop at once', onclick: () => app.fadeOutStop() }, 'Fade');
+  const duck = h('button', { class: 'duck', onclick: () => app.toggleDuck() }, 'Duck');
   const element = h(
     'footer',
     { class: 'footer' },
@@ -54,6 +55,7 @@ export function createFooter(app: App, files: FileMenu) {
       repeatButton('◀◀', 'Rewind 5s (⌥← / ,)', () => app.rewind()),
       play,
       fade,
+      duck,
       repeatButton('▶▶', 'Fast forward 5s (⌥→ / .)', () => app.fastForward()),
       h('button', { title: 'Previous marker (←)', onclick: () => app.previousMarker() }, '|◀'),
       h('button', { title: 'Next marker (→)', onclick: () => app.nextMarker() }, '▶|'),
@@ -78,6 +80,12 @@ export function createFooter(app: App, files: FileMenu) {
     play.textContent = playing ? '■' : '▶';
     play.classList.toggle('playing', playing);
     loop.classList.toggle('active', app.transport.loop);
+    // Lit while lowered, so it is not left down by mistake.
+    const { duckDepth } = app.project.settings;
+    duck.classList.toggle('ducked', app.ducked);
+    duck.title = app.ducked
+      ? `Ducked −${duckDepth} dB: press again to bring the sound back (D)`
+      : `Duck: lower everything by ${duckDepth} dB for an announcement (D)`;
     loop.disabled = app.page.followMtc;
     loop.title = app.page.followMtc
       ? 'MTC In pages follow the DAW: set looping in the DAW'
