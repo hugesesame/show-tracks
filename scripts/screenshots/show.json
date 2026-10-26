@@ -1,0 +1,93 @@
+{
+  "currentPageId": "morning-light",
+  "settings": {
+    "midiOutputId": "screenshot-midi"
+  },
+  "pages": [
+    {
+      "id": "opening",
+      "name": "Opening",
+      "audioMediaId": null,
+      "videoMediaId": null,
+      "audioOffset": 0,
+      "videoOffset": 0,
+      "audioVolume": 0.75,
+      "audioMuted": false,
+      "videoAudioEnabled": false,
+      "videoAudioVolume": 0.75,
+      "audioPan": 0,
+      "videoPan": 0,
+      "rangeStart": null,
+      "rangeEnd": null,
+      "overlapAt": null,
+      "mtcOffset": 0,
+      "followMtc": false,
+      "blankLength": 300,
+      "midiNotes": true,
+      "endAction": "nextPlay",
+      "markers": [
+        { "id": "o1", "name": "Lights up", "time": 2, "midiOn": true, "note": null, "memo": "" },
+        { "id": "o2", "name": "Welcome", "time": 40, "midiOn": false, "note": null, "memo": "" },
+        { "id": "o3", "name": "Band in", "time": 95, "midiOn": true, "note": 62, "memo": "" }
+      ]
+    },
+    {
+      "id": "morning-light",
+      "name": "Morning Light",
+      "audioMediaId": null,
+      "videoMediaId": null,
+      "audioOffset": 0,
+      "videoOffset": 0,
+      "audioVolume": 0.75,
+      "audioMuted": false,
+      "videoAudioEnabled": false,
+      "videoAudioVolume": 0.75,
+      "audioPan": 0,
+      "videoPan": 0,
+      "rangeStart": null,
+      "rangeEnd": null,
+      "overlapAt": 84.5,
+      "mtcOffset": 0,
+      "followMtc": false,
+      "blankLength": 300,
+      "midiNotes": true,
+      "endAction": "nextPlay",
+      "markers": [
+        { "id": "m1", "name": "Intro", "time": 5, "midiOn": true, "note": null, "memo": "" },
+        { "id": "m2", "name": "Verse 1", "time": 15, "midiOn": false, "note": null, "memo": "Morning light on an empty street\nI hear the city start to breathe" },
+        { "id": "m3", "name": "Chorus", "time": 30, "midiOn": true, "note": 62, "memo": "Hold on, hold on\nthe day is waking up with us" },
+        { "id": "m4", "name": "Verse 2", "time": 40, "midiOn": false, "note": null, "memo": "Coffee steam and a quiet tune\nsomeone's singing in the next room" },
+        { "id": "m5", "name": "Chorus 2", "time": 50, "midiOn": true, "note": 62, "memo": "Hold on, hold on\nwe were never meant to sleep" },
+        { "id": "m6", "name": "Bridge", "time": 65, "midiOn": true, "note": 64, "memo": "And if the sky falls down today\nwe'll paint it gold again" },
+        { "id": "m7", "name": "Outro", "time": 80, "midiOn": false, "note": null, "memo": "" }
+      ]
+    },
+    {
+      "id": "night-drive",
+      "name": "Night Drive",
+      "audioMediaId": null,
+      "videoMediaId": null,
+      "audioOffset": 0,
+      "videoOffset": 0,
+      "audioVolume": 0.75,
+      "audioMuted": false,
+      "videoAudioEnabled": false,
+      "videoAudioVolume": 0.75,
+      "audioPan": 0,
+      "videoPan": 0,
+      "rangeStart": null,
+      "rangeEnd": null,
+      "overlapAt": null,
+      "mtcOffset": 0,
+      "followMtc": false,
+      "blankLength": 300,
+      "midiNotes": true,
+      "endAction": "stop",
+      "markers": [
+        { "id": "n1", "name": "Start", "time": 0.5, "midiOn": true, "note": null, "memo": "" },
+        { "id": "n2", "name": "Solo", "time": 120, "midiOn": true, "note": 64, "memo": "" },
+        { "id": "n3", "name": "Last chorus", "time": 170, "midiOn": false, "note": null, "memo": "" }
+      ]
+    }
+  ]
+}
