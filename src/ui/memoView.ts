@@ -1,5 +1,6 @@
 import type { App } from '../app/app';
 import type { MemoPosition } from '../model/types';
+import { colorButton } from './colorPicker';
 import { h } from './dom';
 import { createMemoStage } from './memoStage';
 
@@ -33,12 +34,7 @@ export function createMemoView(app: App) {
     title: 'Outline width',
     oninput: () => app.setMemoLook({ memoOutline: Number(outline.value) }),
   });
-  const outlineColor = h('input', {
-    class: 'memo-color',
-    type: 'color',
-    title: 'Outline colour',
-    oninput: () => app.setMemoLook({ memoOutlineColor: outlineColor.value }),
-  });
+  const outlineColor = colorButton('Outline colour', (memoOutlineColor) => app.setMemoLook({ memoOutlineColor }));
   const outlineOn = h('button', {
     type: 'button',
     class: 'small memo-switch',
@@ -59,12 +55,7 @@ export function createMemoView(app: App) {
     class: 'small memo-switch',
     onclick: () => app.setMemoLook({ memoFadeOn: !app.project.settings.memoFadeOn }),
   });
-  const color = h('input', {
-    class: 'memo-color',
-    type: 'color',
-    title: 'Text colour',
-    oninput: () => app.setMemoLook({ memoColor: color.value }),
-  });
+  const color = colorButton('Text colour', (memoColor) => app.setMemoLook({ memoColor }));
   const positions = POSITIONS.map(({ position, label }) =>
     h('button', { type: 'button', class: 'small', 'data-position': position, onclick: () => app.setMemoLook({ memoPosition: position }) }, label),
   );
@@ -78,8 +69,8 @@ export function createMemoView(app: App) {
     'div',
     { class: 'memo-controls' },
     // One slider per line behind labels of one width, so the sliders line up.
-    sliderRow('Aa', size, color),
-    sliderRow('Edge', outline, outlineColor, outlineOn),
+    sliderRow('Aa', size, color.element),
+    sliderRow('Edge', outline, outlineColor.element, outlineOn),
     sliderRow('Fade', fade, fadeValue, fadeOn),
     h(
       'div',
@@ -129,15 +120,15 @@ export function createMemoView(app: App) {
     const s = app.project.settings;
     size.value = String(s.memoSize);
     size.style.setProperty('--fill', String((s.memoSize - Number(size.min)) / (Number(size.max) - Number(size.min))));
-    color.value = s.memoColor;
     outline.value = String(s.memoOutline);
     outline.style.setProperty('--fill', String(s.memoOutline / Number(outline.max)));
-    outlineColor.value = s.memoOutlineColor;
     switchButton(outlineOn, s.memoOutlineOn, 'Outline');
     // Show mode locks the look; off switches lock their own row.
     const show = app.showMode;
-    for (const control of [size, color, outlineOn, fadeOn, onVideo, ...positions]) control.disabled = show;
-    outline.disabled = outlineColor.disabled = show || !s.memoOutlineOn;
+    for (const control of [size, outlineOn, fadeOn, onVideo, ...positions]) control.disabled = show;
+    color.set(s.memoColor, show);
+    outline.disabled = show || !s.memoOutlineOn;
+    outlineColor.set(s.memoOutlineColor, outline.disabled);
     fade.value = String(s.memoFade);
     fade.style.setProperty('--fill', String(s.memoFade / Number(fade.max)));
     fadeValue.textContent = `${s.memoFade.toFixed(1)}s`;
