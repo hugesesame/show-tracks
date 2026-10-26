@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { addMarker } from '../src/model/markers';
 import { createPage } from '../src/model/project';
 import type { Page } from '../src/model/types';
-import { csvToCues, cuesToCsv, decodeCsv, parseCsv, toCsv } from '../src/ui/cueCsv';
+import { csvToCues, cuesToCsv, cuesToSrt, decodeCsv, parseCsv, toCsv } from '../src/ui/cueCsv';
 import timedSample from '../public/samples/cues-with-times.csv?raw';
 import orderSample from '../public/samples/memos-in-order.csv?raw';
 
@@ -89,5 +89,22 @@ describe('the sample CSVs in public/samples', () => {
     const { page, added } = csvToCues(createPage('P', 'p'), timedSample, 100, ids());
     expect(added).toBe(7);
     expect(page.markers[3]).toMatchObject({ time: 28, name: 'Chorus', memo: 'Hello, morning light\ncarry my voice' });
+  });
+});
+
+describe('cuesToSrt', () => {
+  it('shows each memo from its cue to the next, the last to the page end, skipping empty memos', () => {
+    let page = pageWith(5, 15, 30, 40);
+    const [a, b, , d] = page.markers;
+    page = { ...page, markers: page.markers.map((m) => (m.id === a.id ? { ...m, memo: 'First\nline two' } : m.id === b.id ? { ...m, memo: 'Second' } : m.id === d.id ? { ...m, memo: 'Last' } : m)) };
+    expect(cuesToSrt(page, 3725.5)).toBe(
+      '1\r\n00:00:05,000 --> 00:00:15,000\r\nFirst\r\nline two\r\n' +
+        '\r\n2\r\n00:00:15,000 --> 00:00:30,000\r\nSecond\r\n' +
+        '\r\n3\r\n00:00:40,000 --> 01:02:05,500\r\nLast\r\n',
+    );
+  });
+
+  it('is empty without memos', () => {
+    expect(cuesToSrt(pageWith(5), 60)).toBe('');
   });
 });

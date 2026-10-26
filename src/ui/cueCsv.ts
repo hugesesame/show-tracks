@@ -153,27 +153,65 @@ type SavePicker = (options: {
   types: { description: string; accept: Record<string, string[]> }[];
 }) => Promise<FileSystemFileHandle>;
 
-/** Saves the page's cues as a CSV file named after the page, where the user chooses (a download without Chrome's save dialog). */
-export async function saveCuesCsv(app: App, page: Page): Promise<void> {
-  const text = cuesToCsv(page);
-  const name = `${page.name.replace(/[\\/:*?"<>|]/g, '_') || 'cues'}.csv`;
+/** "00:01:02,345", as SRT writes times. */
+function srtTime(seconds: number): string {
+  const ms = Math.round(Math.max(0, seconds) * 1000);
+  const pad = (n: number, width = 2) => String(n).padStart(width, '0');
+  return `${pad(Math.floor(ms / 3600000))}:${pad(Math.floor(ms / 60000) % 60)}:${pad(Math.floor(ms / 1000) % 60)},${pad(ms % 1000, 3)}`;
+}
+
+/**
+ * The page's memos as SRT subtitles, timed from the page's start: each shows
+ * from its cue to the next cue (the last to the page's end), as on screen.
+ * Cues with an empty memo clear the screen, so they write nothing.
+ */
+export function cuesToSrt(page: Page, duration: number): string {
+  const subtitles = page.markers.flatMap((m, i) => {
+    const end = page.markers[i + 1]?.time ?? duration;
+    return m.memo.trim() && end > m.time ? [{ start: m.time, end, text: m.memo.replace(/\r\n?/g, '\n') }] : [];
+  });
+  return subtitles.map((s, i) => `${i + 1}\r\n${srtTime(s.start)} --> ${srtTime(s.end)}\r\n${s.text.replace(/\n/g, '\r\n')}\r\n`).join('\r\n');
+}
+
+/** Saves text where the user chooses, through Chrome's save dialog (a download without it). Resolves with the file name, or null. */
+async function saveFile(app: App, name: string, text: string, type: { description: string; mime: string; extension: string }): Promise<string | null> {
   const pick = (window as unknown as { showSaveFilePicker?: SavePicker }).showSaveFilePicker;
   if (!pick) {
-    const url = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
+    const url = URL.createObjectURL(new Blob([text], { type: type.mime }));
     const link = document.createElement('a');
     link.href = url;
     link.download = name;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    return;
+    return name;
   }
   try {
-    const handle = await pick({ suggestedName: name, types: [{ description: 'CSV', accept: { 'text/csv': ['.csv'] } }] });
+    const handle = await pick({ suggestedName: name, types: [{ description: type.description, accept: { [type.mime]: [type.extension] } }] });
     const writable = await handle.createWritable();
     await writable.write(text);
     await writable.close();
-    app.notify(`Exported ${page.markers.length} cue(s) to ${handle.name}.`);
+    return handle.name;
   } catch (e) {
     if (!(e instanceof DOMException && e.name === 'AbortError')) app.error(`Export failed: ${(e as Error).message}`);
+    return null;
   }
+}
+
+const fileName = (page: Page, extension: string) => `${page.name.replace(/[\\/:*?"<>|]/g, '_') || 'cues'}${extension}`;
+
+/** Saves the page's cues as a CSV file named after the page. */
+export async function saveCuesCsv(app: App, page: Page): Promise<void> {
+  const saved = await saveFile(app, fileName(page, '.csv'), cuesToCsv(page), { description: 'CSV', mime: 'text/csv', extension: '.csv' });
+  if (saved) app.notify(`Exported ${page.markers.length} cue(s) to ${saved}.`);
+}
+
+/** Saves the page's memos as SRT subtitles named after the page, for a video editor or player. */
+export async function saveCuesSrt(app: App, page: Page, duration: number): Promise<void> {
+  const text = cuesToSrt(page, duration);
+  if (!text) {
+    app.error('This page has no memos to export as subtitles.');
+    return;
+  }
+  const saved = await saveFile(app, fileName(page, '.srt'), text, { description: 'SRT subtitles', mime: 'application/x-subrip', extension: '.srt' });
+  if (saved) app.notify(`Exported ${text.split('-->').length - 1} subtitle(s) to ${saved}.`);
 }

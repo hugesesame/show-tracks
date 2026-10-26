@@ -1,7 +1,7 @@
 import type { App } from '../app/app';
 import { inRange } from '../model/range';
 import type { Marker } from '../model/types';
-import { readCsvIntoCues, saveCuesCsv } from './cueCsv';
+import { readCsvIntoCues, saveCuesCsv, saveCuesSrt } from './cueCsv';
 import { autoScrollButton, deleteButton, h } from './dom';
 import { formatClock, parseClock } from './format';
 
@@ -134,11 +134,13 @@ export function createCueList(app: App) {
   const csvExport = h('button', { type: 'button', title: 'This page’s cues, to edit in a spreadsheet and import again', onclick: () => { closeCsvMenu(); void saveCuesCsv(app, app.page); } }, 'Export CSV…');
   const sample = (file: string, label: string) =>
     h('a', { class: 'csv-sample', href: `./samples/${file}`, download: file, onclick: () => closeCsvMenu() }, label);
+  const csvSrt = h('button', { type: 'button', title: 'This page’s memos as SRT subtitles for a video editor, timed from the page’s start', onclick: () => { closeCsvMenu(); void saveCuesSrt(app, app.page, app.duration); } }, 'Export SRT…');
   const csvMenu = h(
     'div',
     { class: 'csv-menu', hidden: true },
     csvImport,
     csvExport,
+    csvSrt,
     h('div', { class: 'csv-menu-label' }, 'Samples'),
     sample('memos-in-order.csv', 'Memos in order'),
     sample('cues-with-times.csv', 'Cues with times'),
