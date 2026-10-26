@@ -21,6 +21,7 @@
 ## What it does
 
 - **Pages set the running order.** Each page holds one audio file and one video file. At the end of a page it can stop, open the next page, or play it.
+- **Drag and drop**: drop audio or video files on the window. One file goes onto the page open; several make a page each, in order, named after the files. A project file opens as Import does.
 - **Cues** are markers on the track. Press **GO** (or `G`) to play from the cue on standby, and step through them in the **Cue List**.
 - **In and out points** play only part of a song.
 - **Overlap**: a mark near the end of a song starts the next page there, while the end of the song rings out underneath. This is for audio files: the video does not overlap.

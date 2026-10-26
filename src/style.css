@@ -1427,6 +1427,39 @@ dialog.help {
   font: 12px var(--mono);
 }
 
+/* ---- dropping files ---- */
+
+/* Over the whole window while files are dragged in; clicks pass through. */
+.drop-zone {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.55);
+  border: 3px dashed var(--accent);
+}
+
+.drop-zone[hidden] {
+  display: none;
+}
+
+.drop-message {
+  max-width: 520px;
+  padding: 16px 24px;
+  border-radius: 10px;
+  background: var(--panel);
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.drop-zone.locked {
+  border-color: var(--muted);
+}
+
 /* ---- show mode ---- */
 
 .show-toggle {

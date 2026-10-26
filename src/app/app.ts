@@ -6,7 +6,7 @@ import { MtcOutput } from '../engine/mtc';
 import { MtcInput, type MtcInputState } from '../engine/mtcInput';
 import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
-import { importMediaFile } from '../media/importMedia';
+import { importMediaFile, mediaKind } from '../media/importMedia';
 import { moveClip } from '../model/clips';
 import {
   addMarker,
@@ -821,14 +821,14 @@ export class App {
 
   // ---- media ----
 
-  async setMedia(kind: MediaRecord['kind'], file: File): Promise<void> {
-    if (this.editLocked()) return;
+  /** Reads a media file into the browser's store; null, with the reason shown, when it cannot be used. */
+  private async storeMedia(file: File, kind: MediaRecord['kind']): Promise<MediaRecord | null> {
     let record: MediaRecord;
     try {
       record = await importMediaFile(file, kind);
     } catch (e) {
       this.error(`${file.name}: ${(e as Error).message}`);
-      return;
+      return null;
     }
     try {
       await putMedia(this.db, record);
@@ -837,6 +837,13 @@ export class App {
     }
     this.media.set(record.id, record);
     this.storedMedia.set(record.id, record.duration);
+    return record;
+  }
+
+  async setMedia(kind: MediaRecord['kind'], file: File): Promise<void> {
+    if (this.editLocked()) return;
+    const record = await this.storeMedia(file, kind);
+    if (!record) return;
     const page = this.page;
     const previous = kind === 'audio' ? page.audioMediaId : page.videoMediaId;
     const patch = kind === 'audio' ? { audioMediaId: record.id } : { videoMediaId: record.id };
@@ -845,6 +852,52 @@ export class App {
     this.commit(updatePage(this._project, page.id, patch));
     await this.loadCurrentPage();
     void this.deleteUnusedMedia([previous]);
+  }
+
+  /**
+   * Audio and video files dropped on the window. One goes onto the page open, as
+   * Choose does. Several make a page each, named after its file, at the end of the
+   * list open (the page open takes the first while it is still empty); one Undo
+   * takes them all back.
+   */
+  async dropMedia(files: File[]): Promise<void> {
+    if (this.editLocked()) return;
+    const list = pageKind(this.page);
+    const usable: { file: File; kind: MediaRecord['kind'] }[] = [];
+    const refused: string[] = [];
+    for (const file of files) {
+      const kind = mediaKind(file);
+      if (!kind) refused.push(`${file.name} is not audio or video`);
+      else if (kind === 'audio' && list === 'mtc') refused.push(`${file.name}: MTC In pages take no audio, the DAW plays it`);
+      else usable.push({ file, kind });
+    }
+    if (refused.length) this.error(`Not added: ${refused.join('; ')}.`);
+    if (usable.length === 1) return this.setMedia(usable[0].kind, usable[0].file);
+    const records: MediaRecord[] = [];
+    for (const { file, kind } of usable) {
+      const record = await this.storeMedia(file, kind);
+      if (record) records.push(record);
+    }
+    if (!records.length) return;
+    const open = this.page;
+    const fillOpen = !open.audioMediaId && !open.videoMediaId && open.markers.length === 0;
+    let project = this._project;
+    const ids = records.map((record, i) => {
+      const name = record.fileName.replace(/\.[^.]+$/, '') || record.fileName;
+      const media = record.kind === 'audio' ? { audioMediaId: record.id } : { videoMediaId: record.id };
+      if (i === 0 && fillOpen) {
+        project = updatePage(project, open.id, { name, ...media });
+        return open.id;
+      }
+      const page = { ...createPage(name), followMtc: list === 'mtc', ...media };
+      project = addPage(project, page);
+      return page.id;
+    });
+    // The files took a while to read, so the edit's own Redo clearing has lapsed.
+    this.history.clearRedo();
+    this.commit(setCurrentPage(project, ids[0]));
+    // The page open keeps its place, so it is loaded again here with its new media.
+    if (ids[0] === open.id) await this.loadCurrentPage();
   }
 
   async clearMedia(kind: MediaRecord['kind']): Promise<void> {

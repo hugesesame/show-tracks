@@ -6,6 +6,7 @@ import { enableOffline } from './offline';
 import { loadProject, openDb, requestPersistentStorage, saveProject, takeStashed } from './storage/db';
 import { createCueList, setEditGuard } from './ui/cueList';
 import { byId, h } from './ui/dom';
+import { installDropZone } from './ui/dropZone';
 import { createFileMenu } from './ui/fileMenu';
 import { createFooter } from './ui/footer';
 import { keepEscapeInFullscreen } from './ui/fullscreen';
@@ -79,6 +80,7 @@ async function main(): Promise<void> {
     help.element,
     files.confirmDialog,
     createOtherTabsWarning().element,
+    installDropZone(app, files),
   );
   splitters.apply();
 

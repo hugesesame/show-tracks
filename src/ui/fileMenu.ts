@@ -162,6 +162,20 @@ export function createFileMenu(app: App, db: IDBDatabase) {
     await remember({ handle, name: handle?.name ?? DEFAULT_NAME, saved: projectSnapshot(app.project) });
   }
 
+  /** A project file dropped on the window, opened as Import does; with its handle, Save writes back to it. */
+  async function openDropped(dropped: File, handle: FileSystemFileHandle | null): Promise<void> {
+    if (!(await okToReplace('opening another project'))) return;
+    let text: string;
+    try {
+      text = await dropped.text();
+    } catch (e) {
+      app.error(`Import failed: ${(e as Error).message}`);
+      return;
+    }
+    if (!(await app.importJson(text))) return;
+    await remember({ handle, name: handle?.name ?? dropped.name, saved: projectSnapshot(app.project) });
+  }
+
   function pickWithInput(): Promise<File | null> {
     return new Promise((resolve) => {
       const input = h('input', { type: 'file', accept: 'application/json,.json' });
@@ -275,6 +289,7 @@ export function createFileMenu(app: App, db: IDBDatabase) {
     confirmDialog,
     newProject,
     open,
+    openDropped,
     save,
     saveAs,
     backup,
