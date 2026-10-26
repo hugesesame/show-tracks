@@ -84,6 +84,13 @@ On a Mac, the **IAC Driver** in Audio MIDI Setup sends MIDI to other apps on the
 - Before taking a computer to a venue with no connection, open the app once where you have a connection and check that **Offline Ready** appears.
 - When there is a connection, the app loads the latest version each time it opens.
 
+## Before the show
+
+- Run the whole show once on the computer you will use: audio, video, the output window and any MIDI gear.
+- Chrome updates itself, and on rare occasions an update changes how something behaves. The app also loads its latest version whenever there is a connection. Avoid updating Chrome just before a show; if it did update, or the app has a new version, run through the show again.
+- Make a **Backup** with the audio and video included.
+- For a venue without a connection, check that **Offline Ready** appears (see above).
+
 ## Running it on your own computer
 
 This part is for people who want to change the app or build it themselves. You do not need it to use the app — just open the link above. It needs Node.js 20.19+ or 22.12+.
