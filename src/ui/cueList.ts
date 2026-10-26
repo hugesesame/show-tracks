@@ -1,6 +1,7 @@
 import type { App } from '../app/app';
 import { inRange } from '../model/range';
 import type { Marker } from '../model/types';
+import { downloadCuesCsv, readCsvIntoCues } from './cueCsv';
 import { autoScrollButton, deleteButton, h } from './dom';
 import { formatClock, parseClock } from './format';
 
@@ -118,6 +119,35 @@ export function createCueList(app: App) {
     const { standby } = app.cue;
     if (standby.kind === 'cue') app.removeMarker(standby.markerId);
   });
+  // CSV: memos (lyrics, prompts) from a spreadsheet into this page's cues, and back out.
+  const csvInput = h('input', {
+    type: 'file',
+    accept: '.csv,text/csv',
+    hidden: true,
+    onchange: () => {
+      const file = csvInput.files?.[0];
+      csvInput.value = '';
+      if (file) void readCsvIntoCues(app, file);
+    },
+  });
+  const csvImport = h('button', { type: 'button', title: 'Time, Name and Memo columns; without times the memos fill the cues in order', onclick: () => { closeCsvMenu(); csvInput.click(); } }, 'Import CSV…');
+  const csvExport = h('button', { type: 'button', title: 'This page’s cues, to edit in a spreadsheet and import again', onclick: () => { closeCsvMenu(); downloadCuesCsv(app.page); } }, 'Export CSV…');
+  const sample = (file: string, label: string) =>
+    h('a', { class: 'csv-sample', href: `./samples/${file}`, download: file, onclick: () => closeCsvMenu() }, label);
+  const csvMenu = h(
+    'div',
+    { class: 'csv-menu', hidden: true },
+    csvImport,
+    csvExport,
+    h('div', { class: 'csv-menu-label' }, 'Samples'),
+    sample('memos-in-order.csv', 'Memos in order'),
+    sample('cues-with-times.csv', 'Cues with times'),
+  );
+  const csvButton = h('button', { class: 'small', title: 'Import or export this page’s cues as CSV', onclick: (e: Event) => { e.stopPropagation(); csvMenu.hidden = !csvMenu.hidden; } }, 'CSV');
+  const closeCsvMenu = () => (csvMenu.hidden = true);
+  document.addEventListener('click', (e) => {
+    if (!csvMenu.contains(e.target as Node)) closeCsvMenu();
+  });
   const element = h(
     'section',
     { class: 'panel' },
@@ -128,6 +158,7 @@ export function createCueList(app: App) {
       h(
         'div',
         { class: 'panel-actions cue-actions' },
+        h('div', { class: 'csv-wrap' }, csvButton, csvMenu, csvInput),
         autoScroll.button,
         pageMidi,
         addButton,
@@ -243,6 +274,7 @@ export function createCueList(app: App) {
     // Show mode locks editing; its buttons are shown as unavailable.
     const show = app.showMode;
     addButton.disabled = pageMidi.disabled = show;
+    csvImport.disabled = show;
     removeButton.disabled = show || app.cue.standby.kind !== 'cue';
     const { midiNotes } = app.page;
     pageMidi.classList.toggle('on', midiNotes);

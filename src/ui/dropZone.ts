@@ -1,14 +1,17 @@
 import type { App } from '../app/app';
+import { readCsvIntoCues } from './cueCsv';
 import { h } from './dom';
 import type { createFileMenu } from './fileMenu';
 
 type DataTransferItemWithHandle = DataTransferItem & { getAsFileSystemHandle?(): Promise<FileSystemHandle | null> };
 
+const isCsv = (file: File) => file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv');
 const isProjectFile = (file: File) => file.type === 'application/json' || file.name.toLowerCase().endsWith('.json');
 
 /**
  * Files dropped anywhere on the window, alongside the Choose and Import buttons:
- * audio and video go onto the pages, a project file opens as Import does.
+ * audio and video go onto the pages, a project file opens as Import does,
+ * and a CSV fills the cue memos.
  * The window shows it takes them while files are dragged over it.
  */
 export function installDropZone(app: App, files: ReturnType<typeof createFileMenu>): HTMLElement {
@@ -29,7 +32,7 @@ export function installDropZone(app: App, files: ReturnType<typeof createFileMen
     overlay.classList.toggle('locked', locked);
     message.textContent = locked
       ? 'Show mode: files cannot be added'
-      : 'Drop audio or video: one goes onto this page, several make a page each. A project file opens.';
+      : 'Drop audio or video: one goes onto this page, several make a page each. A project file opens; a CSV fills this page’s cue memos.';
     overlay.hidden = false;
   });
   window.addEventListener('dragleave', (e) => {
@@ -54,6 +57,11 @@ export function installDropZone(app: App, files: ReturnType<typeof createFileMen
       void handle
         .catch(() => null)
         .then((h) => files.openDropped(dropped[0], h?.kind === 'file' ? (h as FileSystemFileHandle) : null));
+      return;
+    }
+    // A CSV fills this page's cue memos, as Import CSV does.
+    if (dropped.length === 1 && isCsv(dropped[0])) {
+      void readCsvIntoCues(app, dropped[0]);
       return;
     }
     void app.dropMedia(dropped);

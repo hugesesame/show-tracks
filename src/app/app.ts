@@ -216,6 +216,11 @@ export class App {
     this.events.dispatchEvent(new CustomEvent('error', { detail: message }));
   }
 
+  /** A message for the user, shown as the errors are. */
+  notify(message: string): void {
+    this.error(message);
+  }
+
   private commit(project: Project, previousMarkers = this.page.markers): void {
     if (this.editing && project !== this._project) this.history.clearRedo();
     const pageChanged = project.currentPageId !== this._project.currentPageId;
@@ -787,6 +792,13 @@ export class App {
   setMarkerFields(markerId: string, patch: MarkerFields): void {
     if (this.editLocked()) return;
     this.updateCurrentPage((page) => setMarkerFields(page, markerId, patch));
+  }
+
+  /** Replaces this page's cues at once (a CSV read in); one Undo takes it back. Returns false in show mode. */
+  replaceCues(update: (page: Page, duration: number) => Page): boolean {
+    if (this.editLocked()) return false;
+    this.updateCurrentPage(update);
+    return true;
   }
 
   /** The memo of the last cue the playhead passed. */

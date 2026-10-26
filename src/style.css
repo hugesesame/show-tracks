@@ -1428,6 +1428,50 @@ dialog.help {
   font: 12px var(--mono);
 }
 
+/* ---- CSV menu (Cue List) ---- */
+
+.csv-wrap {
+  position: relative;
+}
+
+.csv-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.csv-menu[hidden] {
+  display: none;
+}
+
+.csv-menu button {
+  white-space: nowrap;
+  text-align: left;
+}
+
+.csv-menu-label {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.csv-sample {
+  padding: 2px 4px;
+  font-size: 12px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
 /* ---- dropping files ---- */
 
 /* Over the whole window while files are dragged in; clicks pass through. */
