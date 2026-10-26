@@ -201,7 +201,7 @@ button:focus-visible {
 }
 
 .readout-value {
-  font: 600 clamp(26px, 2.9vw, 42px) / 1 var(--mono);
+  font: 600 clamp(22px, 2.5vw, 36px) / 1 var(--mono);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
