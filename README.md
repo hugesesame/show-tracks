@@ -15,7 +15,7 @@
 
 **Open the app: https://hugesesame.github.io/show-tracks/**
 
-> **This is a beta.** Show Tracks is still being tested and has not been used in a real show yet. MTC and MIDI Notes have been checked with real equipment. Try it with your own equipment before using it in a show.
+> Before using it in a show, run it through once with your own equipment: see [Before the show](#before-the-show).
 
 ![Show Tracks: the track with cues, the pages, the Cue List and the video with lyrics over it](screenshots/main.png)
 
