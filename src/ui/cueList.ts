@@ -143,7 +143,7 @@ export function createCueList(app: App) {
     sample('memos-in-order.csv', 'Memos in order'),
     sample('cues-with-times.csv', 'Cues with times'),
   );
-  const csvButton = h('button', { class: 'small', title: 'Import or export this page’s cues as CSV', onclick: (e: Event) => { e.stopPropagation(); csvMenu.hidden = !csvMenu.hidden; } }, 'CSV ▾');
+  const csvButton = h('button', { class: 'small csv-button', title: 'Import or export this page’s cues as CSV', onclick: (e: Event) => { e.stopPropagation(); csvMenu.hidden = !csvMenu.hidden; } }, 'CSV ▾');
   const closeCsvMenu = () => (csvMenu.hidden = true);
   document.addEventListener('click', (e) => {
     if (!csvMenu.contains(e.target as Node)) closeCsvMenu();
