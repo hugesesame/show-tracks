@@ -23,7 +23,8 @@
 
 - **Pages set the running order.** Each page holds one audio file and one video file. At the end of a page it can stop, open the next page, or play it.
 - **Drag and drop**: drop audio or video files on the window. One file goes onto the page open; several make a page each, in order, named after the files. A project file opens as Import does.
-- **Cues** are markers on the track. Press **GO** (or `G`) to play from the cue on standby, and step through them in the **Cue List**.
+- **Space for the show, G for rehearsal.** In the show, each page waits on standby when the one before ends, and `Space` starts it at the right moment. In rehearsal, **GO** (`G`) plays from a cue, so you can go straight back to any part of a song.
+- **Cues** are markers on the track. GO shows the cue on standby, the one it will play; choose another in the **Cue List**.
 - **In and out points** play only part of a song.
 - **Overlap**: a mark near the end of a song starts the next page there, while the end of the song rings out underneath. The video dissolves into the next page's over the same time, from the mark to the song's out point, as in karaoke. During the dissolve two videos play at once on each screen: full HD is fine on most computers, but 4K videos may drop frames.
 - **Text on screen at each cue**: lyrics in time with the music, prompts for performers, or text over the video for a karaoke-style picture. Choose the size, color, outline, position and a dissolve between lines.

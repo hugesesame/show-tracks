@@ -6,14 +6,14 @@ import { formatClock, formatCountdown } from './format';
 import { toggleFullscreen } from './fullscreen';
 
 export function createHeader(app: App) {
-  // "▶ STANDBY" under GO says what it does: play the cue on standby, named to its right.
+  // GO names the cue on standby inside it, so what it plays shows before it is pressed.
+  const standbyName = h('span', { class: 'standby-name' });
   const go = h(
     'button',
-    { class: 'go', title: 'GO: play from the cue on standby (G)', onclick: () => app.go() },
+    { class: 'go', title: 'GO: play from the cue on standby (G). For rehearsal; in the show, Space starts each page', onclick: () => app.go() },
     h('span', { class: 'go-label' }, 'GO'),
-    h('span', { class: 'go-hint' }, '▶ STANDBY'),
+    h('span', { class: 'go-standby' }, h('span', { class: 'standby-label' }, 'STANDBY'), standbyName),
   );
-  const standbyName = h('div', { class: 'standby-name' });
   const pageNumber = h('div', { class: 'page-number' });
   const pageName = h('div', { class: 'page-name' });
 
@@ -30,9 +30,8 @@ export function createHeader(app: App) {
     h(
       'div',
       { class: 'header-left' },
+      // GO takes the free room; the page sits on its right, next to the readouts.
       go,
-      // STANDBY takes the free room; the page sits on its right, next to the readouts.
-      h('div', { class: 'header-standby' }, h('div', { class: 'standby-label' }, 'STANDBY'), standbyName),
       h('div', { class: 'page-info' }, pageNumber, pageName),
     ),
     h(

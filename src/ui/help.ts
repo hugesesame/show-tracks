@@ -28,6 +28,13 @@ const HELP: Record<Lang, Text> = {
         ],
       },
       {
+        title: 'Space and G',
+        points: [
+          'Space is for the show. When a page ends, the next page waits on standby; press Space at the right moment to start it. Space also stops at once.',
+          'G (GO) is for rehearsal: it plays from the cue on standby, a marker you set, so you can go straight back to any part of a song. GO shows the cue it will play.',
+        ],
+      },
+      {
         title: 'Show mode',
         points: [
           'Press SHOW (top right) for the show. Editing is locked, and SHOW and the app name at the bottom right turn red.',
@@ -39,8 +46,8 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'Keyboard',
         rows: [
-          ['Space', 'Play / stop at once'],
-          ['G', 'GO: play from the cue on standby'],
+          ['Space', 'Play / stop at once (in the show, starts each page)'],
+          ['G', 'GO: play from the cue on standby (for rehearsal)'],
           ['Esc', 'Fade out and stop (time in Settings); again to stop at once'],
           ['D', 'Duck: lower everything for an announcement (how much and how fast in Settings); again to bring it back'],
           ['M', 'Add a cue at the playhead'],
@@ -157,6 +164,13 @@ const HELP: Record<Lang, Text> = {
         ],
       },
       {
+        title: 'Space と G',
+        points: [
+          'Space は本番用です。ページが終わると次のページが待機に入るので、良いタイミングで Space を押して始めます。Space でいつでもすぐに止められます。',
+          'G（GO）はリハーサル用です。待機中の Cue（打っておいたマーカー）から再生するので、曲のどこへでもすぐに戻れます。GO のボタンに、再生する Cue の名前が出ます。',
+        ],
+      },
+      {
         title: 'ショーモード',
         points: [
           '本番では右上の SHOW を押します。編集がロックされ、SHOW ボタンと右下の SHOW TRACKS の文字が赤くなります。',
@@ -168,8 +182,8 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'キーボード',
         rows: [
-          ['Space', '再生 / すぐに停止'],
-          ['G', 'GO: 待機中の Cue から再生'],
+          ['Space', '再生 / すぐに停止（本番は Space でページを始める）'],
+          ['G', 'GO: 待機中の Cue から再生（リハーサル用）'],
           ['Esc', 'フェードアウトして停止（長さは設定で）。もう一度押すとすぐに停止'],
           ['D', 'ダック。アナウンス用に全体の音を下げる（下げる量と時間は設定で）。もう一度押すと戻る'],
           ['M', '再生位置に Cue を追加'],

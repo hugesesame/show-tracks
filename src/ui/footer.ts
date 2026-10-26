@@ -41,7 +41,7 @@ export function createFooter(app: App, files: FileMenu) {
     'Offline Ready',
   );
   const loop = h('button', { class: 'loop', title: 'Loop the page', onclick: () => app.toggleLoop() }, '🔁');
-  const play = h('button', { class: 'play', title: 'Play / Stop (Space)', onclick: () => app.togglePlay() }, '▶');
+  const play = h('button', { class: 'play', title: 'Play / Stop (Space): in the show, starts the page on standby', onclick: () => app.togglePlay() }, '▶');
   const fade = h('button', { class: 'fade', title: 'Fade out and stop (Esc); again to stop at once', onclick: () => app.fadeOutStop() }, 'Fade');
   const duck = h('button', { class: 'duck', onclick: () => app.toggleDuck() }, 'Duck');
   const element = h(

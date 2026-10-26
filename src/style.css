@@ -107,14 +107,15 @@ button:focus-visible {
 }
 
 .go {
-  width: 140px;
+  flex: 1;
+  min-width: 200px;
+  max-width: 560px;
   height: 76px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1px;
-  padding: 0;
+  gap: 16px;
+  padding: 0 18px 0 22px;
+  text-align: left;
   font-weight: 800;
   background: transparent;
   color: var(--go);
@@ -123,16 +124,19 @@ button:focus-visible {
 }
 
 .go-label {
+  flex: none;
   font-size: 30px;
   line-height: 1;
   letter-spacing: 2px;
 }
 
-.go-hint {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  opacity: 0.75;
+.go-standby {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding-left: 16px;
+  border-left: 1px solid currentColor;
 }
 
 .go:hover:not(:disabled) {
@@ -142,33 +146,32 @@ button:focus-visible {
 
 .go:active:not(:disabled) {
   background: rgba(46, 204, 113, 0.25);
-}
-
-.go:active:not(:disabled) {
   transform: translateY(1px);
-}
-
-.header-standby {
-  flex: 1;
-  min-width: 0;
 }
 
 .standby-label {
   font-size: 10px;
-  color: var(--muted);
+  font-weight: 700;
   letter-spacing: 1px;
+  opacity: 0.75;
 }
 
 .standby-name {
   font-size: 22px;
   font-weight: 600;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.go:disabled .standby-name {
+  color: inherit;
+}
+
 .page-info {
   max-width: 40%;
+  margin-left: auto;
   /* Sized like the page name so 5ch is five of its characters. */
   font-size: 28px;
   margin-right: calc(clamp(8px, 2vw, 32px) + 5ch);
