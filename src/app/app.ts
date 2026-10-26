@@ -7,6 +7,7 @@ import { MtcOutput } from '../engine/mtc';
 import { MtcInput, type MtcInputState } from '../engine/mtcInput';
 import type { Fps } from '../engine/timecode';
 import { Transport } from '../engine/transport';
+import type { VideoView } from '../engine/videoDecks';
 import { importMediaFile, mediaKind } from '../media/importMedia';
 import { moveClip } from '../model/clips';
 import {
@@ -115,7 +116,7 @@ export class App {
   constructor(
     private readonly db: IDBDatabase,
     project: Project,
-    monitor: HTMLVideoElement,
+    monitor: VideoView,
   ) {
     this._project = project;
     this._cue = initialCueState(project, project.currentPageId);
@@ -249,7 +250,7 @@ export class App {
     const { mixer } = this.transport;
     const { masterVolume, masterMuted, masterPan } = this._project.settings;
     mixer.setLevel(this.transport.channel('audio'), page.audioVolume, page.audioMuted, page.audioPan);
-    mixer.setLevel('video', page.videoAudioVolume, !page.videoAudioEnabled, page.videoPan);
+    mixer.setLevel(this.transport.channel('video'), page.videoAudioVolume, !page.videoAudioEnabled, page.videoPan);
     mixer.setLevel('master', masterVolume, masterMuted, masterPan);
     this.mtc.configure(this._project.settings.mtcFps, page.mtcOffset, !this.following);
   }
@@ -274,14 +275,18 @@ export class App {
     return this.loading;
   }
 
-  /** With an overlap mark, readies the next page's audio on the free deck so it can start at once. */
+  /** With an overlap mark, readies the next page's audio and video on the free decks so they can start at once. */
   private async preloadNext(): Promise<void> {
     const page = this.page;
     if (this.loadedPageId !== page.id || activeOverlap(page, this.duration) === null) return;
     const next = nextPage(this._project, page.id);
-    const media = await this.fetchMedia(next?.audioMediaId ?? null);
-    if (!next || !media) return;
-    await this.transport.preload(media.blob, Math.max(0, (next.rangeStart ?? 0) - next.audioOffset));
+    if (!next) return;
+    const [audio, video] = await Promise.all([this.fetchMedia(next.audioMediaId), this.fetchMedia(next.videoMediaId)]);
+    const start = next.rangeStart ?? 0;
+    await Promise.all([
+      audio && this.transport.preload(audio.blob, Math.max(0, start - next.audioOffset)),
+      video && this.transport.preloadVideo(video.blob, start - next.videoOffset),
+    ]);
   }
 
   private async fetchMedia(id: string | null): Promise<MediaRecord | null> {

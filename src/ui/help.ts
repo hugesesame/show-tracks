@@ -68,7 +68,7 @@ const HELP: Record<Lang, Text> = {
           ['Drag a clip', 'Move the audio or video on the page (cues move with the audio)'],
           ['Drop files', 'Drop audio or video anywhere on the window: one file goes onto this page, several make a page each, named after the files. A project file opens as Import does'],
           ['Orange flags', 'In / out points: only this part plays. Drag them; ⌥-click clears'],
-          ['Purple flag', 'Overlap mark: the next page starts here while this page’s audio rings out to its out point'],
+          ['Purple flag', 'Overlap mark: the next page starts here while this page’s audio rings out to its out point, and its video dissolves into the next page’s over that time'],
           ['Pinch / swipe', 'Zoom / scroll the track'],
         ],
       },
@@ -130,7 +130,7 @@ const HELP: Record<Lang, Text> = {
       {
         title: 'Good to know',
         points: [
-          'The overlap mark is for audio files: only the audio rings out; the video does not overlap.',
+          'During an overlap’s dissolve two videos play at once on each screen: full HD is fine on most computers, but 4K videos may drop frames.',
           'Cues outside the in / out points are skipped by GO and send no MIDI Notes.',
           'Drag the borders between the areas to resize them; double-click a border to put it back.',
           'Open the app in one tab only: with two, each saves over the other, and a yellow warning shows.',
@@ -196,7 +196,7 @@ const HELP: Record<Lang, Text> = {
           ['クリップをドラッグ', '音声や映像の位置を動かす（Cue は音声と一緒に動く）'],
           ['ファイルをドロップ', '音声や映像を画面のどこかにドロップ。1 つならこのページに入り、複数ならファイル名のページが 1 つずつできる。プロジェクトファイルは Import と同じように開く'],
           ['オレンジの旗', 'イン点 / アウト点。この間だけ再生する。ドラッグで移動、⌥ クリックで解除'],
-          ['紫の旗', 'オーバーラップ。ここで次のページが始まり、このページの音はアウト点まで鳴り残る'],
+          ['紫の旗', 'オーバーラップ。ここで次のページが始まり、このページの音はアウト点まで鳴り残る。映像はその間に次のページの映像へディゾルブする'],
           ['ピンチ / スワイプ', 'トラックの拡大 / スクロール'],
         ],
       },
@@ -258,7 +258,7 @@ const HELP: Record<Lang, Text> = {
       {
         title: '知っておくこと',
         points: [
-          'オーバーラップ機能は Audio ファイル用です。鳴り残るのは音だけで、映像は重なりません。',
+          'オーバーラップのディゾルブの間は、それぞれの画面で映像を 2 本同時に再生します。フル HD ならたいていの PC で問題ありませんが、4K の映像はコマ落ちすることがあります。',
           'イン点 / アウト点の外の Cue は、GO で飛ばされ、MIDI Note も送りません。',
           'エリアの境界線はドラッグで幅を変えられます。境界線をダブルクリックすると元の幅に戻ります。',
           'アプリは 1 つのタブだけで開いてください。2 つで開くと保存が上書きし合うので、黄色い警告が出ます。',

@@ -14,6 +14,8 @@ const STYLE = `
 .memo-stage {
   position: absolute;
   inset: 0;
+  /* Over both video decks. */
+  z-index: 2;
   container-type: size;
   pointer-events: none;
 }

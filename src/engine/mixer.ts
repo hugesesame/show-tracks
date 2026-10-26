@@ -1,8 +1,8 @@
 export type TrackKind = 'audio' | 'video';
 /** A track or the Master strip. */
 export type StripKind = TrackKind | 'master';
-/** The audio track plays on two decks in turn, so one can ring out while the next page starts. */
-export type ChannelKey = 'deck0' | 'deck1' | 'video' | 'master';
+/** Each track plays on two decks in turn, so one can ring out while the next page starts. */
+export type ChannelKey = 'deck0' | 'deck1' | 'video0' | 'video1' | 'master';
 
 const METER_FLOOR_DB = -60;
 /** Where a fade out ends before cutting to silence: -60 dB, the bottom of the meters. */
@@ -36,7 +36,7 @@ export class Mixer {
   private readonly duck: GainNode;
   private readonly buffer = new Float32Array(1024);
 
-  constructor(elements: { decks: [HTMLMediaElement, HTMLMediaElement]; video: HTMLMediaElement }) {
+  constructor(elements: { decks: [HTMLMediaElement, HTMLMediaElement]; videos: [HTMLMediaElement, HTMLMediaElement] }) {
     const strip = (output: AudioNode): Channel => {
       // Upmix mono files so both meter bars move.
       const gain = new GainNode(this.context, { channelCount: 2, channelCountMode: 'explicit' });
@@ -66,7 +66,8 @@ export class Mixer {
     this.channels = {
       deck0: track(elements.decks[0]),
       deck1: track(elements.decks[1]),
-      video: track(elements.video),
+      video0: track(elements.videos[0]),
+      video1: track(elements.videos[1]),
       master,
     };
 

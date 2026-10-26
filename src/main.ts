@@ -1,6 +1,7 @@
 import './style.css';
 import { App } from './app/app';
 import { createProject } from './model/project';
+import type { VideoView } from './engine/videoDecks';
 import type { RemoteAction, Settings } from './model/types';
 import { enableOffline } from './offline';
 import { loadProject, openDb, requestPersistentStorage, saveProject, takeStashed } from './storage/db';
@@ -43,9 +44,10 @@ async function main(): Promise<void> {
   if (stashed) await saveProject(db, stashed);
   const project = stashed ?? (await loadProject(db)) ?? createProject();
 
-  const monitorVideo = h('video', { muted: true, playsInline: true });
+  // Two decks, so the video can dissolve into the next page's at an overlap.
+  const monitorVideos = [0, 1].map(() => h('video', { muted: true, playsInline: true })) as VideoView;
   const monitorEmpty = h('div', { class: 'monitor-empty' }, 'No video');
-  const app = new App(db, project, monitorVideo);
+  const app = new App(db, project, monitorVideos);
   app.onError((message) => showToast(toasts, message));
 
   const header = createHeader(app);
@@ -59,7 +61,7 @@ async function main(): Promise<void> {
   const mediaBar = createMediaBar(app, settings.open, track);
   const mixer = createMixer(app);
   const memoView = createMemoView(app);
-  const monitor = createMonitor(monitorVideo, monitorEmpty, mixer.element, memoView.element, () => splitters.apply());
+  const monitor = createMonitor(monitorVideos, monitorEmpty, mixer.element, memoView.element, () => splitters.apply());
 
   const main = h('main', { class: 'main' });
   const splitters = createSplitters(main, monitor.minWidth);
@@ -147,7 +149,7 @@ const MONITOR_VIEW_KEY = 'cue-player-monitor-view';
 
 /** The video monitor, or the mixer or the memo in its place; the choice is remembered in this browser. */
 function createMonitor(
-  video: HTMLVideoElement,
+  videos: VideoView,
   empty: HTMLElement,
   mixer: HTMLElement,
   memo: HTMLElement,
@@ -162,10 +164,10 @@ function createMonitor(
   const tab = (name: string, label: string) =>
     h('button', { type: 'button', class: 'small', 'data-view': name, onclick: () => show(name, true) }, label);
   const tabs = h('div', { class: 'monitor-tabs' }, tab('video', 'Video'), tab('memo', 'Memo'), tab('mixer', 'Mixer'));
-  // The video element keeps playing under the others: it is also the Video track's sound.
+  // The video elements keep playing under the others: they are also the Video track's sound.
   // The Video view shows what the video output shows: the memos too while "Memo on Video Output" is on.
   const videoMemo = createMemoStage();
-  const screen = h('div', { class: 'screen' }, video, empty, videoMemo.element);
+  const screen = h('div', { class: 'screen' }, ...videos, empty, videoMemo.element);
   const element = h('section', { class: 'monitor' }, screen, mixer, memo, tabs);
 
   function show(name: string, switched = false): void {

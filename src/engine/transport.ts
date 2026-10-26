@@ -2,7 +2,7 @@ import { pageDuration } from '../model/clips';
 import { playRange, type PlayRange } from '../model/range';
 import { ClockInterpolator, PageClock } from './clock';
 import { Mixer, type ChannelKey, type StripKind } from './mixer';
-import { VideoSync } from './videoSync';
+import { VideoDecks, type VideoView } from './videoDecks';
 
 export type TransportEvent = 'load' | 'playstate' | 'locate' | 'ended' | 'overlap';
 
@@ -25,7 +25,8 @@ const finiteDuration = (element: HTMLMediaElement) => (Number.isFinite(element.d
  * clock, so the music itself is never corrected.
  *
  * The audio alternates between two decks: at a page's overlap mark its audio
- * rings out on its deck while the next page starts on the other one.
+ * rings out on its deck while the next page starts on the other one. The video
+ * does the same on its own two decks, dissolving into the next page's.
  */
 export class Transport {
   private readonly decks: [Deck, Deck] = [0, 1].map(() => {
@@ -38,7 +39,7 @@ export class Transport {
   private tail: { deck: 0 | 1; end: number } | null = null;
   /** A preload that waits for the ringing deck to come free. */
   private pendingPreload: { blob: Blob; time: number } | null = null;
-  readonly videoSync = new VideoSync();
+  readonly video: VideoDecks;
   readonly mixer: Mixer;
   private readonly clock = new PageClock();
   private readonly audioClock = new ClockInterpolator();
@@ -47,7 +48,6 @@ export class Transport {
   private hasVideo = false;
   private audioOffset = 0;
   private videoOffset = 0;
-  private _videoUrl: string | null = null;
   private _duration = 0;
   /** How long the page is while it has no audio or video. */
   private blankLength = 0;
@@ -60,11 +60,10 @@ export class Transport {
   /** When on, playback jumps back to the in point at the out point. */
   loop = false;
 
-  constructor(readonly monitor: HTMLVideoElement) {
-    monitor.preload = 'auto';
-    monitor.playsInline = true;
-    this.mixer = new Mixer({ decks: [this.decks[0].element, this.decks[1].element], video: monitor });
-    this.videoSync.add(monitor);
+  constructor(monitor: VideoView) {
+    this.mixer = new Mixer({ decks: [this.decks[0].element, this.decks[1].element], videos: monitor });
+    // The previous page's video sound goes quiet with its picture.
+    this.video = new VideoDecks(monitor, (deck) => this.mixer.fadeOut(`video${deck}`));
   }
 
   /** The current page's audio player. */
@@ -72,9 +71,10 @@ export class Transport {
     return this.decks[this.deck].element;
   }
 
-  /** The mixer channel of a strip: the Audio strip is whichever deck plays the current page. */
+  /** The mixer channel of a strip: the Audio and Video strips are whichever decks play the current page. */
   channel(kind: StripKind): ChannelKey {
-    return kind === 'audio' ? `deck${this.deck}` : kind;
+    if (kind === 'audio') return `deck${this.deck}`;
+    return kind === 'video' ? `video${this.video.deck}` : kind;
   }
 
   levels(kind: StripKind): [number, number] {
@@ -96,6 +96,11 @@ export class Transport {
       deck.element.removeAttribute('src');
       deck.element.load();
     }
+  }
+
+  /** Loads the next page's video onto its free deck, cued at `time` in its clip, so an overlap shows it at once. */
+  preloadVideo(blob: Blob, time: number): Promise<void> {
+    return this.video.preload(blob, time);
   }
 
   /** Loads the next page's audio onto the free deck, cued at `time` in its clip, so an overlap starts it at once. */
@@ -129,6 +134,9 @@ export class Transport {
     else this.audio.pause();
     this.deck = this.deck === 0 ? 1 : 0;
     this.hasAudio = false;
+    // The picture dissolves into the next page's over the same time the audio rings out.
+    this.video.handOff(this.hasVideo ? time - this.videoOffset : null, end - time);
+    this.hasVideo = false;
     this.emit('playstate');
   }
 
@@ -149,15 +157,16 @@ export class Transport {
     setTimeout(finish, 80);
   }
 
-  /** A previous page is still ringing out after an overlap. */
+  /** A previous page is still ringing out (or its video dissolving) after an overlap. */
   get ringing(): boolean {
-    return this.tail !== null;
+    return this.tail !== null || this.video.fading;
   }
 
   /** Pauses and also silences a page still ringing out. */
   stop(): void {
     this.pause();
     this.stopTail(true);
+    this.video.stopTail();
   }
 
   get duration(): number {
@@ -180,11 +189,7 @@ export class Transport {
   }
 
   get videoDuration(): number | null {
-    return this.hasVideo ? finiteDuration(this.monitor) : null;
-  }
-
-  get videoUrl(): string | null {
-    return this._videoUrl;
+    return this.hasVideo ? finiteDuration(this.video.element) : null;
   }
 
   get hasMedia(): boolean {
@@ -216,14 +221,10 @@ export class Transport {
     const preloaded = audio !== null && deck.blob === audio;
     this.unload(preloaded);
     if (audio && !preloaded) this.setSource(deck, audio);
-    if (video) {
-      this._videoUrl = URL.createObjectURL(video);
-      this.monitor.src = this._videoUrl;
-    }
     this.hasAudio = audio !== null;
     this.hasVideo = video !== null;
     try {
-      await Promise.all([audio && waitForMetadata(this.audio), video && waitForMetadata(this.monitor)]);
+      await Promise.all([audio && waitForMetadata(this.audio), this.video.load(video)]);
     } finally {
       this.setOffsets(audioOffset, videoOffset);
       this.clock.stop(0);
@@ -233,10 +234,6 @@ export class Transport {
 
   private unload(keepAudio: boolean): void {
     if (!keepAudio) this.setSource(this.decks[this.deck], null);
-    this.monitor.removeAttribute('src');
-    this.monitor.load();
-    if (this._videoUrl) URL.revokeObjectURL(this._videoUrl);
-    this._videoUrl = null;
     this.hasAudio = this.hasVideo = false;
     this._duration = 0;
   }
@@ -371,7 +368,7 @@ export class Transport {
       return this.now();
     }
     this.syncAudio(time, false);
-    this.videoSync.tick(time - this.videoOffset, this._playing);
+    this.video.tick(time - this.videoOffset, this._playing, this.hasVideo);
     return time;
   }
 }

@@ -1,4 +1,5 @@
 import type { Transport } from '../engine/transport';
+import type { VideoView } from '../engine/videoDecks';
 import { toggleFullscreen } from '../ui/fullscreen';
 import { createMemoStage, type MemoLook } from '../ui/memoStage';
 
@@ -17,16 +18,14 @@ const WINDOWS: Record<OutputKind, { name: string; title: string }> = {
  */
 export class OutputWindow {
   private win: Window | null = null;
-  private video: HTMLVideoElement | null = null;
+  private videos: VideoView | null = null;
   private memo: ReturnType<typeof createMemoStage> | null = null;
   private readonly events = new EventTarget();
 
   constructor(
     private readonly transport: Transport,
     private readonly kind: OutputKind = 'video',
-  ) {
-    transport.on('load', () => this.updateSource());
-  }
+  ) {}
 
   get isOpen(): boolean {
     return this.win !== null && !this.win.closed;
@@ -51,20 +50,22 @@ export class OutputWindow {
     style.textContent = `
       html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
       body { position: relative; }
-      video { width: 100%; height: 100%; object-fit: contain; display: block; }
+      video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
     `;
     doc.head.replaceChildren(style);
     // After the head is replaced, which would drop the title element.
     doc.title = WINDOWS[this.kind].title;
     this.memo = createMemoStage(doc);
     if (this.kind === 'video') {
-      const video = doc.createElement('video');
-      video.muted = true;
-      video.playsInline = true;
-      doc.body.append(video);
-      this.video = video;
-      this.updateSource();
-      this.transport.videoSync.add(video);
+      // Two decks, as on the monitor, so the video can dissolve into the next page's.
+      const videos = [0, 1].map(() => {
+        const video = doc.createElement('video');
+        video.muted = true;
+        return video;
+      }) as VideoView;
+      doc.body.append(...videos);
+      this.videos = videos;
+      this.transport.video.addView(videos);
     }
     doc.body.append(this.memo.element);
     win.addEventListener('pagehide', () => this.handleClosed());
@@ -97,17 +98,10 @@ export class OutputWindow {
   }
 
   private handleClosed(): void {
-    if (this.video) this.transport.videoSync.remove(this.video);
-    this.video = null;
+    if (this.videos) this.transport.video.removeView(this.videos);
+    this.videos = null;
     this.memo = null;
     this.win = null;
     this.events.dispatchEvent(new Event('change'));
-  }
-
-  private updateSource(): void {
-    if (!this.video) return;
-    const url = this.transport.videoUrl;
-    if (url) this.video.src = url;
-    else this.video.removeAttribute('src');
   }
 }
