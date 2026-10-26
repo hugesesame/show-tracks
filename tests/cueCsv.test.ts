@@ -81,13 +81,13 @@ describe('csvToCues', () => {
 describe('the sample CSVs in public/samples', () => {
   it('fills cues in order with two-line memos', () => {
     const { page, leftOver } = csvToCues(pageWith(1, 2, 3), orderSample, 100);
-    expect(page.markers[1].memo).toBe('夜明け前の街で\nひとり歌を口ずさむ');
+    expect(page.markers[1].memo).toBe('Walking through the city\nbefore the break of day');
     expect(leftOver).toBe(3);
   });
 
   it('adds named cues at their times', () => {
     const { page, added } = csvToCues(createPage('P', 'p'), timedSample, 100, ids());
     expect(added).toBe(7);
-    expect(page.markers[3]).toMatchObject({ time: 28, name: 'Chorus', memo: 'Hello, morning light\n届け この声' });
+    expect(page.markers[3]).toMatchObject({ time: 28, name: 'Chorus', memo: 'Hello, morning light\ncarry my voice' });
   });
 });
