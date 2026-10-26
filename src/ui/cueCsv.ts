@@ -148,12 +148,32 @@ export async function readCsvIntoCues(app: App, file: File): Promise<void> {
   app.notify(`${file.name}: ${parts.join('; ')}.`);
 }
 
-/** Saves the page's cues as a CSV file named after the page. */
-export function downloadCuesCsv(page: Page): void {
-  const url = URL.createObjectURL(new Blob([cuesToCsv(page)], { type: 'text/csv' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${page.name.replace(/[\\/:*?"<>|]/g, '_') || 'cues'}.csv`;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+type SavePicker = (options: {
+  suggestedName: string;
+  types: { description: string; accept: Record<string, string[]> }[];
+}) => Promise<FileSystemFileHandle>;
+
+/** Saves the page's cues as a CSV file named after the page, where the user chooses (a download without Chrome's save dialog). */
+export async function saveCuesCsv(app: App, page: Page): Promise<void> {
+  const text = cuesToCsv(page);
+  const name = `${page.name.replace(/[\\/:*?"<>|]/g, '_') || 'cues'}.csv`;
+  const pick = (window as unknown as { showSaveFilePicker?: SavePicker }).showSaveFilePicker;
+  if (!pick) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return;
+  }
+  try {
+    const handle = await pick({ suggestedName: name, types: [{ description: 'CSV', accept: { 'text/csv': ['.csv'] } }] });
+    const writable = await handle.createWritable();
+    await writable.write(text);
+    await writable.close();
+    app.notify(`Exported ${page.markers.length} cue(s) to ${handle.name}.`);
+  } catch (e) {
+    if (!(e instanceof DOMException && e.name === 'AbortError')) app.error(`Export failed: ${(e as Error).message}`);
+  }
 }

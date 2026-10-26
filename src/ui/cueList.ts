@@ -1,7 +1,7 @@
 import type { App } from '../app/app';
 import { inRange } from '../model/range';
 import type { Marker } from '../model/types';
-import { downloadCuesCsv, readCsvIntoCues } from './cueCsv';
+import { readCsvIntoCues, saveCuesCsv } from './cueCsv';
 import { autoScrollButton, deleteButton, h } from './dom';
 import { formatClock, parseClock } from './format';
 
@@ -131,7 +131,7 @@ export function createCueList(app: App) {
     },
   });
   const csvImport = h('button', { type: 'button', title: 'Time, Name and Memo columns; without times the memos fill the cues in order', onclick: () => { closeCsvMenu(); csvInput.click(); } }, 'Import CSV…');
-  const csvExport = h('button', { type: 'button', title: 'This page’s cues, to edit in a spreadsheet and import again', onclick: () => { closeCsvMenu(); downloadCuesCsv(app.page); } }, 'Export CSV…');
+  const csvExport = h('button', { type: 'button', title: 'This page’s cues, to edit in a spreadsheet and import again', onclick: () => { closeCsvMenu(); void saveCuesCsv(app, app.page); } }, 'Export CSV…');
   const sample = (file: string, label: string) =>
     h('a', { class: 'csv-sample', href: `./samples/${file}`, download: file, onclick: () => closeCsvMenu() }, label);
   const csvMenu = h(
