@@ -32,7 +32,7 @@
 - **MIDI remote**: run GO, Play / Stop, Fade out, Duck and Previous / Next cue from a foot switch, pad or desk. Press Learn, then the key.
 - **Video output window** for a second display, with the text over the video.
 - **Prompter window** with the text alone, for the performers' monitor. Turn the text off on the video output, and the audience sees the video while the performers read the lyrics or prompts. The main screen frames the picture the same way, so what you see is what the audience sees.
-- **Mixer** with Audio, Video and Master faders, pan and mute.
+- **Mixer** with Audio, Video and Master faders, pan and mute. Move the faders from a MIDI fader box (CC or Pitch Bend / Mackie Control); a fader takes over once it reaches the level on screen, so the sound never jumps.
 - **Duck** (`D`): lowers all the sound for an announcement, and brings it back on the next press. How much and how fast are set in Settings.
 - **Audio output**: play through an audio interface or any other output device. Unplugged during a show, the sound moves to the system default and comes back when the device is connected again.
 - **Show mode** locks editing for the performance, so a stray click cannot move a cue or the playhead.

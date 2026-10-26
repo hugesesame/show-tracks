@@ -1,7 +1,8 @@
 import type { App } from '../app/app';
 import { FPS_OPTIONS, formatTimecode, parseTimecode, secondsToTimecode, timecodeToSeconds, type Fps } from '../engine/timecode';
+import { controlLabel } from '../engine/midiFaders';
 import { triggerLabel } from '../engine/midiRemote';
-import type { RemoteAction } from '../model/types';
+import type { FaderKey, RemoteAction } from '../model/types';
 import { storageEstimate } from '../storage/db';
 import { h } from './dom';
 import { fileButtons, type FileMenu } from './fileMenu';
@@ -16,6 +17,12 @@ const REMOTE_ACTIONS: { action: RemoteAction; label: string }[] = [
   { action: 'duck', label: 'Duck' },
   { action: 'previousCue', label: 'Previous Cue' },
   { action: 'nextCue', label: 'Next Cue' },
+];
+
+const FADERS: { key: FaderKey; label: string }[] = [
+  { key: 'audio', label: 'Audio Fader' },
+  { key: 'video', label: 'Video Fader' },
+  { key: 'master', label: 'Master Fader' },
 ];
 
 const formatBytes = (bytes: number) =>
@@ -148,6 +155,29 @@ export function createSettings(app: App, files: FileMenu) {
       return row(label, h('span', { class: 'remote-trigger' }, trigger ? triggerLabel(trigger) : '—'), ' ', learn, ' ', clear);
     });
 
+    // Hardware faders on the same MIDI input move the mixer's faders.
+    const faderRows = FADERS.map(({ key, label }) => {
+      const control = settings.midiFaders[key];
+      const learning = app.learningFaderKey === key;
+      const learn = h(
+        'button',
+        {
+          type: 'button',
+          class: `small${learning ? ' active' : ''}`,
+          title: 'Then move the fader on the MIDI device',
+          onclick: () => {
+            if (learning) app.cancelLearn();
+            else void app.learnFader(key).then(render);
+            render();
+          },
+        },
+        learning ? 'Move a fader…' : 'Learn',
+      );
+      const clear = h('button', { type: 'button', class: 'small', title: 'Remove', onclick: () => { app.setFaderControl(key, null); render(); } }, '×');
+      clear.hidden = !control;
+      return row(label, h('span', { class: 'remote-trigger' }, control ? controlLabel(control) : '—'), ' ', learn, ' ', clear);
+    });
+
     // MTC from a DAW: the input it comes in on, and whether this page follows it.
     const mtcInputSelect = h(
       'select',
@@ -230,6 +260,13 @@ export function createSettings(app: App, files: FileMenu) {
           loopback
             ? 'The input is the same port as the MIDI output: cue notes sent out could come back and run these controls. Use separate ports.'
             : 'Run the show from a foot switch, pad or desk: press Learn, then the key. Notes and CCs both work, also in show mode.',
+        ),
+        h('h3', {}, 'MIDI Faders'),
+        ...faderRows,
+        h(
+          'div',
+          { class: 'hint' },
+          'Move the mixer from a fader box on the MIDI input above: press Learn, then move the fader. CC and Pitch Bend (Mackie Control) both work, also in show mode. A fader takes over once it reaches the level on screen, so the sound never jumps after a page change.',
         ),
         h('h3', {}, 'MIDI Note'),
         row('Channel', channelSelect),

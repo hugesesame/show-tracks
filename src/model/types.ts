@@ -8,6 +8,8 @@ export type Settings = {
   /** The MIDI input MTC comes in on, for pages that follow a DAW. */
   mtcInputId: string | null;
   midiRemote: Partial<Record<RemoteAction, MidiTrigger>>;
+  /** Hardware faders (CC or Pitch Bend on the MIDI input) for the mixer's faders. */
+  midiFaders: Partial<Record<FaderKey, MidiControl>>;
   /** After the last page comes the first one again. */
   loopPages: boolean;
   /** Seconds Esc takes to fade everything out before stopping. */
@@ -117,6 +119,12 @@ export const randomId: IdGenerator = () => crypto.randomUUID();
 
 /** What a MIDI remote (foot switch, pad, desk button) can do. */
 export type RemoteAction = 'go' | 'playStop' | 'fadeOut' | 'duck' | 'previousCue' | 'nextCue';
+
+/** The mixer faders a MIDI controller can move. */
+export type FaderKey = 'audio' | 'video' | 'master';
+
+/** A CC or Pitch Bend on a channel (1..16) that moves a fader; `number` is the CC number, 0 for Pitch Bend. */
+export type MidiControl = { type: 'cc' | 'pitchBend'; channel: number; number: number };
 
 /** A note or CC on a channel (1..16) that runs a remote action. */
 export type MidiTrigger = { type: 'note' | 'cc'; channel: number; number: number };

@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS: Settings = {
   midiInputId: null,
   mtcInputId: null,
   midiRemote: {},
+  midiFaders: {},
   loopPages: false,
   fadeOut: 2,
   duckDepth: 12,

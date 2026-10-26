@@ -1,6 +1,7 @@
 import { go, initialCueState, passed, reconcile, select, type CueState } from '../cue/cueController';
 import { History } from './history';
 import { AudioOutput } from '../engine/audioOutput';
+import { faderFor, FaderPickup, readFaderMove, sameControl } from '../engine/midiFaders';
 import { MidiPresses, remoteAction } from '../engine/midiRemote';
 import { MtcOutput } from '../engine/mtc';
 import { MtcInput, type MtcInputState } from '../engine/mtcInput';
@@ -41,7 +42,7 @@ import {
   updatePage,
   updateSettings,
 } from '../model/project';
-import type { EndAction, MediaRecord, MidiTrigger, Page, Project, RemoteAction, Settings } from '../model/types';
+import type { EndAction, FaderKey, MediaRecord, MidiControl, MidiTrigger, Page, Project, RemoteAction, Settings } from '../model/types';
 import { OutputWindow } from '../output/outputWindow';
 import {
   createAutosaver,
@@ -105,6 +106,8 @@ export class App {
   private readonly presses = new MidiPresses();
   /** A remote control waiting for its note or CC, while Learn is on. */
   private learning: { action: RemoteAction; done: () => void } | null = null;
+  private learningFader: { key: FaderKey; done: () => void } | null = null;
+  private readonly faderPickup = new FaderPickup();
   private fadeTimer: ReturnType<typeof setTimeout> | undefined;
   private fadeEnd = 0;
   private _ducked = false;
@@ -355,8 +358,24 @@ export class App {
     this.mtc.listen('remote', this._project.settings.midiInputId, (data) => this.remoteMessage(data));
   }
 
-  /** A press on the MIDI input: assigned while learning, else run if it is assigned. Works in show mode. */
+  /**
+   * A message on the MIDI input: assigned while learning; else it moves the fader
+   * it is assigned to, or runs the control its press is assigned to. Works in show mode.
+   */
   private remoteMessage(data: Uint8Array): void {
+    const move = readFaderMove(data);
+    if (move && this.learningFader) {
+      const { key, done } = this.learningFader;
+      this.learningFader = null;
+      this.setFaderControl(key, move.control);
+      done();
+      return;
+    }
+    const fader = move && !this.learning ? faderFor(move.control, this._project.settings.midiFaders) : null;
+    if (move && fader) {
+      this.moveFader(fader, move.value);
+      return;
+    }
     const press = this.presses.read(data);
     if (!press) return;
     if (this.learning) {
@@ -393,9 +412,49 @@ export class App {
     this.listenToRemote();
   }
 
+  /** A hardware fader moved: it takes over once it reaches the level (pickup), and only on a track with media. */
+  private moveFader(key: FaderKey, value: number): void {
+    const page = this.page;
+    if ((key === 'audio' && !page.audioMediaId) || (key === 'video' && !page.videoMediaId)) return;
+    const { masterVolume } = this._project.settings;
+    const current = key === 'audio' ? page.audioVolume : key === 'video' ? page.videoAudioVolume : masterVolume;
+    const level = this.faderPickup.move(key, value, current);
+    if (level === null) return;
+    // Steps of 1%, as the fader on screen.
+    const volume = Math.round(level * 100) / 100;
+    if (volume === current) return;
+    if (key === 'master') this.setMaster({ masterVolume: volume });
+    else this.setTrackLevel(key, volume, key === 'audio' ? page.audioMuted : !page.videoAudioEnabled);
+  }
+
+  /** Learn: the next CC or Pitch Bend on the MIDI input moves this fader. Resolves when it arrives or is cancelled. */
+  learnFader(key: FaderKey): Promise<void> {
+    this.cancelLearn();
+    if (this.editLocked()) return Promise.resolve();
+    return new Promise((done) => (this.learningFader = { key, done }));
+  }
+
+  get learningFaderKey(): FaderKey | null {
+    return this.learningFader?.key ?? null;
+  }
+
+  /** Assigns a CC or Pitch Bend to a fader (null removes it); a control moves one fader and runs no other control. */
+  setFaderControl(key: FaderKey, control: MidiControl | null): void {
+    if (this.editLocked()) return;
+    const { midiFaders, midiRemote } = this._project.settings;
+    const faders = Object.fromEntries(
+      Object.entries(midiFaders).filter(([k, c]) => k !== key && !(control && sameControl(c, control))),
+    ) as Settings['midiFaders'];
+    if (control) faders[key] = control;
+    const remote = Object.fromEntries(
+      Object.entries(midiRemote).filter(([, t]) => !(control && sameControl(t, control))),
+    ) as Settings['midiRemote'];
+    this.commit(updateSettings(this._project, { midiFaders: faders, midiRemote: remote }));
+  }
+
   /** Learn: the next note or CC on the MIDI input runs this action. Resolves when it arrives or is cancelled. */
   learnRemote(action: RemoteAction): Promise<void> {
-    this.learning?.done();
+    this.cancelLearn();
     if (this.editLocked()) return Promise.resolve();
     return new Promise((done) => (this.learning = { action, done }));
   }
@@ -403,6 +462,8 @@ export class App {
   cancelLearn(): void {
     this.learning?.done();
     this.learning = null;
+    this.learningFader?.done();
+    this.learningFader = null;
   }
 
   get learningRemote(): RemoteAction | null {
@@ -418,7 +479,11 @@ export class App {
       Object.entries(this._project.settings.midiRemote).filter(([a, t]) => a !== action && !same(t)),
     ) as Settings['midiRemote'];
     if (trigger) remote[action] = trigger;
-    this.commit(updateSettings(this._project, { midiRemote: remote }));
+    // A CC pressed for a control no longer moves a fader.
+    const faders = Object.fromEntries(
+      Object.entries(this._project.settings.midiFaders).filter(([, c]) => !(trigger && sameControl(c, trigger))),
+    ) as Settings['midiFaders'];
+    this.commit(updateSettings(this._project, { midiRemote: remote, midiFaders: faders }));
   }
 
   // ---- MTC from a DAW ----
