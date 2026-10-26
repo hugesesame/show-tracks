@@ -3,10 +3,11 @@
 **English** | [日本語](README.ja.md)
 
 - Show Tracks is a playback-only web app made for live shows. Each page holds one audio file and one video file. There is no editing: you can only set where a track starts and ends.
-- At the markers on the track it can show text: lyrics in time with the music, or text over the video for a karaoke-style video.
+- At the markers on the track it shows text: lyrics in time with the music, prompts for the performers, or text over the video for a karaoke-style video.
+- **Text in time with your DAW**: Show Tracks can also follow MTC from a DAW. The DAW plays the sound, and Show Tracks shows the lyrics, prompts or surtitles on time — free, in the browser, with any DAW that sends MTC.
 - In the same way, it can send a MIDI Note at each marker, to control external gear.
 - Pages set the running order. When a song ends, the next page can play on by itself, or start over the end of the song with the overlap mark.
-- It sends MTC from the playback time, or follows MTC from a DAW: the DAW plays the sound, and Show Tracks shows the text and sends the MIDI Notes.
+- It sends MTC from the playback time, for lights or a DAW to follow.
 - Chrome only. Media and the project are kept in this browser.
 
 > [!IMPORTANT]
