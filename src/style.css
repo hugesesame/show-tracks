@@ -107,9 +107,8 @@ button:focus-visible {
 }
 
 .go {
-  flex: 1;
+  flex: 0 1 280px;
   min-width: 200px;
-  max-width: 560px;
   height: 76px;
   display: flex;
   align-items: center;
