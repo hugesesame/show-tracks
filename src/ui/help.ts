@@ -83,7 +83,7 @@ const HELP: Record<Lang, Text> = {
         title: 'Pages',
         rows: [
           ['Stop / Next / Next ▶', 'At the end of the page: stop, open the next page, or play it'],
-          ['🔁', 'Loop all pages: after the last page comes the first'],
+          ['Loop All', 'Loop all pages: after the last page comes the first'],
           ['Drag a page', 'Reorder pages'],
           ['Double-click', 'Rename'],
           ['Total', 'How long the Play list takes played through: each page from its in to its out point, or to its overlap mark. +? means some media is missing'],
@@ -219,7 +219,7 @@ const HELP: Record<Lang, Text> = {
         title: 'ページ',
         rows: [
           ['Stop / Next / Next ▶', 'ページの終わりで、止まる / 次のページを開く / 次のページを再生する'],
-          ['🔁', '全ページのループ。最後のページの次は最初に戻る'],
+          ['Loop All', '全ページのループ。最後のページの次は最初に戻る'],
           ['ページをドラッグ', '並べ替え'],
           ['ダブルクリック', '名前の変更'],
           ['Total', 'Play の一覧を通して流したときの時間。各ページは In から Out まで、オーバーラップがあればその位置まで。+? は見つからないメディアがあるという印'],

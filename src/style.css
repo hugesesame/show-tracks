@@ -541,14 +541,8 @@ button.active {
   min-width: 26px;
 }
 
-.loop-pages {
-  filter: grayscale(1);
-  opacity: 0.6;
-}
-
 .loop-pages.active {
-  filter: none;
-  opacity: 1;
+  color: var(--go);
   border-color: var(--go);
   background: rgba(46, 204, 113, 0.15);
 }
@@ -1309,13 +1303,17 @@ button.active {
 
 .transport button.loop {
   margin-left: 12px;
-  filter: grayscale(1);
-  opacity: 0.6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transport button.loop svg {
+  display: block;
 }
 
 .transport button.loop.active {
-  filter: none;
-  opacity: 1;
+  color: var(--go);
   border-color: var(--go);
   background: rgba(46, 204, 113, 0.15);
 }

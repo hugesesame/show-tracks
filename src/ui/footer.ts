@@ -6,6 +6,21 @@ import { fileButtons, type FileMenu } from './fileMenu';
 const REPEAT_DELAY_MS = 400;
 const REPEAT_INTERVAL_MS = 150;
 
+/** Two arrows chasing round: drawn in the text colour, so it reads like the other transport buttons. */
+function loopIcon(): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  for (const [name, value] of Object.entries({ viewBox: '0 0 24 24', width: '18', height: '18', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) {
+    svg.setAttribute(name, value);
+  }
+  for (const d of ['m17 2 4 4-4 4', 'M3 11v-1a4 4 0 0 1 4-4h14', 'm7 22-4-4 4-4', 'M21 13v1a4 4 0 0 1-4 4H3']) {
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', d);
+    svg.append(path);
+  }
+  return svg;
+}
+
 /** A button that acts once on press and keeps repeating while held. */
 function repeatButton(label: string, title: string, action: () => void): HTMLButtonElement {
   const button = h('button', { title }, label);
@@ -40,7 +55,7 @@ export function createFooter(app: App, files: FileMenu) {
     { class: 'offline-ready', hidden: true, title: 'A copy of the app is kept in this browser: it also opens without a connection' },
     'Offline Ready',
   );
-  const loop = h('button', { class: 'loop', title: 'Loop the page', onclick: () => app.toggleLoop() }, '🔁');
+  const loop = h('button', { class: 'loop', title: 'Loop the page', onclick: () => app.toggleLoop() }, loopIcon());
   const play = h('button', { class: 'play', title: 'Play / Stop (Space): in the show, starts the page on standby', onclick: () => app.togglePlay() }, '▶');
   const fade = h('button', { class: 'fade', title: 'Fade out and stop (Esc); again to stop at once', onclick: () => app.fadeOutStop() }, 'Fade');
   const duck = h('button', { class: 'duck', onclick: () => app.toggleDuck() }, 'Duck');

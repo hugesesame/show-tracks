@@ -21,7 +21,7 @@ export function createPageList(app: App, openHelp: () => void) {
   const list = h('div', { class: 'page-list' });
   const dropLine = h('div', { class: 'drop-line', hidden: true });
   const empty = h('div', { class: 'page-list-empty' }, 'No MTC In pages yet. Press + to add one: a blank track that follows the MTC from a DAW.');
-  const loopButton = h('button', { class: 'small loop-pages', onclick: () => app.toggleLoopPages() }, '🔁');
+  const loopButton = h('button', { class: 'small loop-pages', onclick: () => app.toggleLoopPages() }, 'Loop All');
 
   const removeButton = deleteButton('Delete page', () => app.removeCurrentPage());
   const autoScroll = autoScrollButton('cue-player-page-autoscroll');
