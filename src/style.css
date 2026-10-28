@@ -1659,6 +1659,59 @@ body.show-mode .app-name {
   font-weight: 600;
 }
 
+/* ---- phone caution ---- */
+
+.phone-warning {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.phone-warning-box {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #3d3410;
+  border: 1px solid #f1c40f;
+  border-radius: 10px;
+  color: #f8e08e;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.phone-warning-box p {
+  margin: 0;
+}
+
+.phone-warning-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.phone-warning-url {
+  padding: 8px;
+  font: 13px var(--mono);
+  word-break: break-all;
+  color: var(--text);
+  background: var(--bg);
+  border-radius: 6px;
+  user-select: all;
+}
+
+.phone-warning-box button {
+  align-self: flex-end;
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
 /* ---- toasts ---- */
 
 .toasts {

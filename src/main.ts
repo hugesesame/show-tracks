@@ -20,6 +20,7 @@ import { createMemoStage } from './ui/memoStage';
 import { createMemoView } from './ui/memoView';
 import { createMixer } from './ui/mixer';
 import { createOtherTabsWarning } from './ui/otherTabs';
+import { createPhoneWarning } from './ui/phoneWarning';
 import { createPageList } from './ui/pageList';
 import { createSettings } from './ui/settings';
 import { createTrack } from './ui/track';
@@ -84,6 +85,8 @@ async function main(): Promise<void> {
     createOtherTabsWarning().element,
     installDropZone(app, files),
   );
+  const phoneWarning = createPhoneWarning();
+  if (phoneWarning) document.body.append(phoneWarning);
   splitters.apply();
 
   const update = () => {
